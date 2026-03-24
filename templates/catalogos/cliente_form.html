@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if modo == "crear" %}Nuevo cliente{% else %}Editar cliente{% endif %} | Sistema de Gestión
+{% endblock %}
+
+{% block page_title %}
+{% if modo == "crear" %}Nuevo cliente{% else %}Editar cliente{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-9 col-lg-10">
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <!-- Datos CFDI -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <h5 class="fw-bold mb-0">
+              <i class="bi bi-receipt me-2"></i> Datos fiscales (CFDI 4.0)
+            </h5>
+            <span class="badge bg-light text-dark border">Receptor</span>
+          </div>
+          <p class="text-muted small mb-3">
+            Estos datos deben coincidir con SAT para timbrar correctamente.
+          </p>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Tipo de persona</label>
+              {{ form.tipo_persona }}
+              <div class="text-danger small">{{ form.tipo_persona.errors }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">RFC</label>
+              {{ form.rfc }}
+              <div class="text-danger small">{{ form.rfc.errors }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Régimen fiscal (SAT)</label>
+              {{ form.regimen_fiscal }}
+              <div class="text-danger small">{{ form.regimen_fiscal.errors }}</div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Nombre / Razón social (SAT)</label>
+              {{ form.nombre_fiscal }}
+              <div class="text-danger small">{{ form.nombre_fiscal.errors }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">CP domicilio fiscal (SAT)</label>
+              {{ form.domicilio_fiscal_cp }}
+              <div class="text-danger small">{{ form.domicilio_fiscal_cp.errors }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Uso CFDI (default)</label>
+              {{ form.uso_cfdi_default }}
+              <div class="text-danger small">{{ form.uso_cfdi_default.errors }}</div>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Email envío CFDI</label>
+              {{ form.email_cfdi }}
+              <div class="text-danger small">{{ form.email_cfdi.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos comerciales -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-person-lines-fill me-2"></i> Datos comerciales / contacto
+          </h5>
+
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Nombre comercial</label>
+              {{ form.nombre_comercial }}
+              <div class="text-danger small">{{ form.nombre_comercial.errors }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Teléfono</label>
+              {{ form.telefono }}
+              <div class="text-danger small">{{ form.telefono.errors }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dirección operativa -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-geo-alt me-2"></i> Dirección operativa (opcional)
+          </h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Calle</label>
+              {{ form.calle }}
+              <div class="text-danger small">{{ form.calle.errors }}</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">No. ext.</label>
+              {{ form.num_ext }}
+              <div class="text-danger small">{{ form.num_ext.errors }}</div>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold">No. int.</label>
+              {{ form.num_int }}
+              <div class="text-danger small">{{ form.num_int.errors }}</div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Colonia</label>
+              {{ form.colonia }}
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Localidad</label>
+              {{ form.localidad }}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Municipio</label>
+              {{ form.municipio }}
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Estado</label>
+              {{ form.estado }}
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold">País</label>
+              {{ form.pais }}
+            </div>
+            <div class="col-md-2">
+              <label class="form-label fw-semibold">CP</label>
+              {{ form.cp }}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Referencias</label>
+              {{ form.referencias }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Defaults factura -->
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-credit-card me-2"></i> Defaults de facturación (opcional)
+          </h5>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Forma de pago (default)</label>
+              {{ form.forma_pago_default }}
+              <div class="text-danger small">{{ form.forma_pago_default.errors }}</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Método de pago (default)</label>
+              {{ form.metodo_pago_default }}
+              <div class="text-danger small">{{ form.metodo_pago_default.errors }}</div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <div class="form-check">
+            {{ form.activo }}
+            <label class="form-check-label fw-semibold">Cliente activo</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="d-flex justify-content-between">
+        <a href="{% url 'clientes_list' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+        <button class="btn btn-primary">
+          <i class="bi bi-save me-1"></i> Guardar
+        </button>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

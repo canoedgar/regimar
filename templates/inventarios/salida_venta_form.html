@@ -1,0 +1,966 @@
+{% extends "base.html" %}
+{# Wizard / Stepper - Salida por venta #}
+
+{% block title %}Salida por venta | Sistema de Gestión{% endblock %}
+{% block active_ventas %}active{% endblock %}
+{% block page_title %}Salida por venta{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">
+              <i class="bi bi-cart-check me-2"></i>
+              Nueva venta
+            </h5>
+            <p class="text-muted mb-0">Sigue el asistente paso a paso para capturar la venta.</p>
+          </div>
+
+          <div class="text-end">
+            <span class="badge text-bg-light border" id="stepBadge">Paso 1 de 5</span>
+          </div>
+        </div>
+
+        {# Stepper header #}
+        <div class="wizard-steps mb-4">
+          <div class="wizard-step active" data-step-indicator="1">
+            <div class="dot">1</div>
+            <div class="label">Datos</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="2">
+            <div class="dot">2</div>
+            <div class="label">Cliente</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="3">
+            <div class="dot">3</div>
+            <div class="label">Productos</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="4">
+            <div class="dot">4</div>
+            <div class="label">Vista previa</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="5">
+            <div class="dot">5</div>
+            <div class="label">Guardar</div>
+          </div>
+        </div>
+
+        <form method="post" novalidate id="ventaForm">
+          {% csrf_token %}
+          <input type="hidden" name="almacen_id" id="almacenId" value="{{ almacen.id }}">
+
+
+          {# --- Campos reales del form (algunos se usan ocultos) --- #}
+          <div class="d-none">
+            {{ form.cliente }} {# se llenará desde el paso 2 #}
+          </div>
+
+          {# Management form del formset #}
+        {{ formset.management_form }}
+          {# Tabla/inputs ocultos del formset (la UI real será un “carrito”) #}
+          <div class="d-none">
+            <table>
+              <tbody id="hiddenFormsetTbody">
+                {% for f in formset %}
+                  <tr class="hidden-row">
+                    <td>{{ f.producto }}</td>
+                    <td>{{ f.cantidad }}</td>
+                    <td>{{ f.precio_unitario }}</td>
+                    <td>
+                      {% if f.DELETE %}{{ f.DELETE }}{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <template id="hiddenRowTemplate">
+            <tr class="hidden-row">
+              <td>{{ formset.empty_form.producto }}</td>
+              <td>{{ formset.empty_form.cantidad }}</td>
+              <td>{{ formset.empty_form.precio_unitario }}</td>
+              <td>{% if formset.empty_form.DELETE %}{{ formset.empty_form.DELETE }}{% endif %}</td>
+            </tr>
+          </template>
+
+          
+          <section class="wizard-panel" data-step="1">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Folio</label>
+                {{ form.folio }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha</label>
+                {{ form.fecha }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Almacén</label>
+                <select class="form-select" id="almacenSelect">
+                  {% for a in almacenes %}
+                    <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
+                      {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+                    </option>
+                  {% endfor %}
+                </select>
+                <div class="form-text">El stock y la salida se aplicarán a este almacén.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Documento referencia</label>
+                {{ form.documento_referencia }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Motivo</label>
+                {{ form.motivo }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Observaciones</label>
+                {{ form.observaciones }}
+              </div>
+            </div>
+          </section>
+          
+          <section class="wizard-panel d-none" data-step="2">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Cliente (Catálogo)</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="clienteSearch" list="clientesDatalist" placeholder="Buscar por nombre o RFC…">
+                  <button type="button" class="btn btn-outline-secondary" id="btnClearCliente" title="Limpiar">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+                <div class="form-text">
+                  Selecciona un cliente del catálogo. Al elegirlo, se llenará el campo de cliente de la venta.
+                </div>
+                <div class="small mt-2">
+                  <span class="badge text-bg-light border">Seleccionado:</span>
+                  <span id="clienteSelectedText" class="ms-1 text-muted">—</span>
+                </div>
+              </div>
+
+              <div class="col-md-4 text-md-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClienteNuevo">
+                  <i class="bi bi-person-plus me-1"></i> Nuevo cliente
+                </button>
+              </div>
+            </div>
+
+            <datalist id="clientesDatalist">
+              {% for c in clientes %}
+                <option value="{{ c.nombre_fiscal }} ({{ c.rfc }})"
+                        data-id="{{ c.id }}"
+                        data-nombre="{{ c.nombre_fiscal }}"
+                        data-rfc="{{ c.rfc }}">
+                </option>
+              {% endfor %}
+            </datalist>
+
+            <hr class="my-4">
+
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle me-2"></i>
+              Si es venta de mostrador y no quieres capturar cliente, puedes dejarlo vacío.
+            </div>
+          </section>
+        
+          <section class="wizard-panel d-none" data-step="3">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-7">
+                <label class="form-label fw-semibold">Agregar producto</label>
+                <input type="text" class="form-control" id="productoSearch" list="productosDatalist" placeholder="Escribe para buscar…">
+                <div class="form-text">Tip: selecciona del listado y presiona “Agregar”. Si ya existe, se incrementa la cantidad.</div>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Cantidad</label>
+                <input type="number" class="form-control" id="productoQty" min="0.01" step="0.01" value="1">
+              </div>
+              <div class="col-md-2 d-grid">
+                <button type="button" class="btn btn-primary" id="btnAddProducto">
+                  <i class="bi bi-plus-circle me-1"></i> Agregar
+                </button>
+              </div>
+            </div>
+
+            <datalist id="productosDatalist">
+              {% for p in productos %}
+                <option value="{{ p.nombre }}"
+                        data-id="{{ p.id }}"
+                        data-nombre="{{ p.nombre }}"
+                        data-stock="{{ p.stock|default_if_none:'' }}"
+                        data-precio="{{ p.precio_venta|default_if_none:'' }}">
+                </option>
+              {% endfor %}
+            </datalist>
+
+            <hr class="my-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+              <h6 class="fw-bold mb-0">Carrito</h6>
+              <div class="text-muted small">
+                Productos: <span id="cartCount">0</span> · Total: <span class="fw-semibold" id="cartTotal">$0.00</span>
+              </div>
+            </div>
+
+            <div id="cartEmpty" class="border rounded p-4 text-center text-muted">
+              <i class="bi bi-bag-plus fs-3 d-block mb-2"></i>
+              Aún no agregas productos.
+            </div>
+
+            <div id="cartList" class="vstack gap-2 d-none"></div>
+          </section>
+      
+          <section class="wizard-panel d-none" data-step="4">
+            <div class="row g-3">
+              <div class="col-lg-6">
+                <div class="alert alert-secondary mb-3">
+                  <i class="bi bi-receipt me-2"></i>
+                  Vista previa en formato <strong>58mm</strong>. No se imprimirá; solo es preview.
+                </div>
+
+                <div class="border rounded p-3 bg-body-tertiary">
+                  <div id="ticketPreview" class="ticket-58"></div>
+                </div>
+              </div>
+
+              <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                  <div class="card-body">
+                    <h6 class="fw-bold mb-2">Resumen</h6>
+                    <div class="small text-muted">Revisa que cliente y productos estén correctos.</div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                      <span>Total</span>
+                      <span class="fw-bold" id="summaryTotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Productos</span>
+                      <span class="fw-semibold" id="summaryCount">0</span>
+                    </div>
+                    <hr class="mb-0">
+                  </div>
+                </div>
+
+                <div class="small text-muted mt-3">
+                  Si necesitas ajustar cantidades o precios, regresa al paso de Productos.
+                </div>
+              </div>
+            </div>
+          </section>
+          
+          <section class="wizard-panel d-none" data-step="5">
+            <div class="alert alert-success">
+              <i class="bi bi-check2-circle me-2"></i>
+              Todo listo. Presiona <strong>Guardar venta</strong> para registrar la salida.
+            </div>
+
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="fw-bold mb-2">Checklist</h6>
+                <ul class="mb-0">
+                  <li>Datos generales capturados</li>
+                  <li>Cliente seleccionado (opcional)</li>
+                  <li>Productos agregados (obligatorio)</li>
+                  <li>Vista previa revisada</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <hr class="my-4">
+
+          {# Navegación wizard #}
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <a href="{% url 'salidas_list' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i> Cancelar
+            </a>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary" id="btnPrev">
+                <i class="bi bi-chevron-left me-1"></i> Atrás
+              </button>
+
+              <button type="button" class="btn btn-primary" id="btnNext">
+                Siguiente <i class="bi bi-chevron-right ms-1"></i>
+              </button>
+
+              <button type="submit" class="btn btn-success d-none" id="btnSubmit">
+                <i class="bi bi-check2-circle me-1"></i> Guardar venta
+              </button>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{# Modal Nuevo Cliente (rápido) #}
+<div class="modal fade" id="modalClienteNuevo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-plus me-2"></i>
+          Nuevo cliente
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning small">
+          Captura lo mínimo requerido por el catálogo (RFC, Razón social, Régimen fiscal y CP fiscal).
+        </div>
+
+        <form id="clienteQuickForm">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">RFC</label>
+              <input type="text" class="form-control" name="rfc" maxlength="13" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Razón social (SAT)</label>
+              <input type="text" class="form-control" name="nombre_fiscal" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Régimen fiscal</label>
+              <select class="form-select" name="regimen_fiscal" required>
+                <option value="" selected disabled>Selecciona…</option>
+                {% for k,v in REGIMEN_FISCAL_CHOICES %}
+                  <option value="{{ k }}">{{ v }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">CP domicilio fiscal</label>
+              <input type="text" class="form-control" name="domicilio_fiscal_cp" maxlength="5" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Teléfono (opcional)</label>
+              <input type="text" class="form-control" name="telefono">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email CFDI (opcional)</label>
+              <input type="email" class="form-control" name="email_cfdi">
+            </div>
+          </div>
+
+          <div class="text-danger small mt-3 d-none" id="clienteQuickError"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveClienteQuick">
+          <i class="bi bi-save me-1"></i> Guardar cliente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* --- Wizard header --- */
+  .wizard-steps{
+    display:flex;
+    gap:12px;
+    justify-content:space-between;
+    flex-wrap:wrap;
+  }
+  .wizard-step{
+    flex:1;
+    min-width:120px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 12px;
+    border:1px solid rgba(0,0,0,.1);
+    border-radius:12px;
+    background: #fff;
+    opacity:.55;
+  }
+  .wizard-step .dot{
+    width:28px;height:28px;border-radius:999px;
+    display:grid;place-items:center;
+    background: rgba(13,110,253,.1);
+    border:1px solid rgba(13,110,253,.25);
+    font-weight:700;
+  }
+  .wizard-step .label{ font-weight:600; font-size:.95rem; }
+  .wizard-step.active{ opacity:1; border-color: rgba(13,110,253,.35); box-shadow:0 6px 16px rgba(0,0,0,.06); }
+  .wizard-step.done{ opacity:1; border-color: rgba(25,135,84,.35); }
+  .wizard-step.done .dot{ background: rgba(25,135,84,.1); border-color: rgba(25,135,84,.25); }
+
+  /* --- Cart items --- */
+  .cart-item{
+    border:1px solid rgba(0,0,0,.08);
+    border-radius:14px;
+    padding:12px;
+    background:#fff;
+  }
+  .cart-name{ font-weight:700; }
+  .cart-meta{ font-size:.85rem; color:#6c757d; }
+  .qty-btn{ width:34px; height:34px; display:grid; place-items:center; border-radius:10px; }
+  .qty-input{ width:86px; }
+
+  /* --- Ticket 58mm preview --- */
+  .ticket-58{
+    width:58mm;
+    max-width:100%;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size:12px;
+    line-height:1.35;
+    color:#111;
+    background:#fff;
+    padding:6px;
+    border-radius:10px;
+  }
+  .ticket-58 .center{ text-align:center; }
+  .ticket-58 .hr{ border-top:1px dashed #999; margin:6px 0; }
+  .ticket-58 .row{ display:flex; justify-content:space-between; gap:10px; }
+  .ticket-58 .row .l{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ticket-58 .row .r{ text-align:right; min-width:65px; }
+  .ticket-58 .tot{ font-weight:800; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function(){
+  const form = document.getElementById("ventaForm");
+
+  const almacenSelect = document.getElementById("almacenSelect");
+  const almacenHidden = document.getElementById("almacenId");
+
+  if (almacenSelect && almacenHidden) {
+    almacenHidden.value = almacenSelect.value;
+
+    almacenSelect.addEventListener("change", () => {
+      almacenHidden.value = almacenSelect.value;
+
+      // opcional: limpiar carrito al cambiar almacén (evita confusiones)
+      if (cart.size > 0) {
+        if (confirm("Cambiaste de almacén. ¿Deseas vaciar el carrito para evitar inconsistencias de stock?")) {
+          cart.clear();
+          updateCartUI();
+        }
+      }
+    });
+  }
+
+
+  // --- Wizard state
+  let step = 1;
+  const totalSteps = 5;
+  const badge = document.getElementById("stepBadge");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const btnSubmit = document.getElementById("btnSubmit");
+
+  const panels = Array.from(document.querySelectorAll(".wizard-panel"));
+  const indicators = Array.from(document.querySelectorAll(".wizard-step"));
+
+  function setIndicator(){
+    indicators.forEach(ind => {
+      const n = Number(ind.dataset.stepIndicator);
+      ind.classList.toggle("active", n === step);
+      ind.classList.toggle("done", n < step);
+    });
+    badge.textContent = `Paso ${step} de ${totalSteps}`;
+  }
+
+  function showStep(n){
+    step = Math.min(Math.max(1, n), totalSteps);
+    panels.forEach(p => p.classList.add("d-none"));
+    const panel = document.querySelector(`.wizard-panel[data-step="${step}"]`);
+    if (panel) panel.classList.remove("d-none");
+
+    btnPrev.disabled = (step === 1);
+    btnNext.classList.toggle("d-none", step === totalSteps);
+    btnSubmit.classList.toggle("d-none", step !== totalSteps);
+
+    setIndicator();
+
+    // hooks
+    if (step === 4) renderPreview();
+    if (step === 5) syncFormsetFromCart();
+  }
+
+  indicators.forEach(ind => {
+    ind.addEventListener("click", () => {
+      const target = Number(ind.dataset.stepIndicator);
+      // permite ir hacia atrás libremente; hacia adelante solo si validas lo previo
+      if (target <= step) showStep(target);
+    });
+  });
+
+  btnPrev.addEventListener("click", () => showStep(step - 1));
+  btnNext.addEventListener("click", async () => {
+    const ok = validateStep(step);
+    if (!ok) return;
+    if (step === 3) syncFormsetFromCart();
+    showStep(step + 1);
+  });
+
+  // --- Helpers
+  function money(n){
+    const v = Number(n || 0);
+    return v.toLocaleString("es-MX", {style:"currency", currency:"MXN"});
+  }
+  function norm(s){
+    return (s||"").trim().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+  function findOptionByValue(datalist, value){
+    const q = norm(value);
+    for (const opt of datalist.querySelectorAll("option")){
+      if (norm(opt.value) === q) return opt;
+    }
+    return null;
+  }
+
+  // =========================
+  // PASO 2: Cliente
+  // =========================
+  const clienteInputReal = form.querySelector('input[name="cliente"]'); // CharField
+  const clienteSearch = document.getElementById("clienteSearch");
+  const clientesDatalist = document.getElementById("clientesDatalist");
+  const clienteSelectedText = document.getElementById("clienteSelectedText");
+  const btnClearCliente = document.getElementById("btnClearCliente");
+
+  function setClienteText(text){
+    if (clienteInputReal) clienteInputReal.value = text || "";
+    clienteSelectedText.textContent = text ? text : "—";
+  }
+
+  clienteSearch.addEventListener("input", () => {
+    const opt = findOptionByValue(clientesDatalist, clienteSearch.value);
+    if (!opt) {
+      // no forzamos; solo no seteamos si no coincide
+      return;
+    }
+    setClienteText(opt.value);
+  });
+
+  btnClearCliente.addEventListener("click", () => {
+    clienteSearch.value = "";
+    setClienteText("");
+    clienteSearch.focus();
+  });
+
+  // =========================
+  // PASO 3: Carrito (Productos)
+  // =========================
+  const productoSearch = document.getElementById("productoSearch");
+  const productosDatalist = document.getElementById("productosDatalist");
+  const productoQty = document.getElementById("productoQty");
+  const btnAddProducto = document.getElementById("btnAddProducto");
+  const cartList = document.getElementById("cartList");
+  const cartEmpty = document.getElementById("cartEmpty");
+  const cartCount = document.getElementById("cartCount");
+  const cartTotal = document.getElementById("cartTotal");
+
+  // cart map: id -> {id, nombre, stock, precio, qty}
+  const cart = new Map();
+
+  function cartToArray(){
+    return Array.from(cart.values()).sort((a,b)=> (a.nombre||"").localeCompare(b.nombre||"", "es"));
+  }
+
+  function getTotal(){
+    let t = 0;
+    cart.forEach(i => t += Number(i.qty||0) * Number(i.precio||0));
+    return t;
+  }
+
+  function updateCartUI(){
+    const items = cartToArray();
+    cartCount.textContent = String(items.length);
+    cartTotal.textContent = money(getTotal());
+
+    if (items.length === 0){
+      cartEmpty.classList.remove("d-none");
+      cartList.classList.add("d-none");
+      cartList.innerHTML = "";
+      return;
+    }
+
+    cartEmpty.classList.add("d-none");
+    cartList.classList.remove("d-none");
+    cartList.innerHTML = "";
+
+    for (const item of items){
+      const el = document.createElement("div");
+      el.className = "cart-item";
+      el.dataset.id = item.id;
+
+      el.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="flex-grow-1">
+            <div class="cart-name">${escapeHtml(item.nombre)}</div>
+            <div class="cart-meta">
+              ${item.stock !== "" ? `Stock: <span class="fw-semibold">${escapeHtml(String(item.stock))}</span> · ` : ""}
+              Precio: <span class="fw-semibold">${money(item.precio)}</span>
+            </div>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove" title="Quitar">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mt-2">
+          <button type="button" class="btn btn-outline-secondary qty-btn" data-action="minus" title="Menos">
+            <i class="bi bi-dash"></i>
+          </button>
+
+          <input type="number" class="form-control form-control-sm qty-input" data-action="qty"
+                 min="0.01" step="0.01" value="${item.qty}">
+
+          <button type="button" class="btn btn-outline-secondary qty-btn" data-action="plus" title="Más">
+            <i class="bi bi-plus"></i>
+          </button>
+
+          <div class="ms-auto text-end">
+            <div class="small text-muted">Subtotal</div>
+            <div class="fw-bold">${money(Number(item.qty||0) * Number(item.precio||0))}</div>
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <label class="form-label small text-muted mb-1">Precio unitario</label>
+          <input type="number" class="form-control form-control-sm" data-action="precio"
+                 min="0" step="0.01" value="${item.precio}">
+        </div>
+      `;
+      cartList.appendChild(el);
+    }
+  }
+
+  function escapeHtml(str){
+    return String(str||"")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  btnAddProducto.addEventListener("click", () => {
+    const opt = findOptionByValue(productosDatalist, productoSearch.value);
+    if (!opt){
+      alert("Selecciona un producto válido de la lista.");
+      productoSearch.focus();
+      return;
+    }
+
+    const id = String(opt.dataset.id || "");
+    const nombre = opt.dataset.nombre || opt.value;
+    const stock = opt.dataset.stock ?? "";
+    const precio = opt.dataset.precio ?? "";
+
+    if (!id){
+      alert("Producto inválido.");
+      return;
+    }
+
+    const q = Number(productoQty.value || 0);
+    if (!(q > 0)){
+      alert("La cantidad debe ser mayor a 0.");
+      productoQty.focus();
+      return;
+    }
+
+    const existing = cart.get(id);
+    if (existing){
+      existing.qty = Number(existing.qty||0) + q;
+      // si el precio está vacío, conserva el actual
+      if (existing.precio === "" || Number(existing.precio) === 0){
+        existing.precio = (precio !== "" ? Number(precio) : existing.precio);
+      }
+    } else {
+      cart.set(id, {
+        id,
+        nombre,
+        stock,
+        precio: (precio !== "" ? Number(precio) : 0),
+        qty: q,
+      });
+    }
+
+    // reset UX
+    productoSearch.value = "";
+    productoQty.value = "1";
+    productoSearch.focus();
+
+    updateCartUI();
+  });
+
+  cartList.addEventListener("click", (e) => {
+    const wrap = e.target.closest(".cart-item");
+    if (!wrap) return;
+
+    const id = wrap.dataset.id;
+    const item = cart.get(id);
+    if (!item) return;
+
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+
+    const action = btn.dataset.action;
+
+    if (action === "remove"){
+      cart.delete(id);
+      updateCartUI();
+      return;
+    }
+    if (action === "plus"){
+      item.qty = Number(item.qty||0) + 1;
+      updateCartUI();
+      return;
+    }
+    if (action === "minus"){
+      const nv = Number(item.qty||0) - 1;
+      item.qty = nv > 0 ? nv : item.qty;
+      updateCartUI();
+      return;
+    }
+  });
+
+  cartList.addEventListener("input", (e) => {
+    const wrap = e.target.closest(".cart-item");
+    if (!wrap) return;
+    const id = wrap.dataset.id;
+    const item = cart.get(id);
+    if (!item) return;
+
+    const action = e.target.dataset.action;
+    if (action === "qty"){
+      const v = Number(e.target.value || 0);
+      if (v > 0){
+        item.qty = v;
+        updateCartUI();
+      }
+    }
+    if (action === "precio"){
+      const v = Number(e.target.value || 0);
+      if (v >= 0){
+        item.precio = v;
+        updateCartUI();
+      }
+    }
+  });
+
+  // =========================
+  // Formset sync (oculto)
+  // =========================
+  const totalForms = form.querySelector('input[name$="-TOTAL_FORMS"]');
+  const initialForms = form.querySelector('input[name$="-INITIAL_FORMS"]');
+  const hiddenTbody = document.getElementById("hiddenFormsetTbody");
+  const hiddenTpl = document.getElementById("hiddenRowTemplate");
+
+  function setRowIndexAttributes(row, index){
+    row.querySelectorAll("input, select, textarea").forEach(el => {
+      const name = el.getAttribute("name");
+      const id = el.getAttribute("id");
+      if (name) el.setAttribute("name", name.replaceAll("__prefix__", index));
+      if (id) el.setAttribute("id", id.replaceAll("__prefix__", index));
+    });
+  }
+
+  function syncFormsetFromCart(){
+    // limpia rows existentes
+    hiddenTbody.innerHTML = "";
+
+    const items = cartToArray();
+    const n = items.length;
+
+    // initial forms siempre 0 (estamos creando)
+    if (initialForms) initialForms.value = "0";
+    totalForms.value = String(n);
+
+    items.forEach((it, idx) => {
+      const node = hiddenTpl.content.cloneNode(true);
+      const row = node.querySelector("tr");
+      setRowIndexAttributes(row, idx);
+
+      const sel = row.querySelector('select[name$="-producto"]');
+      const qty = row.querySelector('input[name$="-cantidad"]');
+      const price = row.querySelector('input[name$="-precio_unitario"]');
+
+      if (sel) sel.value = it.id;
+      if (qty) qty.value = String(it.qty);
+      if (price) price.value = String(it.precio);
+
+      hiddenTbody.appendChild(row);
+    });
+
+    // actualiza resumen/preview
+    const t = getTotal();
+    document.getElementById("summaryTotal").textContent = money(t);
+    document.getElementById("summaryCount").textContent = String(n);
+  }
+
+  // =========================
+  // PASO 4: Ticket preview
+  // =========================
+  const ticketPreview = document.getElementById("ticketPreview");
+
+  function renderPreview(){
+    syncFormsetFromCart();
+
+    const folio = form.querySelector('input[name="folio"]')?.value || "";
+    const fecha = form.querySelector('input[name="fecha"]')?.value || "";
+    const cliente = clienteInputReal?.value || "MOSTRADOR";
+    const items = cartToArray();
+
+    let html = "";
+    html += `<div class="center"><strong>Sistema de Gestión</strong></div>`;
+    html += `<div class="center">Salida por venta</div>`;
+    html += `<div class="hr"></div>`;
+    html += `<div class="row"><div class="l">Folio</div><div class="r">${escapeHtml(folio)}</div></div>`;
+    html += `<div class="row"><div class="l">Fecha</div><div class="r">${escapeHtml(fecha)}</div></div>`;
+    html += `<div class="row"><div class="l">Cliente</div><div class="r">${escapeHtml(cliente)}</div></div>`;
+    html += `<div class="hr"></div>`;
+
+    if (items.length === 0){
+      html += `<div class="center text-muted">Sin productos</div>`;
+    } else {
+      for (const it of items){
+        const sub = Number(it.qty||0) * Number(it.precio||0);
+        html += `<div class="row"><div class="l">${escapeHtml(it.nombre)}</div><div class="r">${money(sub)}</div></div>`;
+        html += `<div class="row"><div class="l">${escapeHtml(String(it.qty))} x ${money(it.precio)}</div><div class="r"></div></div>`;
+      }
+    }
+
+    html += `<div class="hr"></div>`;
+    html += `<div class="row tot"><div class="l">TOTAL</div><div class="r">${money(getTotal())}</div></div>`;
+    html += `<div class="hr"></div>`;
+    html += `<div class="center">Gracias por su compra</div>`;
+
+    ticketPreview.innerHTML = html;
+  }
+
+  // =========================
+  // Validaciones por paso
+  // =========================
+  function validateStep(current){
+    if (current === 1){
+      // fecha obligatoria si tu form lo exige; aquí solo validación suave
+      const fecha = form.querySelector('input[name="fecha"]');
+      if (fecha && !fecha.value){
+        alert("Captura la fecha.");
+        fecha.focus();
+        return false;
+      }
+      return true;
+    }
+    if (current === 2){
+      // cliente es opcional
+      return true;
+    }
+    if (current === 3){
+      if (cart.size === 0){
+        alert("Agrega al menos un producto.");
+        productoSearch.focus();
+        return false;
+      }
+      // validar cantidades > 0
+      for (const it of cart.values()){
+        if (!(Number(it.qty||0) > 0)){
+          alert("Hay un producto con cantidad inválida.");
+          return false;
+        }
+      }
+      return true;
+    }
+    return true;
+  }
+
+  // submit final: asegura que el formset quede sincronizado
+  form.addEventListener("submit", (e) => {
+    syncFormsetFromCart();
+    if (cart.size === 0){
+      e.preventDefault();
+      alert("Agrega al menos un producto.");
+      showStep(3);
+      return;
+    }
+  });
+
+  // =========================
+  // Cliente rápido (AJAX)
+  // =========================
+  const btnSaveClienteQuick = document.getElementById("btnSaveClienteQuick");
+  const clienteQuickForm = document.getElementById("clienteQuickForm");
+  const clienteQuickError = document.getElementById("clienteQuickError");
+
+  function getCsrfToken(){
+    // toma el primero del DOM (del form principal)
+    const inp = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return inp ? inp.value : "";
+  }
+
+  btnSaveClienteQuick.addEventListener("click", async () => {
+    clienteQuickError.classList.add("d-none");
+    clienteQuickError.textContent = "";
+
+    const data = new FormData(clienteQuickForm);
+
+    try{
+      const res = await fetch("{% url 'cliente_quick_create' %}", {
+        method: "POST",
+        headers: { "X-CSRFToken": getCsrfToken() },
+        body: data,
+      });
+
+      const payload = await res.json();
+
+      if (!res.ok || !payload.ok){
+        clienteQuickError.textContent = payload.error || "No se pudo guardar el cliente.";
+        clienteQuickError.classList.remove("d-none");
+        return;
+      }
+
+      // agregar al datalist y seleccionar
+      const opt = document.createElement("option");
+      opt.value = `${payload.nombre_fiscal} (${payload.rfc})`;
+      opt.dataset.id = payload.id;
+      opt.dataset.nombre = payload.nombre_fiscal;
+      opt.dataset.rfc = payload.rfc;
+      clientesDatalist.appendChild(opt);
+
+      clienteSearch.value = opt.value;
+      setClienteText(opt.value);
+
+      // cerrar modal
+      const modalEl = document.getElementById("modalClienteNuevo");
+      const modal = bootstrap.Modal.getInstance(modalEl);
+      modal?.hide();
+
+    } catch(err){
+      clienteQuickError.textContent = "Error de red al guardar el cliente.";
+      clienteQuickError.classList.remove("d-none");
+    }
+  });
+  
+  updateCartUI();
+  showStep(1);
+})();
+</script>
+{% endblock %}

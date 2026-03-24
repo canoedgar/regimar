@@ -1,0 +1,274 @@
+/* ============================
+   AUTH (Login / Registro)
+   ============================ */
+   .bg-solar-auth {
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #021b79 0%, #0575e6 40%, #fbb034 100%);
+    display: flex;
+    align-items: center;
+  }
+  
+  .auth-wrapper {
+    max-width: 900px;
+    width: 100%;
+  }
+  
+  .auth-card {
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+    background: #ffffff;
+  }
+  
+  .auth-hero {
+    background: linear-gradient(160deg, #022140 0%, #034078 60%, #0a9396 100%);
+    color: #fff;
+  }
+  
+  .auth-hero h2 {
+    font-weight: 700;
+  }
+  
+  .sun-icon {
+    font-size: 3rem;
+  }
+  
+  .auth-form-title {
+    font-weight: 600;
+    color: #034078;
+  }
+  
+  .form-control:focus {
+    border-color: #fbb034;
+    box-shadow: 0 0 0 0.2rem rgba(251, 176, 52, 0.25);
+  }
+  
+  .btn-solar {
+    background: linear-gradient(135deg, #fbb034 0%, #ffdd00 100%);
+    border: none;
+    color: #1a1a1a;
+    font-weight: 600;
+  }
+  
+  .btn-solar:hover {
+    filter: brightness(0.95);
+  }
+  
+  @media (max-width: 767.98px) {
+    .auth-hero {
+      text-align: center;
+    }
+  }
+  
+  /* ============================
+     MAIN BACKGROUND
+     ============================ */
+  .bg-solar-main {
+    min-height: 100vh;
+    margin: 0;
+    background: linear-gradient(135deg, #021b79 0%, #0575e6 40%, #fbb034 100%);
+  }
+  
+  /* ============================
+     LAYOUT PRINCIPAL
+     ============================ */
+  .solar-layout {
+    min-height: 100vh;
+  }
+  
+  /* ============================
+     SIDEBAR (Desktop base)
+     ============================ */
+  .solar-sidebar {
+    width: 260px;
+    background: linear-gradient(160deg, #022140 0%, #034078 60%, #0a9396 100%);
+    color: #ffffff;
+    box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
+    position: relative;
+    z-index: 100;
+  }
+  
+  .solar-sidebar .brand {
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .solar-sidebar .brand-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .solar-sidebar .brand-icon {
+    font-size: 1.6rem;
+  }
+  
+  .solar-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.85);
+    padding: 0.75rem 1.25rem;
+    border-radius: 0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .solar-sidebar .nav-link i {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  
+  .solar-sidebar .nav-link:hover,
+  .solar-sidebar .nav-link.active,
+  .solar-sidebar .nav-link.is-active {
+    background: rgba(251, 176, 52, 0.2);
+    color: #ffdd00;
+    font-weight: 700;
+  }
+  
+  .solar-sidebar .nav-section-title {
+    padding: 1rem 1.25rem 0.25rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Logo del sidebar */
+  .logo-sidebar {
+    height: 80px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
+  }
+  
+  /* ============================
+     MAIN
+     ============================ */
+  .solar-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* IMPORTANTE:
+     backdrop-filter puede crear stacking contexts y romper modales/overlays.
+     Lo aplicamos SOLO en desktop para mantener estética sin bugs en móvil/modales. */
+  @media (min-width: 992px) {
+    .solar-main {
+      backdrop-filter: blur(10px);
+    }
+  }
+  
+  .solar-main-header {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.75rem 1.5rem;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .solar-main-header-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #034078;
+    margin: 0;
+  }
+  
+  .solar-main-content {
+    padding: 1.5rem;
+  }
+  
+  /* Badge usuario */
+  .solar-badge-user {
+    background: rgba(251, 176, 52, 0.1);
+    border-radius: 999px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    color: #034078;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  
+  /* ============================
+     TOGGLE BUTTON
+     ============================ */
+  .sidebar-toggle-btn {
+    display: none;
+  }
+  
+  @media (max-width: 991.98px) {
+    .sidebar-toggle-btn {
+      display: inline-flex;
+    }
+  }
+  
+  /* ============================
+     MOBILE/TABLET SIDEBAR (Unified)
+     - Se usa SOLO transform (más estable)
+     ============================ */
+  @media (max-width: 991.98px) {
+    .solar-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 260px;
+      transform: translateX(-100%);
+      transition: transform 0.25s ease-in-out;
+      z-index: 1040;
+    }
+  
+    .solar-sidebar.show {
+      transform: translateX(0);
+    }
+  
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease-in-out;
+      z-index: 1025; /* debajo del sidebar, por encima del contenido */
+    }
+  
+    .sidebar-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+  
+    .solar-sidebar .nav-submenu .nav-link.active,
+    .solar-sidebar .nav-submenu .nav-link.is-active {
+      background: rgba(255, 255, 255, 0.18);
+    }
+  }
+  
+  .modal {
+    z-index: 2000 !important;
+  }
+  
+  .modal-backdrop {
+    z-index: 1990 !important;
+  }
+
+  /* Compactación adicional sidebar */
+.solar-sidebar .nav-submenu .nav-link {
+  padding: 0.35rem 1.25rem;
+  font-size: 0.88rem;
+}
+
+.solar-sidebar .nav-submenu .nav-link i {
+  font-size: 0.95rem;
+}
+
+.solar-sidebar .nav-link {
+  padding: 0.65rem 1.25rem;
+}
+  

@@ -1,0 +1,311 @@
+{# templates/inventarios/kardex.html #}
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Kardex | Sistema de Gestión{% endblock %}
+
+{% block active_inventario %}active{% endblock %}
+{% block inventario_show %}show{% endblock %}
+{% block active_kardex %}active{% endblock %}
+
+{% block page_title %}Kardex{% endblock %}
+
+{% block content %}
+<div class="row">
+  <!-- Header -->
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div>
+          <h5 class="mb-0">
+            <i class="bi bi-journal-text me-2"></i>
+            Kardex por producto
+          </h5>
+          <div class="text-muted small">
+            Movimientos de entradas y salidas (con saldo).
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="?{% if producto_id %}producto={{ producto_id }}&{% endif %}{% if almacen_id %}almacen={{ almacen_id }}&{% endif %}{% if fecha_ini %}fecha_ini={{ fecha_ini }}&{% endif %}{% if fecha_fin %}fecha_fin={{ fecha_fin }}&{% endif %}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Refrescar
+          </a>
+          
+          <a href="{% url 'kardex_export' %}?producto={{ producto_id }}&almacen={{ almacen_id }}&fecha_ini={{ fecha_ini }}&fecha_fin={{ fecha_fin }}"
+             class="btn btn-sm btn-outline-success">
+            <i class="bi bi-file-earmark-excel me-1"></i>
+            Exportar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="col-12 mt-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Producto</label>
+            <select name="producto" class="form-select" required>
+              <option value="">— Selecciona un producto —</option>
+              {% for p in productos %}
+                <option value="{{ p.id }}"
+                        {% if producto and producto.id == p.id %}selected{% endif %}>
+                  {{ p.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-6">
+            <label class="form-label fw-semibold">Almacén</label>
+            <select name="almacen" class="form-select">
+              <option value="">(Default)</option>
+              {% for a in almacenes %}
+                <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
+                  {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold">Fecha inicial</label>
+            <input type="date" name="fecha_ini" class="form-control"
+                   value="{{ fecha_ini|default:'' }}">
+          </div>
+
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold">Fecha final</label>
+            <input type="date" name="fecha_fin" class="form-control"
+                   value="{{ fecha_fin|default:'' }}">
+          </div>
+
+          <div class="col-12 d-flex gap-2 mt-2">
+            <button class="btn btn-primary ms-auto" type="submit">
+              <i class="bi bi-search me-1"></i>
+              Consultar
+            </button>
+          </div>
+        </form>
+
+        {% if producto %}
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="badge text-bg-primary">
+              <i class="bi bi-box-seam me-1"></i>
+              {{ producto.nombre }}
+            </span>
+
+            {% if producto.metrica %}
+              <span class="badge text-bg-light text-dark">
+                <i class="bi bi-rulers me-1"></i>
+                {{ producto.metrica }}
+              </span>
+            {% endif %}
+
+            {% if saldo_inicial is not None %}
+              <span class="badge text-bg-light text-dark">
+                Saldo inicial: <strong>{{ saldo_inicial|floatformat:"-4" }}</strong>
+              </span>
+            {% endif %}
+
+            {% if saldo_final is not None %}
+              <span class="badge text-bg-success">
+                Saldo final: <strong>{{ saldo_final|floatformat:"-4" }}</strong>
+              </span>
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="mt-3 text-muted small">
+            Selecciona un producto para visualizar su Kardex.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Resumen -->
+  {% if producto %}
+  <div class="col-12 mt-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex flex-wrap gap-2 justify-content-between align-items-center">
+        <div class="text-muted small">
+          {% if movimientos %}
+            Mostrando <strong>{{ movimientos|length }}</strong> movimiento(s).
+          {% else %}
+            No hay movimientos con los filtros actuales.
+          {% endif %}
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          {% if tot_entradas is not None %}
+            <span class="badge text-bg-success">
+              Entradas: <strong>{{ tot_entradas|floatformat:"-4" }}</strong>
+            </span>
+          {% endif %}
+          {% if tot_salidas is not None %}
+            <span class="badge text-bg-danger">
+              Salidas: <strong>{{ tot_salidas|floatformat:"-4" }}</strong>
+            </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Tabla Kardex -->
+  <div class="col-12 mt-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Fecha</th>
+                <th>Movimiento</th>
+                <th>Folio</th>
+                <th>Almacén</th>
+                <th>Tercero</th>
+                <th>Referencia</th>
+
+                <th class="text-end">Entrada</th>
+                <th class="text-end">Salida</th>
+                <th class="text-end">Costo/Precio</th>
+                <th class="text-end">Importe</th>
+                <th class="text-end pe-3">Saldo</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% if not producto %}
+                <tr>
+                  <td colspan="10" class="text-center py-4 text-muted">
+                    Selecciona un producto para consultar el Kardex.
+                  </td>
+                </tr>
+              {% else %}
+                {% for m in movimientos %}
+                  <tr>
+                    <td class="ps-3">
+                      <div class="fw-semibold">{{ m.fecha|date:"d/m/Y" }}</div>
+                      <div class="text-muted small">
+                        {{ m.creado_en|date:"H:i" }}
+                      </div>
+                    </td>
+
+                    <td>
+                      {% if m.es_entrada %}
+                        <span class="badge text-bg-success">
+                          <i class="bi bi-box-arrow-in-down me-1"></i>
+                          Entrada
+                        </span>
+                        <div class="text-muted small">{{ m.tipo_display }}</div>
+                      {% else %}
+                        <span class="badge text-bg-danger">
+                          <i class="bi bi-box-arrow-up me-1"></i>
+                          Salida
+                        </span>
+                        <div class="text-muted small">{{ m.tipo_display }}</div>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      <code>{{ m.folio }}</code>
+                    </td>
+                    
+                    <td>
+                      {% if m.almacen %}
+                        <span class="badge text-bg-light border">
+                          {{ m.almacen.codigo }}
+                        </span>
+                        <span class="text-muted">{{ m.almacen.nombre }}</span>
+                      {% endif %}
+                    </td>                    
+
+                    <td>
+                      {% if m.tercero %}
+                        {{ m.tercero }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td>
+                      {% if m.documento_referencia %}
+                        {{ m.documento_referencia }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end fw-semibold">
+                      {% if m.cantidad_entrada %}
+                        {{ m.cantidad_entrada|floatformat:"-4" }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end fw-semibold">
+                      {% if m.cantidad_salida %}
+                        {{ m.cantidad_salida|floatformat:"-4" }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end">
+                      {% if m.unitario is not None %}
+                        $ {{ m.unitario|floatformat:"-2" }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end">
+                      {% if m.importe is not None %}
+                        $ {{ m.importe|floatformat:"-2" }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+
+                    <td class="text-end pe-3 fw-semibold">
+                      {% if m.saldo is not None %}
+                        {{ m.saldo|floatformat:"-4" }}
+                      {% else %}
+                        <span class="text-muted">—</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">
+                      No hay movimientos para este producto en el rango indicado.
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+          Tip: si el saldo no cuadra, revisa ajustes (AJP/AJN) y traspasos (TRE/TRS).
+        </div>
+        <a href="{% url 'inventario_actual' %}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-clipboard-data me-1"></i>
+          Ver inventario actual
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}{{ proyecto.nombre }} | Proyectos{% endblock %}
+{% block page_title %}Detalle del proyecto{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12 col-lg-10">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+          <div>
+            <h4 class="fw-bold mb-1">
+              <i class="bi bi-folder2-open me-2"></i>
+              {{ proyecto.nombre }}
+            </h4>
+            <div class="text-muted">
+              Actualizado: {{ proyecto.fecha_actualizacion|date:"Y-m-d H:i" }}
+            </div>
+          </div>
+
+          <div>
+            {% if proyecto.estado == "TERMINADO" %}
+              <span class="badge text-bg-success fs-6">Terminado</span>
+            {% elif proyecto.estado == "EN_PROCESO" %}
+              <span class="badge text-bg-primary fs-6">En proceso</span>
+            {% else %}
+              <span class="badge text-bg-secondary fs-6">Planeado</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <hr>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="p-3 rounded border bg-light">
+              <div class="text-muted small">Fecha inicio</div>
+              <div class="fw-semibold">{{ proyecto.fecha_inicio|date:"Y-m-d" }}</div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded border bg-light">
+              <div class="text-muted small">Fecha fin</div>
+              <div class="fw-semibold">
+                {% if proyecto.fecha_fin %}
+                  {{ proyecto.fecha_fin|date:"Y-m-d" }}
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded border bg-light">
+              <div class="text-muted small">Creado</div>
+              <div class="fw-semibold">{{ proyecto.fecha_alta|date:"Y-m-d H:i" }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <h6 class="fw-bold mb-2">Descripción</h6>
+          {% if proyecto.descripcion %}
+            <div class="text-body">{{ proyecto.descripcion|linebreaksbr }}</div>
+          {% else %}
+            <div class="text-muted">Sin descripción.</div>
+          {% endif %}
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+          <a class="btn btn-outline-secondary" href="{% url 'proyectos_home' %}">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+          </a>
+
+          <a class="btn btn-outline-primary" href="{% url 'proyectos_edit' proyecto.id %}">
+            <i class="bi bi-pencil me-1"></i> Editar (Catálogos)
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Importar productos{% endblock %}
+{% block page_title %}Importar productos{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h5 class="fw-bold mb-3">Importar productos</h5>
+
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="file" name="archivo" class="form-control mb-3" required>
+          <button class="btn btn-primary w-100">Importar</button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

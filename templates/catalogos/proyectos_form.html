@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if modo_edicion %}Editar proyecto{% else %}Nuevo proyecto{% endif %} | Catálogos
+{% endblock %}
+
+{% block page_title %}
+  {% if modo_edicion %}Editar proyecto{% else %}Nuevo proyecto{% endif %}
+{% endblock %}
+
+{% block active_catalogos %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+
+        <h5 class="fw-bold mb-1">
+          <i class="bi bi-kanban me-2"></i>
+          {% if modo_edicion %}Editar proyecto{% else %}Nuevo proyecto{% endif %}
+        </h5>
+        <p class="text-muted mb-4">
+          La fecha fin se captura únicamente cuando el proyecto se marca como <b>Terminado</b>.
+        </p>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre</label>
+            {{ form.nombre }}
+            {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Apodo</label>
+            {{ form.apodo }}
+            {% for e in form.apodo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Dirección</label>
+            {{ form.direccion }}
+            {% for e in form.direccion.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descripción</label>
+            {{ form.descripcion }}
+            {% for e in form.descripcion.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Estado</label>
+              {{ form.estado }}
+              {% for e in form.estado.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fecha inicio</label>
+              {{ form.fecha_inicio }}
+              {% for e in form.fecha_inicio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fecha fin</label>
+              {{ form.fecha_fin }}
+              <div class="form-text">Se habilita solo al terminar.</div>
+              {% for e in form.fecha_fin.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-primary" type="submit">
+              <i class="bi bi-check2-circle me-1"></i>
+              Guardar
+            </button>
+            <a class="btn btn-outline-secondary" href="{% url 'proyectos_list' %}">
+              <i class="bi bi-arrow-left me-1"></i>
+              Volver
+            </a>
+          </div>
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  (function(){
+    const estado = document.getElementById("id_estado");
+    const fechaFin = document.getElementById("id_fecha_fin");
+
+    function toggleFechaFin(){
+      const terminado = (estado.value === "TERMINADO");
+      fechaFin.disabled = !terminado;
+
+      if (!terminado){
+        fechaFin.value = "";
+      }
+    }
+
+    if (estado && fechaFin){
+      toggleFechaFin();
+      estado.addEventListener("change", toggleFechaFin);
+    }
+  })();
+</script>
+{% endblock %}

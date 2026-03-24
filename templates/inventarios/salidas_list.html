@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Salidas de inventario | Sistema de Gestión{% endblock %}
+{% block page_title %}Salidas de inventario{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-1">
+            <i class="bi bi-box-arrow-up me-2"></i>
+            Salidas de inventario
+          </h5>
+          <p class="text-muted mb-0">
+            Consulta las salidas por ventas/proyectos y ajustes de inventario.
+          </p>
+        </div>
+
+        <div class="btn-group">
+          <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nueva salida
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'salida_venta_create' %}">
+                <i class="bi bi-cart-check me-2"></i>Venta
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'salida_proyecto_create' %}">
+                <i class="bi bi-kanban me-2"></i>Proyecto
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{% url 'ajuste_inventario' %}">
+                <i class="bi bi-sliders me-2"></i>Ajuste
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="col-12 mb-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex flex-wrap align-items-center gap-2">
+        <span class="fw-semibold me-2">Filtrar:</span>
+
+        <form method="get" class="d-flex flex-wrap align-items-center gap-2">
+          <input type="hidden" name="tipo" value="{{ tipo_actual|default:'' }}">
+          <select name="almacen" class="form-select form-select-sm" style="min-width: 240px;">
+            <option value="">Todos los almacenes</option>
+            {% for a in almacenes %}
+              <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
+                {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+
+          <button class="btn btn-sm btn-outline-primary" type="submit" title="Aplicar">
+            <i class="bi bi-funnel"></i>
+          </button>
+
+          {% if tipo_actual or almacen_id %}
+            <a class="btn btn-sm btn-outline-secondary" href="{% url 'salidas_list' %}" title="Limpiar filtros">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+        </form>
+
+        <div class="vr mx-2 d-none d-md-block"></div>
+
+        <a href="{% url 'salidas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
+           class="btn btn-sm {% if not tipo_actual %}btn-primary{% else %}btn-outline-primary{% endif %}">
+          Todas
+        </a>
+
+        {% for value, label in TIPO_CHOICES %}
+          <a href="{% url 'salidas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
+             class="btn btn-sm {% if tipo_actual == value %}btn-primary{% else %}btn-outline-primary{% endif %}">
+            {{ label }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Folio</th>
+                <th>Fecha</th>
+                <th>Almacén</th>
+                <th>Tipo</th>
+                <th>Tercero</th>
+                <th class="text-end">Productos</th>
+                <th class="text-end">Importe total</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for salida in salidas %}
+                <tr>
+                  <td class="fw-semibold">{{ salida.folio }}</td>
+                  <td>{{ salida.fecha|date:"d/m/Y" }}</td>
+
+                  <td>
+                    {% if salida.almacen %}
+                      <span class="badge text-bg-light border">{{ salida.almacen.codigo }}</span>
+                      <span class="text-muted">{{ salida.almacen.nombre }}</span>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    {% if salida.tipo == "AJN" %}
+                      <span class="badge text-bg-info text-dark">
+                        <i class="bi bi-sliders me-1"></i>
+                        Ajuste
+                      </span>
+                    {% else %}
+                      <span class="badge text-bg-danger">
+                        <i class="bi bi-box-arrow-up me-1"></i>
+                        {{ salida.get_tipo_display }}
+                      </span>
+                    {% endif %}
+                  </td>
+
+                  <td>
+                    {{ salida.cliente|default:salida.proveedor|default:"-" }}
+                  </td>
+
+                  <td class="text-end">
+                    {{ salida.total_productos|default:"0" }}
+                  </td>
+
+                  <td class="text-end">
+                    $ {{ salida.total_importe|default:"0.00"|floatformat:2 }}
+                  </td>
+
+                  <td class="text-end">
+                    <a href="{% url 'salida_detalle' salida.id %}" class="btn btn-sm btn-outline-secondary" title="Ver detalle">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-4">
+                    No hay salidas registradas.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

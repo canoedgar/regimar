@@ -1,0 +1,375 @@
+# inventarios/forms.py
+from django import forms
+from django.forms import inlineformset_factory, formset_factory
+from catalogos.models import Producto, Categoria, Proveedor
+from .models import EntradaInventario, EntradaInventarioDetalle
+from .models import SalidaInventario, SalidaInventarioDetalle
+
+
+
+# --- Entradas ---
+
+# --- Inicio Entrdadas -> Entrada OCF ---
+
+class EntradaOCFacturaUploadForm(forms.Form):
+    xml_archivo = forms.FileField(
+        label="Factura XML",
+        required=True,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"})
+    )
+
+class EntradaOCFacturaForm(forms.Form):
+    folio = forms.CharField(
+        label="Folio",
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    fecha = forms.DateField(
+        label="Fecha",
+        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"})
+    )
+    proveedor = forms.CharField(
+        label="Proveedor",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    uuid_factura = forms.CharField(
+        label="UUID factura",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+    observaciones = forms.CharField(
+        label="Observaciones",
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
+    )
+    xml_archivo = forms.FileField(
+        label="Factura XML",
+        required=True,
+        widget=forms.ClearableFileInput(attrs={"class": "form-control"})
+    )
+
+class ConciliacionLineaForm(forms.Form):
+    
+    MOTIVO_EXCLUSION_CHOICES = [
+    ("FLETE", "Flete"),
+    ("SERVICIO", "Servicio"),
+    ("INSTALACION", "Instalación / Mano de obra"),
+    ("AJUSTE", "Ajuste / Redondeo"),
+    ("SEGURO_ENVIO", "Seguro / Envío"),
+    ("OTRO", "Otro"),
+    ]
+
+    excluir = forms.BooleanField(
+        label="Excluir (no inventariable)",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
+    motivo_exclusion = forms.ChoiceField(
+        label="Motivo exclusión",
+        required=False,
+        choices=[("", "-- Motivo --")] + MOTIVO_EXCLUSION_CHOICES,
+        widget=forms.Select(attrs={"class": "form-select form-select-sm"})
+    )
+
+    motivo_exclusion_otro = forms.CharField(
+        label="Otro motivo",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control form-control-sm", "placeholder": "Especifica el motivo"})
+    )
+    
+    # Datos que vienen del XML (solo lectura en la UI)
+    clave_sat_xml = forms.CharField(widget=forms.HiddenInput())
+    descripcion_xml = forms.CharField(widget=forms.HiddenInput())
+    cantidad_xml = forms.DecimalField(decimal_places=2, max_digits=12)
+    valor_unitario_xml = forms.DecimalField(decimal_places=2, max_digits=12)
+
+    # Conciliación con el catálogo
+    producto = forms.ModelChoiceField(
+        label="Producto en sistema",
+        queryset=Producto.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select form-select-sm"})
+    )
+
+    crear_nuevo = forms.BooleanField(
+        label="Crear como nuevo producto",
+        required=False,
+        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
+    )
+
+    categoria_nueva = forms.ModelChoiceField(
+        label="Categoría",
+        queryset=Categoria.objects.all(),
+        required=False,
+        widget=forms.Select(attrs={"class": "form-select form-select-sm"})
+    )
+    nombre_nuevo = forms.CharField(
+        label="Nombre producto",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control form-control-sm"})
+    )
+    metrica_nueva = forms.CharField(
+        label="Métrica",
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control form-control-sm"})
+    )
+    precio_nuevo = forms.DecimalField(
+        label="Precio venta",
+        decimal_places=2,
+        max_digits=12,
+        required=False,
+        widget=forms.NumberInput(attrs={"class": "form-control form-control-sm"})
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+
+        excluir = cleaned.get("excluir")
+        producto = cleaned.get("producto")
+        crear_nuevo = cleaned.get("crear_nuevo")
+
+        # Si excluye, no se exige conciliación, pero sí motivo
+        if excluir:
+            motivo = (cleaned.get("motivo_exclusion") or "").strip()
+            if not motivo:
+                raise forms.ValidationError("Si excluyes un renglón, selecciona el motivo de exclusión.")
+            if motivo == "OTRO":
+                if not (cleaned.get("motivo_exclusion_otro") or "").strip():
+                    raise forms.ValidationError("Captura el motivo cuando seleccionas 'Otro'.")
+            # Limpieza defensiva para evitar ambigüedad
+            cleaned["producto"] = None
+            cleaned["crear_nuevo"] = False
+            return cleaned
+
+        # Si NO excluye, debe conciliar o crear producto
+        if not producto and not crear_nuevo:
+            raise forms.ValidationError("Debes seleccionar un producto, crear uno nuevo o excluir el renglón.")
+
+        if crear_nuevo:
+            if not cleaned.get("categoria_nueva") or not cleaned.get("nombre_nuevo"):
+                raise forms.ValidationError("Para crear un nuevo producto debes capturar categoría y nombre.")
+
+        return cleaned
+
+ConciliacionFormSet = formset_factory(ConciliacionLineaForm, extra=0)
+
+class EntradaOCFacturaDetalleForm(forms.ModelForm):
+    class Meta:
+        model = EntradaInventarioDetalle
+        fields = ["producto", "cantidad", "costo_unitario"]
+        widgets = {
+            "producto": forms.Select(attrs={"class": "form-select"}),
+            "cantidad": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "costo_unitario": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+        }
+
+
+EntradaOCFacturaDetalleFormSet = inlineformset_factory(
+    EntradaInventario,
+    EntradaInventarioDetalle,
+    form=EntradaOCFacturaDetalleForm,
+    fields=["producto", "cantidad", "costo_unitario"],
+    extra=3,         
+    can_delete=False,
+)
+
+# --- Fin Entrada OCF ---
+
+# --- Inicio Entradas manuales ---
+
+class EntradaManualForm(forms.ModelForm):
+    class Meta:
+        model = EntradaInventario
+        fields = [
+            "folio",
+            "fecha",
+            "proveedor",
+            "documento_referencia",
+            "motivo",
+            "observaciones",
+        ]
+        widgets = {
+            "folio": forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
+            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "proveedor": forms.Select(attrs={"class": "form-select", "id": "proveedorSelect"}),
+            "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
+            "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+
+        self.fields["proveedor"].queryset = Proveedor.objects.filter(activo=True).order_by("nombre")
+        self.fields["proveedor"].empty_label = "-- Selecciona --"
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.tipo = EntradaInventario.TIPO_ENTRADA_MANUAL        
+        obj.tiene_xml = False
+        obj.uuid_factura = None
+        obj.xml_contenido = ""
+        if commit:
+            obj.save()
+        return obj
+
+
+class EntradaManualDetalleForm(forms.ModelForm):
+    class Meta:
+        model = EntradaInventarioDetalle
+        fields = ["producto", "cantidad", "costo_unitario"]
+        widgets = {
+            "producto": forms.Select(attrs={"class": "form-select"}),
+            "cantidad": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01"}),
+            "costo_unitario": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+        }
+
+
+EntradaManualDetalleFormSet = inlineformset_factory(
+    EntradaInventario,
+    EntradaInventarioDetalle,
+    form=EntradaManualDetalleForm,
+    fields=["producto", "cantidad", "costo_unitario"],
+    extra=6,
+    can_delete=True,
+)
+
+# --- Fin entradas manuales ---
+
+class AjusteInventarioForm(forms.Form):    
+    TIPO_AJUSTE_POSITIVO = "POS"
+    TIPO_AJUSTE_NEGATIVO = "NEG"
+
+    TIPO_AJUSTE_CHOICES = [
+        (TIPO_AJUSTE_POSITIVO, "Ajuste positivo (entrada)"),
+        (TIPO_AJUSTE_NEGATIVO, "Ajuste negativo (salida)"),
+    ]
+
+    folio = forms.CharField(
+        max_length=30,
+        required=True,
+        widget=forms.TextInput(attrs={"readonly": "readonly", "class": "form-control"})
+    )
+
+    fecha = forms.DateField(
+        required=True,
+        widget=forms.DateInput(
+            format="%Y-%m-%d",
+            attrs={
+                "type": "date",
+                "readonly": "readonly",
+                "class": "form-control",
+            }
+        ),
+        input_formats=["%Y-%m-%d"], 
+    )
+
+    producto = forms.ModelChoiceField(
+        queryset=Producto.objects.all(),
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    cantidad = forms.DecimalField(
+        max_digits=14,
+        decimal_places=4,
+        min_value=0.0001,
+        required=True,
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.0001"})
+    )
+
+    tipo_ajuste = forms.ChoiceField(
+        choices=TIPO_AJUSTE_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={"class": "form-select"})
+    )
+
+    motivo = forms.CharField(
+        max_length=120,
+        required=False,
+        widget=forms.TextInput(attrs={"class": "form-control"})
+    )
+
+    observaciones = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 3})
+    )
+
+class SalidaProyectoForm(forms.ModelForm):
+    class Meta:
+        model = SalidaInventario
+        fields = ["folio", "fecha", "proyecto", "documento_referencia", "motivo", "observaciones"]
+        widgets = {
+            "folio": forms.TextInput(attrs={"class": "form-control"}),
+            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "proyecto": forms.Select(attrs={"class": "form-select"}),
+            "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
+            "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+
+        self.instance.tipo = SalidaInventario.TIPO_PROYECTO
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.tipo = SalidaInventario.TIPO_PROYECTO
+        if commit:
+            obj.save()
+        return obj
+
+
+class SalidaInventarioDetalleForm(forms.ModelForm):
+    class Meta:
+        model = SalidaInventarioDetalle
+        fields = ["producto", "cantidad", "precio_unitario"]
+        widgets = {
+            "producto": forms.Select(attrs={"class": "form-select"}),
+            "cantidad": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01"}),
+            "precio_unitario": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)        
+        self.fields["producto"].queryset = Producto.objects.all().order_by("nombre")
+
+    def clean(self):
+        cleaned = super().clean()
+        
+        if hasattr(self, "add_prefix") and hasattr(self, "prefix") and hasattr(self, "data"):            
+            pass
+
+        return cleaned
+
+class SalidaVentaForm(forms.ModelForm):
+    class Meta:
+        model = SalidaInventario
+        fields = ["folio", "fecha", "cliente", "documento_referencia", "motivo", "observaciones"]
+        widgets = {
+            "folio": forms.TextInput(attrs={"class": "form-control"}),
+            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "cliente": forms.TextInput(attrs={"class": "form-control"}),
+            "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
+            "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+
+        self.instance.tipo = SalidaInventario.TIPO_VENTA
+
+    def save(self, commit=True):
+        obj = super().save(commit=False)
+        obj.tipo = SalidaInventario.TIPO_VENTA
+        obj.proyecto = None  # por seguridad
+        if commit:
+            obj.save()
+        return obj
+

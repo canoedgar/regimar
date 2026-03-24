@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Ajuste de inventario | Sistema de Gestión{% endblock %}
+{% block active_inventario %}active{% endblock %}
+{% block inventario_show %}show{% endblock %}
+{% block active_ajustes_inventario %}active{% endblock %}
+{% block page_title %}Ajuste de inventario{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+
+        <h5 class="fw-bold mb-1">
+          <i class="bi bi-sliders me-2"></i>
+          Nuevo ajuste
+        </h5>
+        <p class="text-muted mb-4">
+          Usa ajuste positivo para incrementar stock y ajuste negativo para disminuirlo.
+        </p>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {# Hidden: almacén seleccionado (sin tocar el form) #}
+          <input type="hidden" name="almacen_id" id="almacenId" value="{{ almacen.id }}">
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Folio</label>
+              {{ form.folio }}
+              {% for e in form.folio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Fecha</label>
+              {{ form.fecha }}
+              {% for e in form.fecha.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Almacén</label>
+              <select class="form-select" id="almacenSelect">
+                {% for a in almacenes %}
+                  <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
+                    {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+              <div class="form-text">El ajuste se aplicará al stock del almacén seleccionado.</div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Producto</label>
+              {{ form.producto }}
+              {% for e in form.producto.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Tipo de ajuste</label>
+              {{ form.tipo_ajuste }}
+              {% for e in form.tipo_ajuste.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Cantidad</label>
+              {{ form.cantidad }}
+              {% for e in form.cantidad.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Motivo (opcional)</label>
+              {{ form.motivo }}
+            </div>
+
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observaciones (opcional)</label>
+              {{ form.observaciones }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'inventario_actual' %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+            <button class="btn btn-primary" type="submit">
+              <i class="bi bi-check2-circle me-1"></i>
+              Aplicar ajuste
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    // --- Sync almacén select -> hidden ---
+    const almacenSelect = document.getElementById("almacenSelect");
+    const almacenHidden = document.getElementById("almacenId");
+    if (almacenSelect && almacenHidden) {
+      almacenHidden.value = almacenSelect.value;
+      almacenSelect.addEventListener("change", () => {
+        almacenHidden.value = almacenSelect.value;
+      });
+    }
+
+    // --- Dar clases Bootstrap a los widgets sin widget_tweaks ---
+    const ids = ["id_folio", "id_fecha", "id_producto", "id_tipo_ajuste", "id_cantidad", "id_motivo", "id_observaciones"];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (el.tagName === "SELECT") el.classList.add("form-select");
+      else if (el.tagName === "TEXTAREA") el.classList.add("form-control");
+      else el.classList.add("form-control");
+    });
+  });
+</script>
+{% endblock %}

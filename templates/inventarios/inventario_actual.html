@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Inventario actual | Sistema de Gestión{% endblock %}
+
+{% block active_inventario %}active{% endblock %}
+{% block inventario_show %}show{% endblock %}
+{% block active_inventario_actual %}active{% endblock %}
+
+{% block page_title %}Inventario actual{% endblock %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+        <div>
+          <h5 class="mb-0">
+            <i class="bi bi-clipboard-data me-2"></i>
+            Existencias por producto
+          </h5>
+          <div class="text-muted small">
+            Consulta rápida del stock actual (sin recorrer movimientos).
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <a href="?{% if q %}q={{ q|urlencode }}&{% endif %}{% if categoria_id %}categoria={{ categoria_id }}&{% endif %}{% if solo_bajos %}solo_bajos=on&{% endif %}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i>
+            Refrescar
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="col-12 mt-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold">Almacén</label>
+            <select name="almacen" class="form-select">
+              <option value="">(Default)</option>
+              {% for a in almacenes %}
+                <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
+                  {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12 col-md-5">
+            <label class="form-label fw-semibold">Buscar</label>
+            <input type="text"
+                   name="q"
+                   value="{{ q|default:'' }}"
+                   class="form-control"
+                   placeholder="Nombre, clave SAT, métrica...">
+          </div>
+
+          <div class="col-12 col-md-2">
+            <label class="form-label fw-semibold">Categoría</label>
+            <select name="categoria" class="form-select">
+              <option value="">Todas</option>
+              {% for c in categorias %}
+                <option value="{{ c.id }}" {% if categoria_id|stringformat:"s" == c.id|stringformat:"s" %}selected{% endif %}>
+                  {{ c.nombre }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-12 col-md-2 d-flex gap-2">
+            <div class="form-check mt-4">
+              <input class="form-check-input"
+                     type="checkbox"
+                     id="solo_bajos"
+                     name="solo_bajos"
+                     {% if solo_bajos %}checked{% endif %}>
+              <label class="form-check-label" for="solo_bajos">
+                Solo bajos (≤ mín.)
+              </label>
+            </div>
+
+            <button class="btn btn-primary ms-auto mt-3 mt-md-0" type="submit">
+              <i class="bi bi-search me-1"></i>
+              Filtrar
+            </button>
+          </div>
+        </form>
+
+        {% if productos %}
+          <div class="mt-3 text-muted small">
+            Mostrando <strong>{{ productos|length }}</strong> producto(s).
+          </div>
+        {% else %}
+          <div class="mt-3 text-muted small">
+            No hay resultados con los filtros actuales.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div class="col-12 mt-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="ps-3">Producto</th>
+                <th>Categoría</th>
+                <th>Clave SAT</th>
+                <th class="text-end">Stock</th>
+                <th class="text-end">Mín.</th>
+                <th class="text-end">Máx.</th>
+                <th class="text-end">Precio</th>
+                <th class="text-center pe-3">Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for p in productos %}                
+                <tr>
+                  <td class="ps-3">
+                    <div class="fw-semibold">{{ p.nombre }}</div>
+                    <div class="text-muted small">
+                      {% if p.metrica %}{{ p.metrica }}{% endif %}
+                    </div>
+                  </td>
+                  <td>
+                    {% if p.categoria %}{{ p.categoria.nombre }}{% else %}<span class="text-muted">—</span>{% endif %}
+                  </td>
+                  <td>
+                    {% if p.clave_sat %}<code>{{ p.clave_sat }}</code>{% else %}<span class="text-muted">—</span>{% endif %}
+                  </td>
+
+                  <td class="text-end fw-semibold">
+                    {{ p.stock_almacen|default_if_none:0|floatformat:"-4" }}
+                  </td>
+
+                  <td class="text-end">
+                    {{ p.stock_minimo|default_if_none:0|floatformat:"-4" }}
+                  </td>
+
+                  <td class="text-end">
+                    {{ p.stock_maximo|default_if_none:0|floatformat:"-4" }}
+                  </td>
+
+                  <td class="text-end">
+                    {% if p.precio is not None %}
+                      $ {{ p.precio|floatformat:"-2" }}
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+
+                  <td class="text-center pe-3">
+                    {% if p.stock_minimo is not None and p.stock_almacen <= p.stock_minimo %}
+                      <span class="badge text-bg-warning">
+                        <i class="bi bi-exclamation-triangle me-1"></i>Bajo
+                      </span>
+                    {% elif p.stock_maximo is not None and p.stock_almacen >= p.stock_maximo and p.stock_maximo > 0 %}
+                      <span class="badge text-bg-info">
+                        <i class="bi bi-arrow-up-right me-1"></i>Alto
+                      </span>
+                    {% else %}
+                      <span class="badge text-bg-success">
+                        <i class="bi bi-check2-circle me-1"></i>OK
+                      </span>
+                    {% endif %}
+                  </td>
+                </tr>                
+              {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center py-4 text-muted">
+                    No hay productos para mostrar.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
+        <div class="text-muted small">
+          Tip: Usa “Solo bajos” para ver productos que requieren compra.
+        </div>
+        <a href="{% url 'productos_list' %}" class="btn btn-sm btn-outline-primary">
+          <i class="bi bi-box2-heart me-1"></i>
+          Ir a productos
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

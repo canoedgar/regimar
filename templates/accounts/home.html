@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio | Sistema de gestión{% endblock %}
+
+{% block active_inicio %}active{% endblock %}
+{% block page_title %}Panel principal{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Bienvenida -->
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h1 class="h4 mb-2">Bienvenido al sistema de gestión</h1>        
+      </div>
+    </div>
+  </div>
+
+  <!-- Tarjetas rápidas -->
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-1">Clientes</h5>
+        <p class="text-muted small mb-2">Gestiona tus clientes y prospectos.</p>
+        <a href="#" class="btn btn-sm btn-outline-primary">Ver clientes</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-1">Cotizaciones</h5>
+        <p class="text-muted small mb-2">Crea y da seguimiento a cotizaciones.</p>
+        <a href="#" class="btn btn-sm btn-outline-primary">Ver cotizaciones</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title mb-1">Proyectos</h5>
+        <p class="text-muted small mb-2">Control de instalaciones y proyectos activos.</p>        
+        <a href="{% url 'proyectos_home' %}" class="btn btn-sm btn-outline-primary">Ver proyectos</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================= -->
+  <!--                 DASHBOARD                 -->
+  <!-- ========================================= -->
+
+  <!-- Métricas principales -->
+  <div class="col-12 mt-3">
+    <h5 class="mb-3 text-secondary fw-semibold">Dashboard general</h5>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="text-muted small">Clientes activos</div>
+            <div class="h4 mb-0 fw-bold">128</div>
+          </div>
+          <div class="text-primary fs-3">
+            <i class="bi bi-people-fill"></i>
+          </div>
+        </div>
+        <small class="text-success">▲ +12 este mes</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="text-muted small">Cotizaciones del mes</div>
+            <div class="h4 mb-0 fw-bold">34</div>
+          </div>
+          <div class="text-warning fs-3">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+          </div>
+        </div>
+        <small class="text-danger">▼ -3 respecto a abril</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="text-muted small">Proyectos activos</div>
+            <div class="h4 mb-0 fw-bold">15</div>
+          </div>
+          <div class="text-info fs-3">
+            <i class="bi bi-diagram-3-fill"></i>
+          </div>
+        </div>
+        <small class="text-success">▲ +2 nuevos</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <div>
+            <div class="text-muted small">Instalaciones finalizadas</div>
+            <div class="h4 mb-0 fw-bold">7</div>
+          </div>
+          <div class="text-success fs-3">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+        </div>
+        <small class="text-muted">Últimos 30 días</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sección inferior: listas, actividades, etc. -->
+  <div class="col-md-7 mt-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title">Últimas actividades</h5>
+        <ul class="list-group list-group-flush small">
+          <li class="list-group-item">🔧 Proyecto “Sucursal Nainari” actualizado.</li>
+          <li class="list-group-item">📃 Nueva cotización creada por *admin*.</li>
+          <li class="list-group-item">👤 Cliente “Juan Pérez” agregado.</li>
+          <li class="list-group-item">📦 Nuevo producto registrado: Camarón mediano</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-5 mt-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h5 class="card-title mb-3">Pendientes</h5>
+        <div class="small">
+          <p class="mb-2">• Enviar cotización a “Grupo del Valle”.</p>
+          <p class="mb-2">• Confirmar instalación en Col. Las Haciendas.</p>
+          <p class="mb-2">• Subir catálogo actualizado.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div> <!-- row -->
+{% endblock %}
+

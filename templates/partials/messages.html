@@ -1,0 +1,117 @@
+{% if messages %}
+  {# Contenedor temporal, se clonará al <body> y luego se eliminará este #}
+  <div id="flash-container" style="display:none;">
+    <div class="flash-overlay"></div>
+
+    <div class="flash-messages-wrapper">
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          {% with 'danger' as level %}
+            <div class="alert alert-{{ level }} alert-dismissible fade show flash-message" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endwith %}
+        {% else %}
+          {% with message.tags|default:'info' as level %}
+            <div class="alert alert-{{ level }} alert-dismissible fade show flash-message" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+          {% endwith %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <style>
+    .flash-overlay {
+      position: fixed !important;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(3px);
+      z-index: 25000;
+    }
+
+    .flash-messages-wrapper {
+      position: fixed !important;
+      top: 50vh;
+      left: 50vw;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      max-width: 600px;
+      padding: 0 1rem;
+      z-index: 26000;
+      pointer-events: none;
+    }
+
+    .flash-message {
+      pointer-events: auto;
+      background: #fff;
+      border-radius: 0.75rem;
+      box-shadow:
+        0 0 0 4px rgba(255,255,255,0.7),
+        0 12px 32px rgba(0,0,0,0.35);
+      animation: popIn 0.25s ease-out forwards;
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const tempContainer = document.getElementById("flash-container");
+      if (!tempContainer) return;
+
+      // 🔸 Clonamos el contenedor y eliminamos el original
+      const clone = tempContainer.cloneNode(true);
+      tempContainer.remove();
+
+      clone.id = "flash-container-active";
+      clone.style.display = "block";
+      document.body.appendChild(clone);
+
+      const overlay = clone.querySelector(".flash-overlay");
+      const alerts = clone.querySelectorAll(".flash-message");
+
+      // Limpia overlay cuando ya no hay alerts en el CLON
+      function cleanup() {
+        const remaining = clone.querySelectorAll(".flash-message.show, .flash-message:not(.fade)");
+        if (remaining.length === 0) {
+          if (overlay) overlay.remove();
+          // opcional: también podrías remover todo el clon:
+          // clone.remove();
+        }
+      }
+
+      alerts.forEach((alertEl, index) => {
+        const timeout = 10000 + index * 500;
+        let bsAlert = null;
+
+        if (window.bootstrap && bootstrap.Alert) {
+          bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+        }
+
+        // 🔸 Cierre automático
+        setTimeout(() => {
+          if (bsAlert) {
+            bsAlert.close();
+          } else {
+            alertEl.remove();
+          }
+          cleanup();
+        }, timeout);
+
+        // 🔸 Cierre manual (X)
+        alertEl.addEventListener("closed.bs.alert", () => {
+          cleanup();
+        });
+      });
+    });
+  </script>
+{% endif %}
