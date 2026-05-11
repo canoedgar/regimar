@@ -1,559 +1,446 @@
 {% extends "base.html" %}
-{% block title %}Entrada manual | Inventarios{% endblock %}
+{% block title %}Entrada Manual{% endblock %}
 {% block page_title %}Entrada manual{% endblock %}
 {% block active_inventario %}active{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-11">
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-xl-11 col-xxl-10">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="detalle_json" id="detalle_json" value='{{ detalle_json_initial|default:"[]"|escape }}'>
 
-    {% if messages %}
-      {% for m in messages %}
-        <div class="alert {% if m.tags %}alert-{{ m.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
-          {{ m }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+              <div>
+                <h4 class="mb-1">Entrada manual</h4>
+                <p class="text-muted mb-0">
+                  Registra productos por métrica base o por presentación con conversión automática al inventario.
+                </p>
+              </div>
+              <a href="{% url 'proveedores_form' %}?next={{ request.path|urlencode }}" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle me-1"></i> Nuevo proveedor
+              </a>
+            </div>
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger py-2">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <div class="row g-3">
+              {% for field in form %}
+                <div class="col-md-6 col-lg-4">
+                  <label class="form-label fw-semibold">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                  {% endif %}
+                  {% if field.errors %}
+                    <div class="text-danger small">{{ field.errors }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
         </div>
-      {% endfor %}
-    {% endif %}
 
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <h5 class="fw-bold mb-1">
-          <i class="bi bi-journal-text me-2"></i>
-          Nueva entrada manual (nota / remisión)
-        </h5>
-        <p class="text-muted mb-4">Captura el encabezado y agrega los productos a ingresar (por almacén).</p>
-
-        <form id="entradaManualForm" method="post">
-          {% csrf_token %}
-
-          <div class="row g-3">
-            <div class="col-md-3">
-              <label class="form-label fw-semibold">Folio</label>
-              {{ form.folio }}
-              {% if form.folio.errors %}<div class="text-danger small mt-1">{{ form.folio.errors|striptags }}</div>{% endif %}
-            </div>
-
-            <div class="col-md-3">
-              <label class="form-label fw-semibold">Fecha</label>
-              {{ form.fecha }}
-              {% if form.fecha.errors %}<div class="text-danger small mt-1">{{ form.fecha.errors|striptags }}</div>{% endif %}
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Proveedor <span class="text-danger">*</span></label>
-            
-              <div class="input-group">
-                {{ form.proveedor }}
-                <a class="btn btn-outline-primary"
-                  id="btnNuevoProveedor"
-                  href="{% url 'proveedores_form' %}?next={{ request.get_full_path|urlencode }}">
-                  <i class="bi bi-person-plus me-1"></i> Nuevo
-                </a>
+        <div class="card shadow-sm border-0 mb-4">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <div>
+                <h5 class="mb-1">Agregar producto</h5>
+                <p class="text-muted small mb-0">Puedes capturar en kilos o en una presentación como caja, bolsa o cubeta.</p>
               </div>
-            
-              {% if form.proveedor.errors %}
-                <div class="text-danger small mt-1">{{ form.proveedor.errors|striptags }}</div>
-              {% endif %}
-              <div class="form-text">Obligatorio para entradas manuales.</div>
-            </div>
-            
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Documento referencia</label>
-              {{ form.documento_referencia }}
-              {% if form.documento_referencia.errors %}<div class="text-danger small mt-1">{{ form.documento_referencia.errors|striptags }}</div>{% endif %}
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Motivo</label>
-              {{ form.motivo }}
-              {% if form.motivo.errors %}<div class="text-danger small mt-1">{{ form.motivo.errors|striptags }}</div>{% endif %}
-            </div>
-
-            <div class="col-12">
-              <label class="form-label fw-semibold">Observaciones</label>
-              {{ form.observaciones }}
-              {% if form.observaciones.errors %}<div class="text-danger small mt-1">{{ form.observaciones.errors|striptags }}</div>{% endif %}
-            </div>
-          </div>
-
-          <hr class="my-4">
-
-          <h6 class="fw-bold mb-2 d-flex align-items-center justify-content-between">
-            <span><i class="bi bi-list-check me-2"></i>Detalle</span>
-
-            <button type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    data-bs-toggle="modal"
-                    data-bs-target="#modalAddProducto">
-              <i class="bi bi-plus-circle me-1"></i> Agregar producto
-            </button>
-          </h6>
-
-          <!-- Persistente cuando hay error server-side -->
-          <input type="hidden"
-                 name="detalle_json"
-                 id="detalleJson"
-                 value='{{ detalle_json_initial|default:"[]"|escape }}'>
-
-          <div class="table-responsive">
-            <table class="table table-hover align-middle" id="detalleTable">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Almacén</th>
-                  <th style="width: 140px;" class="text-end">Cantidad</th>
-                  <th style="width: 170px;" class="text-end">Costo unit.</th>
-                  <th style="width: 120px;" class="text-end">Importe</th>
-                  <th style="width: 80px;" class="text-center">Quitar</th>
-                </tr>
-              </thead>
-
-              <tbody id="detalleTbody">
-                <tr id="detalleEmptyRow">
-                  <td colspan="6" class="text-muted text-center py-4">
-                    Aún no hay productos. Usa <b>Agregar producto</b>.
-                  </td>
-                </tr>
-              </tbody>
-
-              <tfoot>
-                <tr>
-                  <td colspan="4" class="text-end fw-semibold">Total</td>
-                  <td class="text-end fw-bold" id="detalleTotal">$0.00</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-primary" type="submit">
-              <i class="bi bi-check2-circle me-1"></i> Guardar
-            </button>
-            <a class="btn btn-outline-secondary" href="{% url 'entradas_list' %}">
-              <i class="bi bi-arrow-left me-1"></i> Volver
-            </a>
-          </div>
-        </form>
-
-        <!-- Modal Agregar Producto (fuera del form) -->
-        <div class="modal fade" id="modalAddProducto" tabindex="-1">
-          <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-              <div class="modal-header">
-                <h5 class="modal-title">
-                  <i class="bi bi-box-seam me-2"></i>Agregar producto
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <div class="row g-3 align-items-end">
+              <div class="col-lg-3 col-md-6">
+                <label class="form-label">Producto</label>
+                <select id="mpProducto" class="form-select">
+                  <option value="">Selecciona</option>
+                  {% for p in productos %}
+                    <option value="{{ p.id }}">{{ p.nombre }}</option>
+                  {% endfor %}
+                </select>
               </div>
 
-              <div class="modal-body">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold">Producto <span class="text-danger">*</span></label>
-                    <select class="form-select" id="mpProducto">
-                      <option value="">-- Selecciona --</option>
-                      {% for p in productos %}
-                        <option value="{{ p.id }}">{{ p.nombre }}</option>
-                      {% endfor %}
-                    </select>
-                  </div>
+              <div class="col-lg-3 col-md-6">
+                <label class="form-label">Presentación</label>
+                <select id="mpConversion" class="form-select">
+                  <option value="">Base</option>
+                </select>
+              </div>
 
-                  <div class="col-md-6">
-                    <label class="form-label fw-semibold">Almacén <span class="text-danger">*</span></label>
-                    <select class="form-select" id="mpAlmacen">
-                      <option value="">-- Selecciona --</option>
-                      {% for a in almacenes %}
-                        <option value="{{ a.id }}">
-                          {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
-                        </option>
-                      {% endfor %}
-                    </select>
-                    <div class="form-text">El mismo producto puede ingresarse en distintos almacenes.</div>
-                  </div>
+              <div class="col-lg-2 col-md-4">
+                <label class="form-label">Cantidad</label>
+                <input type="number" id="mpCantidad" class="form-control" step="0" min="0">
+              </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label fw-semibold">Cantidad <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="mpCantidad" step="0.01" min="0.01" placeholder="0.00">
-                  </div>
+              <div class="col-lg-2 col-md-4">
+                <label class="form-label">Costo unitario</label>
+                <input type="number" id="mpCosto" class="form-control" step="0.01" min="0">
+              </div>
 
-                  <div class="col-md-3">
-                    <label class="form-label fw-semibold">Costo unit. <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" id="mpCosto" step="0.01" min="0" placeholder="0.00">
-                  </div>
+              <div class="col-lg-2 col-md-4">
+                <label class="form-label">Almacén</label>
+                <select id="mpAlmacen" class="form-select">
+                  <option value="">Selecciona</option>
+                  {% for a in almacenes %}
+                    <option value="{{ a.id }}">{{ a.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
 
-                  <div class="col-md-6">
-                    <div class="alert alert-info mb-0 h-100 d-flex align-items-center">
-                      <small class="mb-0">
-                        Tip: si agregas el mismo <b>producto + almacén</b> otra vez, se sumará la cantidad (y el costo unitario quedará con el último capturado).
-                      </small>
-                    </div>
-                  </div>
+            <div class="row g-3 mt-1">
+              <div class="col-lg-8">
+                <div class="border rounded-3 bg-light p-3 h-100">
+                  <div class="small text-muted mb-1">Conversión al inventario</div>
+                  <div id="previewConversion" class="fw-semibold">Selecciona un producto para ver sus presentaciones.</div>
                 </div>
               </div>
-
-              <div class="modal-footer">
-                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
-                  Cancelar
-                </button>
-                <button class="btn btn-primary" type="button" id="btnAddLinea">
-                  <i class="bi bi-check2-circle me-1"></i> Agregar
+              <div class="col-lg-4 d-grid">
+                <button type="button" class="btn btn-primary" id="btnAgregarLinea">
+                  <i class="bi bi-plus-circle me-1"></i> Agregar al detalle
                 </button>
               </div>
             </div>
           </div>
         </div>
-        <!-- Fin Modal -->
 
-      </div>
+        <div class="card shadow-sm border-0">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <div>
+                <h5 class="mb-1">Detalle de entrada</h5>
+                <p class="text-muted small mb-0">El stock se incrementará con la cantidad convertida a la métrica base del producto.</p>
+              </div>
+              <div class="text-end">
+                <div class="small text-muted">Total de líneas</div>
+                <div class="fw-bold" id="totalLineas">0</div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table align-middle table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th>Producto</th>
+                    <th>Presentación</th>
+                    <th class="text-end">Cantidad capturada</th>
+                    <th class="text-end">Equivalencia</th>
+                    <th>Almacén</th>
+                    <th class="text-end">Costo unitario</th>
+                    <th class="text-end">Importe</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="tabla">
+                  <tr id="filaVacia">
+                    <td colspan="8" class="text-center text-muted py-4">Aún no has agregado productos.</td>
+                  </tr>
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <th colspan="6" class="text-end">Total</th>
+                    <th class="text-end" id="granTotal">0.00</th>
+                    <th></th>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
+              <a href="{% url 'entradas_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Cancelar
+              </a>
+              <button type="submit" class="btn btn-success">
+                <i class="bi bi-check2-circle me-1"></i> Guardar entrada
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
-
   </div>
 </div>
 
+{{ productos_conversiones_json|json_script:"productos-conversiones-data" }}
+
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const formEl = document.querySelector("form");
+(function () {
+  const productosData = JSON.parse(document.getElementById("productos-conversiones-data").textContent || "{}");
 
-    // ---- Detalle modal/table ----
-    const detalleJsonInput = document.getElementById("detalleJson");
-    const tbody = document.getElementById("detalleTbody");
-    const emptyRow = document.getElementById("detalleEmptyRow");
-    const totalEl = document.getElementById("detalleTotal");
+  let lineas = [];
 
-    const modalEl = document.getElementById("modalAddProducto");
-    const mpProducto = document.getElementById("mpProducto");
-    const mpAlmacen = document.getElementById("mpAlmacen");
-    const mpCantidad = document.getElementById("mpCantidad");
-    const mpCosto = document.getElementById("mpCosto");
-    const btnAddLinea = document.getElementById("btnAddLinea");
+  const mpProducto = document.getElementById("mpProducto");
+  const mpConversion = document.getElementById("mpConversion");
+  const mpCantidad = document.getElementById("mpCantidad");
+  const mpCosto = document.getElementById("mpCosto");
+  const mpAlmacen = document.getElementById("mpAlmacen");
+  const tabla = document.getElementById("tabla");
+  const detalleJson = document.getElementById("detalle_json");
+  const btnAgregarLinea = document.getElementById("btnAgregarLinea");
+  const previewConversion = document.getElementById("previewConversion");
+  const totalLineas = document.getElementById("totalLineas");
+  const granTotal = document.getElementById("granTotal");
 
-    // Cada linea: {producto_id, producto_nombre, almacen_id, almacen_nombre, cantidad, costo_unitario}
-    let lineas = [];
+  function decimal(value, decimals) {
+    const number = Number(value || 0);
+    return number.toLocaleString("es-MX", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
 
-    function money(n) {
-      const v = Number(n || 0);
-      return v.toLocaleString(undefined, { style: "currency", currency: "MXN" });
+  function getProducto(pid) {
+    return productosData[String(pid)] || null;
+  }
+
+  function getConversion(pid, cid) {
+    const producto = getProducto(pid);
+    if (!producto || !cid) return null;
+    return (producto.conversiones || []).find(function (item) {
+      return String(item.id) === String(cid);
+    }) || null;
+  }
+
+  function getMetricaBase(pid) {
+    const producto = getProducto(pid);
+    return producto ? (producto.metrica || "kg") : "kg";
+  }
+
+  function renderConversiones(productoId, selectedId) {
+    const producto = getProducto(productoId);
+    const metrica = getMetricaBase(productoId);
+
+    mpConversion.innerHTML = "";
+
+    const baseOption = document.createElement("option");
+    baseOption.value = "";
+    baseOption.textContent = "Base (" + metrica + ")";
+    mpConversion.appendChild(baseOption);
+
+    if (!producto) {
+      updatePreview();
+      return;
     }
-    function toNumber(v) {
-      const n = Number(v);
-      return isNaN(n) ? 0 : n;
-    }
 
-    function syncJson() {
-      detalleJsonInput.value = JSON.stringify(lineas.map(x => ({
-        producto_id: x.producto_id,
-        almacen_id: x.almacen_id,
-        cantidad: x.cantidad,
-        costo_unitario: x.costo_unitario
-      })));
-    }
-
-    function render() {
-      tbody.querySelectorAll("tr.linea").forEach(tr => tr.remove());
-
-      if (!lineas.length) {
-        emptyRow.classList.remove("d-none");
-      } else {
-        emptyRow.classList.add("d-none");
-
-        for (const [idx, l] of lineas.entries()) {
-          const importe = (l.cantidad * l.costo_unitario);
-          const tr = document.createElement("tr");
-          tr.className = "linea";
-          tr.innerHTML = `
-            <td>
-              <div class="fw-semibold">${l.producto_nombre}</div>
-              <div class="text-muted small">ID: ${l.producto_id}</div>
-            </td>
-            <td>
-              <div class="fw-semibold">${l.almacen_nombre}</div>
-              <div class="text-muted small">ID: ${l.almacen_id}</div>
-            </td>
-            <td class="text-end">${Number(l.cantidad).toFixed(2)}</td>
-            <td class="text-end">${money(l.costo_unitario)}</td>
-            <td class="text-end fw-semibold">${money(importe)}</td>
-            <td class="text-center">
-              <button type="button" class="btn btn-sm btn-outline-danger" data-idx="${idx}" title="Quitar">
-                <i class="bi bi-trash"></i>
-              </button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        }
+    (producto.conversiones || []).forEach(function (c) {
+      const option = document.createElement("option");
+      option.value = c.id;
+      option.textContent = c.nombre + " (" + c.texto + ")";
+      if (selectedId && String(selectedId) === String(c.id)) {
+        option.selected = true;
       }
-
-      const total = lineas.reduce((acc, l) => acc + (l.cantidad * l.costo_unitario), 0);
-      totalEl.textContent = money(total);
-
-      syncJson();
-    }
-
-    // quitar linea
-    tbody.addEventListener("click", function (e) {
-      const btn = e.target.closest("button[data-idx]");
-      if (!btn) return;
-      const idx = Number(btn.getAttribute("data-idx"));
-      if (idx >= 0 && idx < lineas.length) {
-        lineas.splice(idx, 1);
-        render();
-      }
+      mpConversion.appendChild(option);
     });
 
-    // cargar desde backend si viene (errores)
-    try {
-      const raw = (detalleJsonInput.value || "[]").trim();
-      if (raw && raw !== "[]") {
-        const parsed = JSON.parse(raw);
-        // parsed viene como lista simple (producto_id, almacen_id, cantidad, costo_unitario)
-        // pero necesitamos nombres para render. Los reconstruimos desde selects (si existen).
-        lineas = parsed.map(x => {
-          const pid = Number(x.producto_id);
-          const aid = Number(x.almacen_id);
+    updatePreview();
+  }
 
-          const pOpt = mpProducto.querySelector(`option[value="${pid}"]`);
-          const aOpt = mpAlmacen.querySelector(`option[value="${aid}"]`);
+  function calcularCantidadConvertida(pid, cantidad, conversionId) {
+    const qty = Number(cantidad || 0);
+    if (!qty) return 0;
 
-          return {
-            producto_id: pid,
-            producto_nombre: pOpt ? pOpt.textContent.trim() : `Producto ${pid}`,
-            almacen_id: aid,
-            almacen_nombre: aOpt ? aOpt.textContent.trim() : `Almacén ${aid}`,
-            cantidad: Number(x.cantidad || 0),
-            costo_unitario: Number(x.costo_unitario || 0),
-          };
-        }).filter(x => x.producto_id && x.almacen_id);
-      }
-    } catch (e) {
-      lineas = [];
+    const conversion = getConversion(pid, conversionId);
+    if (!conversion) return qty;
+
+    const cantidadOrigen = Number(conversion.cantidad_origen || 0);
+    const factor = Number(conversion.factor_conversion || 0);
+    if (!cantidadOrigen || !factor) return qty;
+
+    return (qty / cantidadOrigen) * factor;
+  }
+
+  function updatePreview() {
+    const pid = mpProducto.value;
+    const cantidad = mpCantidad.value;
+    const conversionId = mpConversion.value;
+    const producto = getProducto(pid);
+
+    if (!producto) {
+      previewConversion.textContent = "Selecciona un producto para ver sus presentaciones.";
+      return;
     }
 
-    // agregar linea desde modal (producto + almacen)
-    btnAddLinea.addEventListener("click", function () {
-      const pidRaw = (mpProducto.value || "").trim();
-      const aidRaw = (mpAlmacen.value || "").trim();
+    const metrica = producto.metrica || "kg";
+    const conversion = getConversion(pid, conversionId);
 
-      const cantidad = toNumber(mpCantidad.value);
-      const costo = toNumber(mpCosto.value);
+    if (!cantidad || Number(cantidad) <= 0) {
+      previewConversion.textContent = conversion
+        ? ("Se convertirá usando: " + conversion.texto)
+        : ("Se capturará directamente en métrica base (" + metrica + ").");
+      return;
+    }
 
-      if (!pidRaw) { alert("Selecciona un producto."); return; }
-      if (!aidRaw) { alert("Selecciona un almacén."); return; }
-      if (cantidad <= 0) { alert("La cantidad debe ser mayor a 0."); return; }
-      if (costo < 0) { alert("El costo unitario no puede ser negativo."); return; }
+    const cantidadConvertida = calcularCantidadConvertida(pid, cantidad, conversionId);
 
-      const pid = Number(pidRaw);
-      const aid = Number(aidRaw);
+    if (conversion) {
+      previewConversion.textContent = decimal(cantidad, 0) + " " + conversion.unidad_origen +
+        " = " + decimal(cantidadConvertida, 0) + " " + metrica + " al inventario.";
+    } else {
+      previewConversion.textContent = decimal(cantidad, 0) + " " + metrica +
+        " se sumarán directamente al inventario.";
+    }
+  }
 
-      const pname = mpProducto.options[mpProducto.selectedIndex]?.text || `Producto ${pid}`;
-      const aname = mpAlmacen.options[mpAlmacen.selectedIndex]?.text || `Almacén ${aid}`;
+  function syncJson() {
+    detalleJson.value = JSON.stringify(lineas);
+  }
 
-      // Duplicado por (producto + almacén)
-      const existing = lineas.find(x => x.producto_id === pid && x.almacen_id === aid);
-      if (existing) {
-        existing.cantidad = Number((existing.cantidad + cantidad).toFixed(2));
-        existing.costo_unitario = Number(costo.toFixed(2));
-      } else {
-        lineas.push({
-          producto_id: pid,
-          producto_nombre: pname,
-          almacen_id: aid,
-          almacen_nombre: aname,
-          cantidad: Number(cantidad.toFixed(2)),
-          costo_unitario: Number(costo.toFixed(2)),
-        });
-      }
+  function render() {
+    tabla.innerHTML = "";
 
-      render();
+    if (!lineas.length) {
+      tabla.innerHTML = '<tr id="filaVacia"><td colspan="8" class="text-center text-muted py-4">Aún no has agregado productos.</td></tr>';
+      totalLineas.textContent = "0";
+      granTotal.textContent = "0.00";
+      return;
+    }
 
-      // cerrar modal
-      const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-      modal.hide();
+    let total = 0;
+
+    lineas.forEach(function (l, idx) {
+      const tr = document.createElement("tr");
+      const importe = Number(l.cantidad || 0) * Number(l.costo_unitario || 0);
+      total += importe;
+
+      tr.innerHTML = `
+        <td>
+          <div class="fw-semibold">${l.producto_nombre}</div>
+          <div class="small text-muted">Métrica base: ${l.metrica_base}</div>
+        </td>
+        <td>${l.conversion_texto || ('Base (' + l.metrica_base + ')')}</td>
+        <td class="text-end">${decimal(l.cantidad_original || l.cantidad, 0)}</td>
+        <td class="text-end">${decimal(l.cantidad_convertida || l.cantidad, 0)} ${l.metrica_base}</td>
+        <td>${l.almacen_nombre}</td>
+        <td class="text-end">${decimal(l.costo_unitario, 2)}</td>
+        <td class="text-end">${decimal(importe, 2)}</td>
+        <td class="text-end">
+          <button type="button" class="btn btn-sm btn-outline-danger" data-index="${idx}">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      `;
+
+      tabla.appendChild(tr);
     });
 
-    // limpiar inputs al cerrar (pero NO toca la tabla ni el form)
-    modalEl.addEventListener("hidden.bs.modal", function () {
-      mpProducto.value = "";
-      mpAlmacen.value = "";
-      mpCantidad.value = "";
-      mpCosto.value = "";
-    });
+    totalLineas.textContent = String(lineas.length);
+    granTotal.textContent = decimal(total, 2);
+  }
 
-    // Validación antes de submit: proveedor + al menos 1 linea
-    formEl.addEventListener("submit", function (e) {
-      const proveedorInput = document.querySelector("[name='proveedor']");
-      if (!proveedorInput || !proveedorInput.value.trim()) {
-        e.preventDefault();
-        alert("Debes capturar el proveedor.");
-        proveedorInput?.focus();
-        return;
-      }
+  btnAgregarLinea.addEventListener("click", function () {
+    const pid = mpProducto.value;
+    const aid = mpAlmacen.value;
+    const cantidad = mpCantidad.value;
+    const costo = mpCosto.value;
+    const conversionId = mpConversion.value || null;
 
-      if (!lineas.length) {
-        e.preventDefault();
-        alert("Debes agregar al menos un producto.");
-        return;
-      }
+    if (!pid) {
+      alert("Selecciona un producto.");
+      return;
+    }
+
+    if (!aid) {
+      alert("Selecciona un almacén.");
+      return;
+    }
+
+    if (!cantidad || Number(cantidad) <= 0) {
+      alert("Captura una cantidad válida.");
+      return;
+    }
+
+    if (costo === "" || Number(costo) < 0) {
+      alert("Captura un costo válido.");
+      return;
+    }
+
+    const producto = getProducto(pid);
+    const metricaBase = getMetricaBase(pid);
+    const conversion = getConversion(pid, conversionId);
+    const cantidadConvertida = calcularCantidadConvertida(pid, cantidad, conversionId);
+
+    lineas.push({
+      producto_id: pid,
+      producto_nombre: mpProducto.options[mpProducto.selectedIndex].text,
+      cantidad: cantidad,
+      cantidad_original: cantidad,
+      cantidad_convertida: cantidadConvertida,
+      costo_unitario: costo,
+      almacen_id: aid,
+      almacen_nombre: mpAlmacen.options[mpAlmacen.selectedIndex].text,
+      conversion_id: conversionId,
+      conversion_texto: conversion ? conversion.texto : ("Base (" + metricaBase + ")"),
+      metrica_base: metricaBase
     });
 
     render();
-  });
-</script>
+    syncJson();
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const modalEl = document.getElementById("modalAddProducto");
-  
-    if (!modalEl) return;
-  
-    // 1) Mover modal al <body> para evitar stacking contexts (backdrop-filter/containers)
-    if (modalEl.parentElement !== document.body) {
-      document.body.appendChild(modalEl);
-    }
-  
-    // Helpers para evitar "pantalla bloqueada"
-    function closeSidebarOverlayIfAny() {
-      document.getElementById("solarSidebar")?.classList.remove("show");
-      document.getElementById("sidebarOverlay")?.classList.remove("show");
-    }
-  
-    function cleanupBackdrops() {
-      document.querySelectorAll(".modal-backdrop").forEach(b => b.remove());
-      document.body.classList.remove("modal-open");
-      document.body.style.removeProperty("padding-right");
-    }
-  
-    // 2) Antes de abrir: apaga overlay/sidebar y elimina backdrops huérfanos
-    modalEl.addEventListener("show.bs.modal", function () {
-      closeSidebarOverlayIfAny();
-      cleanupBackdrops();
-    });
-  
-    // 3) Al cerrar: limpieza extra (por si se queda algo raro)
-    modalEl.addEventListener("hidden.bs.modal", function () {
-      cleanupBackdrops();
-      closeSidebarOverlayIfAny();
-    });
+    mpProducto.value = "";
+    mpConversion.innerHTML = '<option value="">Base</option>';
+    mpCantidad.value = "";
+    mpCosto.value = "";
+    mpAlmacen.value = "";
+    updatePreview();
   });
-  </script>
-  
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const DRAFT_KEY = "entrada_manual_draft_v1";
-    
-      const form = document.getElementById("entradaManualForm");
-      const btnNuevoProveedor = document.getElementById("btnNuevoProveedor");
-      const btnClearDraft = document.getElementById("btnClearDraft");
-    
-      // Campos (ajusta IDs si cambian)
-      const elFolio = document.getElementById("id_folio");
-      const elFecha = document.getElementById("id_fecha");
-      const elProveedor = document.getElementById("proveedorSelect") || document.getElementById("id_proveedor");
-      const elDocRef = document.getElementById("id_documento_referencia");
-      const elMotivo = document.getElementById("id_motivo");
-      const elObs = document.getElementById("id_observaciones");
-    
-      // Hidden detalle_json
-      function getDetalleInput() {
-        return document.querySelector('input[name="detalle_json"]');
-      }
-    
-      function safeJsonParse(s, fallback) {
-        try { return JSON.parse(s); } catch { return fallback; }
-      }
-    
-      function saveDraft() {
-        const detalleInput = getDetalleInput();
-        const payload = {
-          // No guardo folio (readonly y se recalcula), pero no hace daño si lo guardas.
-          fecha: elFecha?.value || "",
-          proveedor: elProveedor?.value || "",
-          documento_referencia: elDocRef?.value || "",
-          motivo: elMotivo?.value || "",
-          observaciones: elObs?.value || "",
-          detalle_json: detalleInput?.value || "[]",
-          saved_at: new Date().toISOString(),
+
+  tabla.addEventListener("click", function (event) {
+    const button = event.target.closest("button[data-index]");
+    if (!button) return;
+
+    const idx = Number(button.getAttribute("data-index"));
+    lineas.splice(idx, 1);
+    render();
+    syncJson();
+  });
+
+  mpProducto.addEventListener("change", function () {
+    renderConversiones(this.value, null);
+  });
+  mpConversion.addEventListener("change", updatePreview);
+  mpCantidad.addEventListener("input", updatePreview);
+
+  try {
+    const inicial = JSON.parse(detalleJson.value || "[]");
+    if (Array.isArray(inicial)) {
+      lineas = inicial.map(function (item) {
+        const pid = item.producto_id;
+        const conversionId = item.conversion_id || null;
+        const metricaBase = item.metrica_base || getMetricaBase(pid);
+        const conversion = getConversion(pid, conversionId);
+        const cantidadOriginal = item.cantidad_original || item.cantidad || 0;
+        const cantidadConvertida = item.cantidad_convertida || calcularCantidadConvertida(pid, cantidadOriginal, conversionId);
+
+        return {
+          producto_id: pid,
+          producto_nombre: item.producto_nombre,
+          cantidad: item.cantidad,
+          cantidad_original: cantidadOriginal,
+          cantidad_convertida: cantidadConvertida,
+          costo_unitario: item.costo_unitario,
+          almacen_id: item.almacen_id,
+          almacen_nombre: item.almacen_nombre,
+          conversion_id: conversionId,
+          conversion_texto: item.conversion_texto || (conversion ? conversion.texto : ("Base (" + metricaBase + ")")),
+          metrica_base: metricaBase
         };
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
-      }
-    
-      function loadDraft() {
-        const raw = localStorage.getItem(DRAFT_KEY);
-        if (!raw) return;
-    
-        const draft = safeJsonParse(raw, null);
-        if (!draft) return;
-    
-        // Solo rellena si hay contenido (para no pisar initial server-side)
-        if (elFecha && draft.fecha && !elFecha.value) elFecha.value = draft.fecha;
-    
-        // Proveedor:
-        // - Si el server ya te regresó con proveedor_id, normalmente ya viene seleccionado.
-        // - Si NO viene seleccionado, aplicamos el draft.
-        if (elProveedor && draft.proveedor) {
-          if (!elProveedor.value) {
-            elProveedor.value = draft.proveedor;
-          }
-        }
-    
-        if (elDocRef && draft.documento_referencia && !elDocRef.value) elDocRef.value = draft.documento_referencia;
-        if (elMotivo && draft.motivo && !elMotivo.value) elMotivo.value = draft.motivo;
-        if (elObs && draft.observaciones && !elObs.value) elObs.value = draft.observaciones;
-    
-        // Detalle JSON: siempre que el template venga vacío (detalle_json_initial = "[]")
-        const detalleInput = getDetalleInput();
-        if (detalleInput) {
-          const current = (detalleInput.value || "[]").trim();
-          const isEmpty = (current === "" || current === "[]");
-          if (draft.detalle_json && isEmpty) {
-            detalleInput.value = draft.detalle_json;
-          }
-        }
-    
-        // Si tu template construye la tabla del detalle desde detalle_json_initial en DOMContentLoaded,
-        // y NO re-renderiza cuando cambia el hidden, aquí conviene llamar a tu función de "renderDetalle()".
-        // Ejemplo:
-        // if (window.renderDetalleDesdeHidden) window.renderDetalleDesdeHidden();
-      }
-    
-      function clearDraft() {
-        localStorage.removeItem(DRAFT_KEY);
-      }
-    
-      // 1) Cargar borrador al entrar
-      loadDraft();
-    
-      // 2) Guardar borrador con cambios
-      const watch = [elFecha, elProveedor, elDocRef, elMotivo, elObs].filter(Boolean);
-      watch.forEach(el => el.addEventListener("change", saveDraft));
-      watch.forEach(el => el.addEventListener("keyup", () => {
-        // para no saturar, puedes hacer debounce; aquí lo dejamos simple
-        saveDraft();
-      }));
-    
-      // 3) Guardar antes de ir a crear proveedor
-      btnNuevoProveedor?.addEventListener("click", () => {
-        saveDraft();
       });
-    
-      // 4) Guardar justo antes de salir (por si cierran o cambian de página)
-      window.addEventListener("beforeunload", () => {
-        saveDraft();
-      });
-    
-      // 5) Botón para limpiar borrador (opcional)
-      btnClearDraft?.addEventListener("click", () => {
-        clearDraft();
-        // recargar sin cache para limpiar UI
-        window.location.reload();
-      });
-    
-      // 6) Cuando envías el formulario, NO limpiamos aquí (porque si hay error server-side quieres conservar)
-      // Lo correcto es limpiar el borrador solo cuando el guardado fue exitoso.
-      // Para eso, en el template de "entradas_list" podrías limpiar, o bien pasar un flag ?ok=1 al redirect.
-    });
-    </script>
-    
+    }
+  } catch (e) {
+    lineas = [];
+  }
 
+  render();
+  syncJson();
+  updatePreview();
+})();
+</script>
 {% endblock %}

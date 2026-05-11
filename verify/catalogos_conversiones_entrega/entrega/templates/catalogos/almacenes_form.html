@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block active_almacenes %}active{% endblock %}
+
+{% block title %}{% if modo_edicion %}Editar almacén{% else %}Nuevo almacén{% endif %} | Sistema de Gestión{% endblock %}
+{% block page_title %}{% if modo_edicion %}Editar almacén{% else %}Nuevo almacén{% endif %}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">
+              <i class="bi bi-building me-2"></i>
+              {% if modo_edicion %}Editar almacén{% else %}Nuevo almacén{% endif %}
+            </h5>
+            <p class="text-muted mb-0">
+              Define almacenes físicos y virtuales.
+            </p>
+          </div>
+          <a href="{% url 'almacenes_list' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Volver
+          </a>
+        </div>
+
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Código</label>
+              {{ form.codigo }}
+              {% for e in form.codigo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Nombre</label>
+              {{ form.nombre }}
+              {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Tipo</label>
+              {{ form.tipo }}
+              {% for e in form.tipo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Ubicación</label>
+              {{ form.ubicacion }}
+              <div class="form-text">Para almacenes virtuales puede ir vacío.</div>
+              {% for e in form.ubicacion.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-12">
+              <hr>
+              <div class="row g-3">
+                <div class="col-md-3">
+                  <div class="form-check">
+                    {{ form.es_activo }}
+                    <label class="form-check-label">Activo</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check">
+                    {{ form.permite_ventas }}
+                    <label class="form-check-label">Permite ventas</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check">
+                    {{ form.permite_transferencias }}
+                    <label class="form-check-label">Permite transferencias</label>
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <div class="form-check">
+                    {{ form.es_virtual_sistema }}
+                    <label class="form-check-label">Virtual de sistema</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="col-12">
+              <hr>
+              <div class="row g-3 align-items-end">
+
+                <div class="col-md-4">
+                  <div class="form-check">
+                    {{ form.es_arrendado }}
+                    <label class="form-check-label">Almacén arrendado</label>
+                  </div>
+                  {% for e in form.es_arrendado.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                </div>
+
+                <div class="col-12" id="arrendado_fields">
+                  <div class="border rounded p-3 bg-light">
+                    <div class="row g-3">
+                      <div class="col-md-4">
+                        <label class="form-label fw-semibold">Tipo de costo</label>
+                        {{ form.tipo_costo }}
+                        {% for e in form.tipo_costo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                      </div>
+
+                      <div class="col-md-4">
+                        <label class="form-label fw-semibold">Costo del almacén</label>
+                        {{ form.costo_almacen }}
+                        <div class="form-text">Monto por el tipo de costo seleccionado.</div>
+                        {% for e in form.costo_almacen.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                      </div>
+
+                      <div class="col-md-4">
+                        <label class="form-label fw-semibold">Vencimiento (días)</label>
+                        {{ form.vencimiento_dias }}
+                        <div class="form-text">Cada cuántos días vence el pago.</div>
+                        {% for e in form.vencimiento_dias.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                      </div>
+                    </div>
+
+                    <div class="text-muted small mt-2">
+                      Estos campos aplican únicamente si el almacén es <strong>arrendado</strong>.
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'almacenes_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> Guardar
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  // OJO: Django suele renderizar el checkbox con id="id_es_arrendado"
+  // Si tu form ya trae otro id, esto igual funciona porque lo buscamos por selector de nombre.
+  const chk = document.getElementById("id_es_arrendado") || document.querySelector('input[name="es_arrendado"]');
+  const box = document.getElementById("arrendado_fields");
+
+  const tipoCosto = document.getElementById("id_tipo_costo") || document.querySelector('[name="tipo_costo"]');
+  const costo = document.getElementById("id_costo_almacen") || document.querySelector('[name="costo_almacen"]');
+  const venc = document.getElementById("id_vencimiento_dias") || document.querySelector('[name="vencimiento_dias"]');
+
+  function setUI() {
+    const on = !!(chk && chk.checked);
+
+    if (box) box.style.display = on ? "block" : "none";
+
+    [tipoCosto, costo, venc].forEach(el => {
+      if (!el) return;
+      el.disabled = !on;
+      if (!on) el.value = ""; // limpia UI cuando es propio
+    });
+  }
+
+  if (chk) {
+    chk.addEventListener("change", setUI);
+  }
+  setUI();
+})();
+</script>
+{% endblock %}

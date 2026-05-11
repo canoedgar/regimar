@@ -1,158 +1,466 @@
 {% extends "base.html" %}
 
 {% block title %}Inicio | Sistema de gestión{% endblock %}
-
 {% block active_inicio %}active{% endblock %}
-{% block page_title %}Panel principal{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
 
 {% block content %}
+<style>
+  .dashboard-option-card {
+    border: 1px solid rgba(0,0,0,.06);
+    border-radius: 1rem;
+    transition: all .2s ease;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+  }
+  .dashboard-option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.08);
+  }
+  .metric-card {
+    border: 0;
+    border-radius: 1rem;
+    box-shadow: 0 .3rem 1rem rgba(0,0,0,.06);
+    height: 100%;
+  }
+  .metric-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    background: rgba(13,110,253,.1);
+    color: #0d6efd;
+  }
+  .mock-chart {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    min-height: 220px;
+  }
+  .mock-bar-wrap {
+    flex: 1;
+    text-align: center;
+  }
+  .mock-bar {
+    width: 100%;
+    border-radius: 14px 14px 6px 6px;
+    background: linear-gradient(180deg, rgba(13,110,253,.85), rgba(13,110,253,.35));
+    min-height: 24px;
+  }
+  .mock-bar.secondary {
+    background: linear-gradient(180deg, rgba(25,135,84,.85), rgba(25,135,84,.35));
+  }
+  .mock-bar.warning {
+    background: linear-gradient(180deg, rgba(255,193,7,.9), rgba(255,193,7,.35));
+  }
+  .mock-bar.info {
+    background: linear-gradient(180deg, rgba(13,202,240,.9), rgba(13,202,240,.35));
+  }
+  .product-pill {
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 999px;
+    padding: .4rem .75rem;
+    background: #fff;
+    font-size: .85rem;
+  }
+  .mini-stat {
+    border-radius: .9rem;
+    background: #f8f9fa;
+    padding: .85rem 1rem;
+    height: 100%;
+  }
+  .table-dashboard thead th {
+    font-size: .82rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #6c757d;
+    border-bottom-width: 1px;
+  }
+  .selector-btn {
+    border-radius: 999px !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .period-select {
+    min-width: 190px;
+    border-radius: .85rem;
+  }
+  .subtle-label {
+    font-size: .8rem;
+    color: #6c757d;
+    margin-bottom: .35rem;
+  }
+</style>
+
 <div class="row g-4">
 
-  <!-- Bienvenida -->
   <div class="col-12">
     <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <h1 class="h4 mb-2">Bienvenido al sistema de gestión</h1>        
-      </div>
-    </div>
-  </div>
+      <div class="card-body p-4">        
 
-  <!-- Tarjetas rápidas -->
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title mb-1">Clientes</h5>
-        <p class="text-muted small mb-2">Gestiona tus clientes y prospectos.</p>
-        <a href="#" class="btn btn-sm btn-outline-primary">Ver clientes</a>
-      </div>
-    </div>
-  </div>
+        <div class="tab-content" id="dashboard-options-content">      
 
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title mb-1">Cotizaciones</h5>
-        <p class="text-muted small mb-2">Crea y da seguimiento a cotizaciones.</p>
-        <a href="#" class="btn btn-sm btn-outline-primary">Ver cotizaciones</a>
-      </div>
-    </div>
-  </div>
+          <!-- OPCION 2 -->
+          <div class="tab-pane fade show active" id="opcion2" role="tabpanel" aria-labelledby="opcion2-tab">
+            <div class="dashboard-option-card p-3 p-lg-4">
+              <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
+                <div>
+                  <h4 class="mb-1">Dashboard de ventas</h4>
+                  <p class="text-muted mb-0">Mockup dinámico para visualizar kilos, venta, costo, utilidad y cartera vencida por periodo.</p>
+                </div>
+                <div>
+                  <div class="subtle-label">Mostrar información</div>
+                  <select class="form-select period-select" id="periodSelector">
+                    <option value="semanal" selected>Semanal</option>
+                    <option value="mensual">Mensual</option>
+                    <option value="anual">Anual</option>
+                  </select>
+                </div>
+              </div>
 
-  <div class="col-md-4">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title mb-1">Proyectos</h5>
-        <p class="text-muted small mb-2">Control de instalaciones y proyectos activos.</p>        
-        <a href="{% url 'proyectos_home' %}" class="btn btn-sm btn-outline-primary">Ver proyectos</a>
-      </div>
-    </div>
-  </div>
+              <div class="row g-3 mb-4">
+                <div class="col-md-6 col-xl-3">
+                  <div class="mini-stat">
+                    <div class="text-muted small">Total kilos</div>
+                    <div class="h3 fw-bold mb-1" id="totalKilos">1,245 kg</div>
+                    <small class="text-muted" id="periodDescription">Semana actual</small>
+                  </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                  <div class="mini-stat">
+                    <div class="text-muted small">Total venta</div>
+                    <div class="h3 fw-bold mb-1" id="totalVenta">$286,500</div>
+                    <small class="text-muted" id="ventaDescription">Ingreso bruto</small>
+                  </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                  <div class="mini-stat">
+                    <div class="text-muted small">Costo estimado</div>
+                    <div class="h3 fw-bold mb-1" id="costoEstimado">$204,274</div>
+                    <small class="text-muted" id="costoDescription">Costo de mercancía</small>
+                  </div>
+                </div>
+                <div class="col-md-6 col-xl-3">
+                  <div class="mini-stat">
+                    <div class="text-muted small">Utilidad</div>
+                    <div class="h3 fw-bold mb-1" id="utilidadTotal">$82,226</div>
+                    <small class="text-success" id="margenTotal">Margen 28.7%</small>
+                  </div>
+                </div>
+              </div>
 
-  <!-- ========================================= -->
-  <!--                 DASHBOARD                 -->
-  <!-- ========================================= -->
+              <div class="row g-4">
+                <div class="col-xl-8">
+                  <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                          <h5 class="mb-1" id="resumenTitulo">Resumen semanal por producto</h5>
+                          <p class="text-muted small mb-0">Tabla mockup con foco en utilidad y margen.</p>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                          <span class="badge text-bg-primary-subtle text-primary">Kilos</span>
+                          <span class="badge text-bg-success-subtle text-success">Pesos</span>
+                          <span class="badge text-bg-warning-subtle text-warning">Margen</span>
+                        </div>
+                      </div>
 
-  <!-- Métricas principales -->
-  <div class="col-12 mt-3">
-    <h5 class="mb-3 text-secondary fw-semibold">Dashboard general</h5>
-  </div>
+                      <div class="table-responsive">
+                        <table class="table align-middle table-dashboard mb-0">
+                          <thead>
+                            <tr>
+                              <th>Producto</th>
+                              <th class="text-end">Kilos</th>
+                              <th class="text-end">Venta</th>
+                              <th class="text-end">Costo</th>
+                              <th class="text-end">Utilidad</th>
+                              <th class="text-end">Margen</th>
+                            </tr>
+                          </thead>
+                          <tbody id="productosBody">
+                            <tr>
+                              <td><strong>Camarón</strong></td>
+                              <td class="text-end">420</td>
+                              <td class="text-end">$108,000</td>
+                              <td class="text-end">$76,500</td>
+                              <td class="text-end">$31,500</td>
+                              <td class="text-end text-success">29.2%</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Pulpo</strong></td>
+                              <td class="text-end">265</td>
+                              <td class="text-end">$59,625</td>
+                              <td class="text-end">$44,850</td>
+                              <td class="text-end">$14,775</td>
+                              <td class="text-end text-success">24.8%</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Salmón</strong></td>
+                              <td class="text-end">310</td>
+                              <td class="text-end">$83,700</td>
+                              <td class="text-end">$58,900</td>
+                              <td class="text-end">$24,800</td>
+                              <td class="text-end text-success">29.6%</td>
+                            </tr>
+                            <tr>
+                              <td><strong>Atún</strong></td>
+                              <td class="text-end">250</td>
+                              <td class="text-end">$35,175</td>
+                              <td class="text-end">$24,024</td>
+                              <td class="text-end">$11,151</td>
+                              <td class="text-end text-success">31.7%</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-  <div class="col-md-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div>
-            <div class="text-muted small">Clientes activos</div>
-            <div class="h4 mb-0 fw-bold">128</div>
-          </div>
-          <div class="text-primary fs-3">
-            <i class="bi bi-people-fill"></i>
-          </div>
+                <div class="col-xl-4">
+                  <div class="card border-0 bg-light h-100">
+                    <div class="card-body">
+                      <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                          <h5 class="mb-1" id="carteraTitulo">Cartera vencida</h5>
+                          <p class="text-muted small mb-0">Clientes con saldo pendiente fuera de plazo.</p>
+                        </div>
+                        <span class="badge text-bg-danger-subtle text-danger">Cobranza</span>
+                      </div>
+
+                      <div class="row g-2 mb-3">
+                        <div class="col-6">
+                          <div class="mini-stat">
+                            <div class="text-muted small">Clientes vencidos</div>
+                            <div class="h4 fw-bold mb-0" id="clientesVencidos">8</div>
+                          </div>
+                        </div>
+                        <div class="col-6">
+                          <div class="mini-stat">
+                            <div class="text-muted small">Saldo vencido</div>
+                            <div class="h4 fw-bold mb-0" id="saldoVencido">$148,900</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="table-responsive">
+                        <table class="table align-middle table-dashboard mb-0">
+                          <thead>
+                            <tr>
+                              <th>Cliente</th>
+                              <th class="text-end">Vencido</th>
+                              <th class="text-end">Días</th>
+                            </tr>
+                          </thead>
+                          <tbody id="carteraBody">
+                            <tr>
+                              <td>
+                                <strong>Mariscos del Pacífico</strong>
+                                <div class="small text-muted">3 facturas</div>
+                              </td>
+                              <td class="text-end text-danger">$42,500</td>
+                              <td class="text-end">18</td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <strong>Distribuidora Bahía Norte</strong>
+                                <div class="small text-muted">2 facturas</div>
+                              </td>
+                              <td class="text-end text-danger">$31,800</td>
+                              <td class="text-end">11</td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <strong>Restaurante Costa Azul</strong>
+                                <div class="small text-muted">1 factura</div>
+                              </td>
+                              <td class="text-end text-danger">$27,400</td>
+                              <td class="text-end">24</td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <strong>Comercializadora Marejada</strong>
+                                <div class="small text-muted">2 facturas</div>
+                              </td>
+                              <td class="text-end text-danger">$19,600</td>
+                              <td class="text-end">9</td>
+                            </tr>
+                            <tr>
+                              <td>
+                                <strong>Hotel Marina Suites</strong>
+                                <div class="small text-muted">Saldo parcial</div>
+                              </td>
+                              <td class="text-end text-danger">$27,600</td>
+                              <td class="text-end">15</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>          
+
         </div>
-        <small class="text-success">▲ +12 este mes</small>
       </div>
     </div>
   </div>
 
-  <div class="col-md-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div>
-            <div class="text-muted small">Cotizaciones del mes</div>
-            <div class="h4 mb-0 fw-bold">34</div>
-          </div>
-          <div class="text-warning fs-3">
-            <i class="bi bi-file-earmark-bar-graph"></i>
-          </div>
-        </div>
-        <small class="text-danger">▼ -3 respecto a abril</small>
-      </div>
-    </div>
-  </div>
+</div>
 
-  <div class="col-md-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div>
-            <div class="text-muted small">Proyectos activos</div>
-            <div class="h4 mb-0 fw-bold">15</div>
-          </div>
-          <div class="text-info fs-3">
-            <i class="bi bi-diagram-3-fill"></i>
-          </div>
-        </div>
-        <small class="text-success">▲ +2 nuevos</small>
-      </div>
-    </div>
-  </div>
+<script>
+  (function () {
+    const dashboardData = {
+      semanal: {
+        periodDescription: 'Semana actual',
+        ventaDescription: 'Ingreso bruto',
+        costoDescription: 'Costo de mercancía',
+        resumenTitulo: 'Resumen semanal por producto',
+        totalKilos: '1,245 kg',
+        totalVenta: '$286,500',
+        costoEstimado: '$204,274',
+        utilidadTotal: '$82,226',
+        margenTotal: 'Margen 28.7%',
+        clientesVencidos: '8',
+        saldoVencido: '$148,900',
+        productos: [
+          ['Camarón', '420', '$108,000', '$76,500', '$31,500', '29.2%'],
+          ['Pulpo', '265', '$59,625', '$44,850', '$14,775', '24.8%'],
+          ['Salmón', '310', '$83,700', '$58,900', '$24,800', '29.6%'],
+          ['Atún', '250', '$35,175', '$24,024', '$11,151', '31.7%'],
+        ],
+        cartera: [
+          ['Mariscos del Pacífico', '3 facturas', '$42,500', '18'],
+          ['Distribuidora Bahía Norte', '2 facturas', '$31,800', '11'],
+          ['Restaurante Costa Azul', '1 factura', '$27,400', '24'],
+          ['Comercializadora Marejada', '2 facturas', '$19,600', '9'],
+          ['Hotel Marina Suites', 'Saldo parcial', '$27,600', '15'],
+        ]
+      },
+      mensual: {
+        periodDescription: 'Mes actual',
+        ventaDescription: 'Ingreso acumulado',
+        costoDescription: 'Costo acumulado',
+        resumenTitulo: 'Resumen mensual por producto',
+        totalKilos: '5,380 kg',
+        totalVenta: '$1,148,900',
+        costoEstimado: '$821,470',
+        utilidadTotal: '$327,430',
+        margenTotal: 'Margen 28.5%',
+        clientesVencidos: '14',
+        saldoVencido: '$386,250',
+        productos: [
+          ['Camarón', '1,820', '$435,200', '$308,400', '$126,800', '29.1%'],
+          ['Pulpo', '1,145', '$251,900', '$188,760', '$63,140', '25.1%'],
+          ['Salmón', '1,360', '$344,800', '$244,900', '$99,900', '29.0%'],
+          ['Atún', '1,055', '$116,000', '$79,410', '$36,590', '31.5%'],
+        ],
+        cartera: [
+          ['Mariscos del Pacífico', '5 facturas', '$96,400', '21'],
+          ['Distribuidora Bahía Norte', '3 facturas', '$74,250', '16'],
+          ['Restaurante Costa Azul', '2 facturas', '$58,300', '28'],
+          ['Comercializadora Marejada', '2 facturas', '$49,100', '13'],
+          ['Hotel Marina Suites', 'Saldo parcial', '$108,200', '19'],
+        ]
+      },
+      anual: {
+        periodDescription: 'Año actual',
+        ventaDescription: 'Ingreso acumulado',
+        costoDescription: 'Costo acumulado',
+        resumenTitulo: 'Resumen anual por producto',
+        totalKilos: '64,950 kg',
+        totalVenta: '$13,986,000',
+        costoEstimado: '$10,024,200',
+        utilidadTotal: '$3,961,800',
+        margenTotal: 'Margen 28.3%',
+        clientesVencidos: '29',
+        saldoVencido: '$1,248,700',
+        productos: [
+          ['Camarón', '21,800', '$5,280,000', '$3,761,000', '$1,519,000', '28.8%'],
+          ['Pulpo', '13,950', '$3,062,500', '$2,298,700', '$763,800', '24.9%'],
+          ['Salmón', '16,400', '$4,220,000', '$2,980,800', '$1,239,200', '29.4%'],
+          ['Atún', '12,800', '$1,423,500', '$983,700', '$439,800', '30.9%'],
+        ],
+        cartera: [
+          ['Mariscos del Pacífico', '11 facturas', '$296,500', '34'],
+          ['Distribuidora Bahía Norte', '7 facturas', '$238,900', '26'],
+          ['Restaurante Costa Azul', '4 facturas', '$185,300', '41'],
+          ['Comercializadora Marejada', '3 facturas', '$159,600', '22'],
+          ['Hotel Marina Suites', 'Saldo parcial', '$368,400', '30'],
+        ]
+      }
+    };
 
-  <div class="col-md-3">
-    <div class="card shadow-sm border-0">
-      <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <div>
-            <div class="text-muted small">Instalaciones finalizadas</div>
-            <div class="h4 mb-0 fw-bold">7</div>
-          </div>
-          <div class="text-success fs-3">
-            <i class="bi bi-check2-circle"></i>
-          </div>
-        </div>
-        <small class="text-muted">Últimos 30 días</small>
-      </div>
-    </div>
-  </div>
+    const periodSelector = document.getElementById('periodSelector');
+    const totalKilos = document.getElementById('totalKilos');
+    const periodDescription = document.getElementById('periodDescription');
+    const totalVenta = document.getElementById('totalVenta');
+    const ventaDescription = document.getElementById('ventaDescription');
+    const costoEstimado = document.getElementById('costoEstimado');
+    const costoDescription = document.getElementById('costoDescription');
+    const utilidadTotal = document.getElementById('utilidadTotal');
+    const margenTotal = document.getElementById('margenTotal');
+    const resumenTitulo = document.getElementById('resumenTitulo');
+    const clientesVencidos = document.getElementById('clientesVencidos');
+    const saldoVencido = document.getElementById('saldoVencido');
+    const productosBody = document.getElementById('productosBody');
+    const carteraBody = document.getElementById('carteraBody');
 
-  <!-- Sección inferior: listas, actividades, etc. -->
-  <div class="col-md-7 mt-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <h5 class="card-title">Últimas actividades</h5>
-        <ul class="list-group list-group-flush small">
-          <li class="list-group-item">🔧 Proyecto “Sucursal Nainari” actualizado.</li>
-          <li class="list-group-item">📃 Nueva cotización creada por *admin*.</li>
-          <li class="list-group-item">👤 Cliente “Juan Pérez” agregado.</li>
-          <li class="list-group-item">📦 Nuevo producto registrado: Camarón mediano</li>
-        </ul>
-      </div>
-    </div>
-  </div>
+    function renderProductos(rows) {
+      productosBody.innerHTML = rows.map((row) => `
+        <tr>
+          <td><strong>${row[0]}</strong></td>
+          <td class="text-end">${row[1]}</td>
+          <td class="text-end">${row[2]}</td>
+          <td class="text-end">${row[3]}</td>
+          <td class="text-end">${row[4]}</td>
+          <td class="text-end text-success">${row[5]}</td>
+        </tr>
+      `).join('');
+    }
 
-  <div class="col-md-5 mt-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <h5 class="card-title mb-3">Pendientes</h5>
-        <div class="small">
-          <p class="mb-2">• Enviar cotización a “Grupo del Valle”.</p>
-          <p class="mb-2">• Confirmar instalación en Col. Las Haciendas.</p>
-          <p class="mb-2">• Subir catálogo actualizado.</p>
-        </div>
-      </div>
-    </div>
-  </div>
+    function renderCartera(rows) {
+      carteraBody.innerHTML = rows.map((row) => `
+        <tr>
+          <td>
+            <strong>${row[0]}</strong>
+            <div class="small text-muted">${row[1]}</div>
+          </td>
+          <td class="text-end text-danger">${row[2]}</td>
+          <td class="text-end">${row[3]}</td>
+        </tr>
+      `).join('');
+    }
 
-</div> <!-- row -->
+    function updateDashboard(period) {
+      const data = dashboardData[period];
+      if (!data) return;
+
+      totalKilos.textContent = data.totalKilos;
+      periodDescription.textContent = data.periodDescription;
+      totalVenta.textContent = data.totalVenta;
+      ventaDescription.textContent = data.ventaDescription;
+      costoEstimado.textContent = data.costoEstimado;
+      costoDescription.textContent = data.costoDescription;
+      utilidadTotal.textContent = data.utilidadTotal;
+      margenTotal.textContent = data.margenTotal;
+      resumenTitulo.textContent = data.resumenTitulo;
+      clientesVencidos.textContent = data.clientesVencidos;
+      saldoVencido.textContent = data.saldoVencido;
+
+      renderProductos(data.productos);
+      renderCartera(data.cartera);
+    }
+
+    periodSelector.addEventListener('change', function () {
+      updateDashboard(this.value);
+    });
+
+    updateDashboard(periodSelector.value);
+  })();
+</script>
 {% endblock %}
-

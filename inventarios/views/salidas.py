@@ -1,17 +1,25 @@
+from decimal import Decimal, InvalidOperation
+
 from catalogos.models import Almacen, Producto, Cliente
-from ..models import SalidaInventario, SalidaInventarioDetalle
+from ..models import SalidaInventario, SalidaInventarioDetalle, InventarioStock
 from ..forms import SalidaInventarioDetalleForm, SalidaVentaForm, SalidaProyectoForm
 from django.db.models import F, Sum, ExpressionWrapper, DecimalField
 from django.db.models.functions import Round
 from django.db import transaction
 from django.contrib import messages
 from ..utils import get_almacen_default
-from ..services.stock import (agrupar_requeridos_por_producto, validar_stock_suficiente, errores_stock_humano, aplicar_movimientos_salida)
+from ..services.stock import (
+    agrupar_requeridos_por_producto,
+    validar_stock_suficiente,
+    errores_stock_humano,
+    aplicar_movimientos_salida,
+)
 from ..services.folios import next_folio_movimiento
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from catalogos.sat_catalogos import REGIMEN_FISCAL_CHOICES
+
 
 def salidas_list(request):
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
@@ -50,6 +58,7 @@ def salidas_list(request):
     return render(request, "inventarios/salidas_list.html", context)
 
 
+
 def salida_detalle(request, pk):
     salida = get_object_or_404(
         SalidaInventario.objects
@@ -81,6 +90,159 @@ def salida_detalle(request, pk):
         "total_importe": totales["total_importe"] or 0,
     })
 
+
+
+
+
+def _decimal_text(value):
+    dec = _to_decimal(value, default=Decimal("0"))
+    txt = format(dec, "f")
+    if "." in txt:
+        txt = txt.rstrip("0").rstrip(".")
+    return txt or "0"
+
+
+def _nombre_metrica(obj):
+    if obj is None:
+        return ""
+    return (
+        getattr(obj, "abreviatura", None)
+        or getattr(obj, "nombre", None)
+        or getattr(obj, "nombre_metrica", None)
+        or str(obj)
+    )
+
+
+def _conversiones_producto(producto):
+    default_name = _nombre_metrica(getattr(producto, "metrica", None)) or "kg"
+    conversiones = [{
+        "id": "default",
+        "cantidad_origen": 1.0,
+        "unidad_origen": default_name,
+        "factor_conversion": 1.0,
+        "equivalencia_texto": f"1 {default_name} = 1 {default_name}",
+        "es_default": True,
+    }]
+
+    rel = None
+    for attr in ("conversiones_metricas", "conversiones"):
+        if hasattr(producto, attr):
+            rel = getattr(producto, attr)
+            break
+
+    if rel is None:
+        return conversiones
+
+    try:
+        rows = rel.all()
+    except Exception:
+        return conversiones
+
+    for conv in rows:
+        cantidad_origen = _to_decimal(getattr(conv, "cantidad_origen", None), default=Decimal("1")) or Decimal("1")
+        factor = _to_decimal(getattr(conv, "factor_conversion", None), default=Decimal("0")) or Decimal("0")
+        unidad_origen = _nombre_metrica(getattr(conv, "unidad_origen", None)) or _nombre_metrica(getattr(conv, "metrica", None)) or default_name
+        conversiones.append({
+            "id": str(getattr(conv, "id", "")) or f"conv-{len(conversiones)}",
+            "cantidad_origen": float(cantidad_origen),
+            "unidad_origen": unidad_origen,
+            "factor_conversion": float(factor),
+            "equivalencia_texto": getattr(conv, "equivalencia_texto", None) or f"{_decimal_text(cantidad_origen)} {unidad_origen} = {_decimal_text(factor)} {default_name}",
+            "es_default": False,
+        })
+
+    return conversiones
+
+
+def build_productos_ui():
+    stocks = (
+        InventarioStock.objects
+        .filter(almacen__es_activo=True)
+        .select_related("producto", "almacen")
+        .order_by("producto__nombre", "almacen__tipo", "almacen__nombre")
+    )
+
+    productos_map = {}
+
+    for s in stocks:
+        p = s.producto
+        pid = str(p.id)
+        item = productos_map.setdefault(pid, {
+            "id": pid,
+            "nombre": p.nombre,
+            "stock": 0.0,
+            "precio": float(getattr(p, "precio_venta", 0) or 0),
+            "codigo": getattr(p, "codigo", "") or "",
+            "clave_busqueda": getattr(p, "clave_busqueda", "") or "",
+            "metrica_default": _nombre_metrica(getattr(p, "metrica", None)) or "kg",
+            "conversiones": _conversiones_producto(p),
+            "almacenes": [],
+        })
+
+        cantidad = float(s.cantidad or 0)
+        item["stock"] += cantidad
+        item["almacenes"].append({
+            "id": str(s.almacen_id),
+            "codigo": getattr(s.almacen, "codigo", "") or "",
+            "nombre": getattr(s.almacen, "nombre", "") or "",
+            "tipo": getattr(s.almacen, "tipo", "") or "",
+            "stock": cantidad,
+            "label": f"{getattr(s.almacen, 'codigo', '')} - {getattr(s.almacen, 'nombre', '')}".strip(" -"),
+        })
+
+    productos_ui = list(productos_map.values())
+    productos_ui.sort(key=lambda x: (x.get("nombre") or "").lower())
+    return productos_ui
+
+
+
+def _to_decimal(value, default=None):
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        return default
+
+
+
+def _parse_lineas_venta(request, productos_permitidos, almacenes_permitidos):
+    producto_ids = request.POST.getlist("linea_producto_id")
+    almacen_ids = request.POST.getlist("linea_almacen_id")
+    cantidades = request.POST.getlist("linea_cantidad")
+
+    if not (len(producto_ids) == len(almacen_ids) == len(cantidades)):
+        return None, "No fue posible interpretar las asignaciones de almacén de la venta."
+
+    lineas = []
+    for raw_pid, raw_aid, raw_qty in zip(producto_ids, almacen_ids, cantidades):
+        pid = (raw_pid or "").strip()
+        aid = (raw_aid or "").strip()
+        qty = _to_decimal(raw_qty, default=None)
+
+        if not pid or not aid:
+            return None, "Hay asignaciones de almacén incompletas en el detalle."
+
+        producto = productos_permitidos.get(pid)
+        almacen = almacenes_permitidos.get(aid)
+
+        if not producto:
+            return None, "Uno de los productos seleccionados ya no es válido."
+        if not almacen:
+            return None, "Uno de los almacenes seleccionados ya no es válido."
+        if qty is None or qty <= 0:
+            return None, f"La cantidad asignada para {producto} debe ser mayor a 0."
+
+        lineas.append({
+            "producto": producto,
+            "almacen": almacen,
+            "cantidad": qty,
+        })
+
+    if not lineas:
+        return None, "Agrega al menos un producto a la venta."
+
+    return lineas, None
+
+
 @transaction.atomic
 def salida_venta_create(request):
     DetalleFormSet = modelformset_factory(
@@ -90,27 +252,21 @@ def salida_venta_create(request):
         can_delete=True,
     )
 
-    productos = Producto.objects.all().order_by("nombre")
     clientes = Cliente.objects.all().order_by("nombre_fiscal")
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
 
-    almacen = get_almacen_default()
-    if not almacen:
+    almacen_default = get_almacen_default() or almacenes_qs.first()
+    if not almacen_default:
         messages.error(request, "No hay almacenes activos. Crea al menos uno para operar inventario.")
         return redirect("almacenes_create")
 
-    # Si viene almacen_id, úsalo (POST)
-    if request.method == "POST":
-        almacen_id = (request.POST.get("almacen_id") or "").strip()
-        if almacen_id.isdigit():
-            almacen = almacenes_qs.filter(pk=int(almacen_id)).first() or almacen
+    productos_ui = build_productos_ui()
 
     if request.method == "POST":
         form = SalidaVentaForm(request.POST)
         formset = DetalleFormSet(request.POST, queryset=SalidaInventarioDetalle.objects.none())
 
         if form.is_valid() and formset.is_valid():
-            # 1) Preparar detalles válidos
             detalles = formset.save(commit=False)
 
             detalles_validos = []
@@ -124,10 +280,10 @@ def salida_venta_create(request):
                     return render(request, "inventarios/salida_venta_form.html", {
                         "form": form,
                         "formset": formset,
-                        "productos": productos,
+                        "productos_ui": productos_ui,
                         "clientes": clientes,
                         "almacenes": almacenes_qs,
-                        "almacen": almacen,
+                        "almacen": almacen_default,
                         "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
                     })
 
@@ -138,63 +294,100 @@ def salida_venta_create(request):
                 return render(request, "inventarios/salida_venta_form.html", {
                     "form": form,
                     "formset": formset,
-                    "productos": productos,
+                    "productos_ui": productos_ui,
                     "clientes": clientes,
                     "almacenes": almacenes_qs,
-                    "almacen": almacen,
+                    "almacen": almacen_default,
                     "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
                 })
 
-            # 2) Validar stock (sumando productos repetidos)
-            requeridos = agrupar_requeridos_por_producto(
-                (d.producto_id, d.cantidad) for d in detalles_validos
-            )
-
-            productos_por_id = {
-                p.id: str(p)
-                for p in Producto.objects.filter(id__in=requeridos.keys())
+            productos_permitidos = {
+                str(p.id): p
+                for p in Producto.objects.filter(id__in=[d.producto_id for d in detalles_validos])
             }
+            almacenes_permitidos = {str(a.id): a for a in almacenes_qs}
 
-            ok, disponibles, faltantes = validar_stock_suficiente(
-                almacen_id=almacen.id,
-                requeridos=requeridos,
+            lineas_stock, lineas_error = _parse_lineas_venta(
+                request=request,
+                productos_permitidos=productos_permitidos,
+                almacenes_permitidos=almacenes_permitidos,
             )
-
-            if not ok:
-                for msg in errores_stock_humano(
-                    almacen_nombre=str(almacen),
-                    faltantes=faltantes,
-                    disponibles=disponibles,
-                    productos_por_id=productos_por_id,
-                ):
-                    messages.error(request, msg)
-
+            if lineas_error:
+                messages.error(request, lineas_error)
                 return render(request, "inventarios/salida_venta_form.html", {
                     "form": form,
                     "formset": formset,
-                    "productos": productos,
+                    "productos_ui": productos_ui,
                     "clientes": clientes,
                     "almacenes": almacenes_qs,
-                    "almacen": almacen,
+                    "almacen": almacen_default,
                     "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
                 })
 
-            # 3) Guardar cabecera
+            requeridos_por_almacen = {}
+            for linea in lineas_stock:
+                aid = linea["almacen"].id
+                pid = linea["producto"].id
+                requeridos_por_almacen.setdefault(aid, {})
+                requeridos_por_almacen[aid][pid] = requeridos_por_almacen[aid].get(pid, Decimal("0")) + linea["cantidad"]
+
+            productos_por_id = {
+                p.id: str(p)
+                for p in Producto.objects.filter(id__in=[d.producto_id for d in detalles_validos])
+            }
+
+            for aid, requeridos in requeridos_por_almacen.items():
+                ok, disponibles, faltantes = validar_stock_suficiente(
+                    almacen_id=aid,
+                    requeridos=requeridos,
+                )
+                if not ok:
+                    for msg in errores_stock_humano(
+                        almacen_nombre=str(almacenes_permitidos[str(aid)]),
+                        faltantes=faltantes,
+                        disponibles=disponibles,
+                        productos_por_id=productos_por_id,
+                    ):
+                        messages.error(request, msg)
+
+                    return render(request, "inventarios/salida_venta_form.html", {
+                        "form": form,
+                        "formset": formset,
+                        "productos_ui": productos_ui,
+                        "clientes": clientes,
+                        "almacenes": almacenes_qs,
+                        "almacen": almacen_default,
+                        "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
+                    })
+
             salida = form.save(commit=False)
-            salida.almacen = almacen
+            salida.almacen = lineas_stock[0]["almacen"] if lineas_stock else almacen_default
+
+            almacenes_usados = []
+            seen_almacenes = set()
+            for linea in lineas_stock:
+                key = str(linea["almacen"].id)
+                if key not in seen_almacenes:
+                    seen_almacenes.add(key)
+                    almacenes_usados.append(str(linea["almacen"]))
+
+            if len(almacenes_usados) > 1:
+                nota_almacenes = "Almacenes surtidos: " + ", ".join(almacenes_usados)
+                salida.observaciones = (
+                    (salida.observaciones or "").strip() + ("\n" if (salida.observaciones or "").strip() else "") + nota_almacenes
+                )
+
             salida.save()
 
-            # deletes (en create casi no aplica, pero correcto)
             for obj in getattr(formset, "deleted_objects", []):
                 obj.delete()
 
-            # 4) Guardar detalles
             for d in detalles_validos:
                 d.salida = salida
                 d.save()
 
-            # 5) Descontar stock en lote por producto
-            aplicar_movimientos_salida(almacen_id=almacen.id, requeridos=requeridos)
+            for aid, requeridos in requeridos_por_almacen.items():
+                aplicar_movimientos_salida(almacen_id=aid, requeridos=requeridos)
 
             messages.success(request, "Salida por venta creada correctamente.")
             return redirect("salidas_list")
@@ -211,12 +404,13 @@ def salida_venta_create(request):
     return render(request, "inventarios/salida_venta_form.html", {
         "form": form,
         "formset": formset,
-        "productos": productos,
+        "productos_ui": productos_ui,
         "clientes": clientes,
         "almacenes": almacenes_qs,
-        "almacen": almacen,
+        "almacen": almacen_default,
         "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
     })
+
 
 @transaction.atomic
 def salida_proyecto_create(request):
@@ -252,7 +446,6 @@ def salida_proyecto_create(request):
                 "almacen": almacen,
             })
 
-        # 1) Validar que exista al menos un producto válido
         detalles_validos = []
         for f in formset:
             cd = getattr(f, "cleaned_data", None)
@@ -279,7 +472,6 @@ def salida_proyecto_create(request):
                 "almacen": almacen,
             })
 
-        # 2) Validar productos duplicados (si quieres mantener esta regla)
         seen = set()
         duplicados = set()
         for d in detalles_validos:
@@ -300,7 +492,6 @@ def salida_proyecto_create(request):
                 "almacen": almacen,
             })
 
-        # 3) Validar stock (sumando por producto)
         requeridos = agrupar_requeridos_por_producto(
             (d["producto"].id, d["cantidad"]) for d in detalles_validos
         )
@@ -331,12 +522,10 @@ def salida_proyecto_create(request):
                 "almacen": almacen,
             })
 
-        # 4) Guardar cabecera
         salida = form.save(commit=False)
         salida.almacen = almacen
         salida.save()
 
-        # 5) Guardar detalles
         for d in detalles_validos:
             SalidaInventarioDetalle.objects.create(
                 salida=salida,
@@ -345,13 +534,11 @@ def salida_proyecto_create(request):
                 precio_unitario=d["precio"],
             )
 
-        # 6) Descontar stock en lote por producto
         aplicar_movimientos_salida(almacen_id=almacen.id, requeridos=requeridos)
 
         messages.success(request, "Salida por proyecto registrada correctamente.")
         return redirect("salidas_list")
 
-    # GET
     form = SalidaProyectoForm(initial={
         "folio": next_folio_movimiento(tipo="PRY", width=6),
         "fecha": timezone.localdate(),

@@ -1,264 +1,423 @@
 /* ============================
+   TEMA GLOBAL AZUL / NARANJA
+   ============================ */
+:root,
+html[data-theme="light"],
+body[data-theme="light"] {
+  --color-bg: #f4f7fb;
+  --color-bg-alt: #eaf1fb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f8fbff;
+  --color-primary: #0f3d91;
+  --color-primary-strong: #082a66;
+  --color-primary-soft: #3b82f6;
+  --color-secondary: #f97316;
+  --color-secondary-soft: #fb923c;
+  --color-accent: #ffb703;
+  --color-text: #1f2937;
+  --color-text-soft: #5b6472;
+  --color-text-inverse: #ffffff;
+  --color-border: rgba(15, 61, 145, 0.12);
+  --color-border-strong: rgba(15, 61, 145, 0.22);
+  --color-sidebar-text: rgba(255, 255, 255, 0.88);
+  --color-sidebar-muted: rgba(255, 255, 255, 0.58);
+  --color-sidebar-hover: rgba(255, 183, 3, 0.18);
+  --color-sidebar-active: #ffd166;
+  --shadow-soft: 0 14px 34px rgba(8, 42, 102, 0.14);
+  --shadow-strong: 0 18px 45px rgba(7, 24, 58, 0.28);
+  --focus-ring: 0 0 0 0.2rem rgba(249, 115, 22, 0.22);
+  --gradient-main: linear-gradient(135deg, #082a66 0%, #0f3d91 38%, #f97316 100%);
+  --gradient-sidebar: linear-gradient(180deg, #082a66 0%, #0f3d91 58%, #f97316 100%);
+  --gradient-auth: linear-gradient(145deg, #082a66 0%, #0f3d91 45%, #fb923c 100%);
+  --gradient-hero: linear-gradient(160deg, #0a224f 0%, #123f93 56%, #f97316 100%);
+  --badge-bg: rgba(249, 115, 22, 0.12);
+}
+
+html[data-theme="dark"],
+body[data-theme="dark"] {
+  --color-bg: #0b1220;
+  --color-bg-alt: #111b2e;
+  --color-surface: #162033;
+  --color-surface-soft: #1b2940;
+  --color-primary: #60a5fa;
+  --color-primary-strong: #1d4ed8;
+  --color-primary-soft: #93c5fd;
+  --color-secondary: #fb923c;
+  --color-secondary-soft: #fdba74;
+  --color-accent: #ffd166;
+  --color-text: #e5edf8;
+  --color-text-soft: #aebcd0;
+  --color-text-inverse: #ffffff;
+  --color-border: rgba(147, 197, 253, 0.14);
+  --color-border-strong: rgba(251, 146, 60, 0.24);
+  --color-sidebar-text: rgba(229, 237, 248, 0.9);
+  --color-sidebar-muted: rgba(229, 237, 248, 0.62);
+  --color-sidebar-hover: rgba(251, 146, 60, 0.16);
+  --color-sidebar-active: #ffd166;
+  --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
+  --shadow-strong: 0 18px 45px rgba(0, 0, 0, 0.42);
+  --focus-ring: 0 0 0 0.2rem rgba(251, 146, 60, 0.22);
+  --gradient-main: linear-gradient(135deg, #09111f 0%, #13233d 42%, #7c2d12 100%);
+  --gradient-sidebar: linear-gradient(180deg, #0b1220 0%, #13233d 56%, #7c2d12 100%);
+  --gradient-auth: linear-gradient(145deg, #0b1220 0%, #13233d 45%, #9a3412 100%);
+  --gradient-hero: linear-gradient(160deg, #111b2e 0%, #1b2940 58%, #9a3412 100%);
+  --badge-bg: rgba(251, 146, 60, 0.14);
+}
+
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.solar-sidebar,
+.solar-main-header,
+.auth-card,
+.auth-hero,
+.bg-solar-main,
+.bg-solar-auth,
+.solar-badge-user,
+.form-control,
+.form-select,
+.input-group-text,
+.btn-solar {
+  transition:
+    background 0.25s ease,
+    background-color 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.solar-main-header {
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent);
+}
+
+.theme-switcher {
+  min-width: 110px;
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.theme-switcher:focus {
+  border-color: var(--color-secondary);
+  box-shadow: var(--focus-ring);
+}
+
+.solar-main-content {
+  color: var(--color-text);
+}
+
+/* ============================
    AUTH (Login / Registro)
    ============================ */
-   .bg-solar-auth {
-    min-height: 100vh;
-    margin: 0;
-    background: linear-gradient(135deg, #021b79 0%, #0575e6 40%, #fbb034 100%);
-    display: flex;
-    align-items: center;
-  }
-  
-  .auth-wrapper {
-    max-width: 900px;
-    width: 100%;
-  }
-  
-  .auth-card {
-    border-radius: 1.5rem;
-    overflow: hidden;
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
-    background: #ffffff;
-  }
-  
+.bg-solar-auth {
+  /*min-height: 100vh;*/
+  max-height: 900px;
+  margin: 0;
+  background: var(--gradient-auth);
+  display: flex;
+  align-items: center;
+}
+
+.auth-wrapper {
+  max-width: 900px;
+  width: 100%;
+}
+
+.auth-card {
+  border-radius: 1.5rem;
+  overflow: hidden;
+  box-shadow: var(--shadow-strong);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.auth-hero {
+  background: var(--gradient-hero);
+  color: var(--color-text-inverse);
+}
+
+.auth-hero h2 {
+  font-weight: 700;
+}
+
+.sun-icon {
+  font-size: 3rem;
+}
+
+.auth-form-title {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  border-color: var(--color-border);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--color-secondary);
+  box-shadow: var(--focus-ring);
+}
+
+.btn-solar {
+  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+  border: none;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.btn-solar:hover {
+  filter: brightness(0.97);
+}
+
+@media (max-width: 767.98px) {
   .auth-hero {
-    background: linear-gradient(160deg, #022140 0%, #034078 60%, #0a9396 100%);
-    color: #fff;
+    text-align: center;
   }
-  
-  .auth-hero h2 {
-    font-weight: 700;
-  }
-  
-  .sun-icon {
-    font-size: 3rem;
-  }
-  
-  .auth-form-title {
-    font-weight: 600;
-    color: #034078;
-  }
-  
-  .form-control:focus {
-    border-color: #fbb034;
-    box-shadow: 0 0 0 0.2rem rgba(251, 176, 52, 0.25);
-  }
-  
-  .btn-solar {
-    background: linear-gradient(135deg, #fbb034 0%, #ffdd00 100%);
-    border: none;
-    color: #1a1a1a;
-    font-weight: 600;
-  }
-  
-  .btn-solar:hover {
-    filter: brightness(0.95);
-  }
-  
-  @media (max-width: 767.98px) {
-    .auth-hero {
-      text-align: center;
-    }
-  }
-  
-  /* ============================
-     MAIN BACKGROUND
-     ============================ */
-  .bg-solar-main {
-    min-height: 100vh;
-    margin: 0;
-    background: linear-gradient(135deg, #021b79 0%, #0575e6 40%, #fbb034 100%);
-  }
-  
-  /* ============================
-     LAYOUT PRINCIPAL
-     ============================ */
-  .solar-layout {
-    min-height: 100vh;
-  }
-  
-  /* ============================
-     SIDEBAR (Desktop base)
-     ============================ */
-  .solar-sidebar {
-    width: 260px;
-    background: linear-gradient(160deg, #022140 0%, #034078 60%, #0a9396 100%);
-    color: #ffffff;
-    box-shadow: 4px 0 18px rgba(0, 0, 0, 0.35);
-    position: relative;
-    z-index: 100;
-  }
-  
-  .solar-sidebar .brand {
-    padding: 1.5rem 1.25rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .solar-sidebar .brand-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .solar-sidebar .brand-icon {
-    font-size: 1.6rem;
-  }
-  
-  .solar-sidebar .nav-link {
-    color: rgba(255, 255, 255, 0.85);
-    padding: 0.75rem 1.25rem;
-    border-radius: 0;
-    font-size: 0.95rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  
-  .solar-sidebar .nav-link i {
-    font-size: 1.1rem;
-    opacity: 0.9;
-  }
-  
-  .solar-sidebar .nav-link:hover,
-  .solar-sidebar .nav-link.active,
-  .solar-sidebar .nav-link.is-active {
-    background: rgba(251, 176, 52, 0.2);
-    color: #ffdd00;
-    font-weight: 700;
-  }
-  
-  .solar-sidebar .nav-section-title {
-    padding: 1rem 1.25rem 0.25rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: rgba(255, 255, 255, 0.5);
-  }
-  
-  /* Logo del sidebar */
-  .logo-sidebar {
-    height: 80px;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
-  }
-  
-  /* ============================
-     MAIN
-     ============================ */
+}
+
+/* ============================
+   MAIN BACKGROUND
+   ============================ */
+.bg-solar-main {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--gradient-main);
+  color: var(--color-text);
+}
+
+/* ============================
+   LAYOUT PRINCIPAL
+   ============================ */
+.solar-layout {
+  min-height: 100vh;
+}
+
+/* ============================
+   SIDEBAR (Desktop base)
+   ============================ */
+.solar-sidebar {
+  width: 260px;
+  background: var(--gradient-sidebar);
+  color: var(--color-text-inverse);
+  box-shadow: 4px 0 18px rgba(0, 0, 0, 0.28);
+  position: relative;
+  z-index: 100;
+}
+
+.solar-sidebar .brand {
+  padding: 1.5rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.solar-sidebar .brand-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.solar-sidebar .brand-icon {
+  font-size: 1.6rem;
+}
+
+.solar-sidebar .nav-link {
+  color: var(--color-sidebar-text);
+  padding: 0.65rem 1.25rem;
+  border-radius: 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.solar-sidebar .nav-link i {
+  font-size: 1.05rem;
+  opacity: 0.92;
+}
+
+.solar-sidebar .nav-link:hover,
+.solar-sidebar .nav-link.active,
+.solar-sidebar .nav-link.is-active {
+  background: var(--color-sidebar-hover);
+  color: var(--color-sidebar-active);
+  font-weight: 700;
+}
+
+.solar-sidebar .nav-section-title {
+  padding: 1rem 1.25rem 0.25rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-sidebar-muted);
+}
+
+/* Logo del sidebar */
+.logo-sidebar {
+  height: 80px;
+  width: auto;
+  object-fit: contain;
+  padding: 0.35rem;
+  border-radius: 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.35));
+}
+
+/* ============================
+   MAIN
+   ============================ */
+.solar-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 992px) {
   .solar-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    backdrop-filter: blur(10px);
   }
-  
-  /* IMPORTANTE:
-     backdrop-filter puede crear stacking contexts y romper modales/overlays.
-     Lo aplicamos SOLO en desktop para mantener estética sin bugs en móvil/modales. */
-  @media (min-width: 992px) {
-    .solar-main {
-      backdrop-filter: blur(10px);
-    }
-  }
-  
-  .solar-main-header {
-    background: rgba(255, 255, 255, 0.95);
-    padding: 0.75rem 1.5rem;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.15);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .solar-main-header-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #034078;
-    margin: 0;
-  }
-  
-  .solar-main-content {
-    padding: 1.5rem;
-  }
-  
-  /* Badge usuario */
-  .solar-badge-user {
-    background: rgba(251, 176, 52, 0.1);
-    border-radius: 999px;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.8rem;
-    color: #034078;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-  
-  /* ============================
-     TOGGLE BUTTON
-     ============================ */
+}
+
+.solar-main-header {
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.75rem 1.5rem;
+  box-shadow: 0 4px 18px rgba(8, 42, 102, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(15, 61, 145, 0.08);
+}
+
+html[data-theme="dark"] .solar-main-header {
+  background: rgba(22, 32, 51, 0.92);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
+  border-bottom-color: rgba(147, 197, 253, 0.08);
+}
+
+.solar-main-header-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.solar-main-content {
+  padding: 1.5rem;
+}
+
+.solar-main-content .card,
+.solar-main-content .table,
+.solar-main-content .modal-content,
+.solar-main-content .dropdown-menu {
+  border-color: var(--color-border);
+}
+
+/* Badge usuario */
+.solar-badge-user {
+  background: var(--badge-bg);
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.8rem;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--color-border);
+}
+
+/* ============================
+   CONTROLES EXTRA TEMA
+   ============================ */
+.theme-switcher {
+  min-width: 130px;
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+html[data-theme="dark"] .theme-switcher {
+  background: rgba(22, 32, 51, 0.85);
+  color: var(--color-text);
+}
+
+/* ============================
+   TOGGLE BUTTON
+   ============================ */
+.sidebar-toggle-btn {
+  display: none;
+}
+
+@media (max-width: 991.98px) {
   .sidebar-toggle-btn {
-    display: none;
+    display: inline-flex;
   }
-  
-  @media (max-width: 991.98px) {
-    .sidebar-toggle-btn {
-      display: inline-flex;
-    }
-  }
-  
-  /* ============================
-     MOBILE/TABLET SIDEBAR (Unified)
-     - Se usa SOLO transform (más estable)
-     ============================ */
-  @media (max-width: 991.98px) {
-    .solar-sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 260px;
-      transform: translateX(-100%);
-      transition: transform 0.25s ease-in-out;
-      z-index: 1040;
-    }
-  
-    .solar-sidebar.show {
-      transform: translateX(0);
-    }
-  
-    .sidebar-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.45);
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.2s ease-in-out;
-      z-index: 1025; /* debajo del sidebar, por encima del contenido */
-    }
-  
-    .sidebar-overlay.show {
-      opacity: 1;
-      visibility: visible;
-    }
-  
-    .solar-sidebar .nav-submenu .nav-link.active,
-    .solar-sidebar .nav-submenu .nav-link.is-active {
-      background: rgba(255, 255, 255, 0.18);
-    }
-  }
-  
-  .modal {
-    z-index: 2000 !important;
-  }
-  
-  .modal-backdrop {
-    z-index: 1990 !important;
+}
+
+/* ============================
+   MOBILE/TABLET SIDEBAR
+   ============================ */
+@media (max-width: 991.98px) {
+  .solar-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-in-out;
+    z-index: 1040;
   }
 
-  /* Compactación adicional sidebar */
+  .solar-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-in-out;
+    z-index: 1025;
+  }
+
+  .sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .solar-sidebar .nav-submenu .nav-link.active,
+  .solar-sidebar .nav-submenu .nav-link.is-active {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+.modal {
+  z-index: 2000 !important;
+}
+
+.modal-backdrop {
+  z-index: 1990 !important;
+}
+
+/* Compactación adicional sidebar */
 .solar-sidebar .nav-submenu .nav-link {
   padding: 0.35rem 1.25rem;
   font-size: 0.88rem;
@@ -268,7 +427,15 @@
   font-size: 0.95rem;
 }
 
-.solar-sidebar .nav-link {
-  padding: 0.65rem 1.25rem;
+.nav-submenu {
+  padding-left: 1.5rem;
+  margin-top: 0.25rem;
 }
-  
+
+.nav-subtitle {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-sidebar-muted);
+  margin-top: 0.35rem;
+}

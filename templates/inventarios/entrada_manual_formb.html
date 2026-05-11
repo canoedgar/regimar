@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}Entrada Manual{% endblock %}
+{% block page_title %}Entrada manual{% endblock %}
+{% block active_inventario %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <h4 class="mb-3">Entrada Manual</h4>
+
+  <form method="post">
+    {% csrf_token %}
+
+    {{ form.as_p }}
+
+    <input type="hidden" name="detalle_json" id="detalle_json" value='{{ detalle_json_initial|default:"[]"|escape }}'>
+
+    <hr>
+
+    <h5>Agregar producto</h5>
+
+    <div class="row mb-3">
+      <div class="col-md-3">
+        <label>Producto</label>
+        <select id="mpProducto" class="form-control">
+          <option value="">Selecciona</option>
+          {% for p in productos %}
+          <option value="{{ p.id }}">{{ p.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label>Presentación</label>
+        <select id="mpConversion" class="form-control">
+          <option value="">Base (kg)</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label>Cantidad</label>
+        <input type="number" id="mpCantidad" class="form-control" step="0.01" min="0.01">
+      </div>
+
+      <div class="col-md-2">
+        <label>Costo</label>
+        <input type="number" id="mpCosto" class="form-control" step="0.01" min="0">
+      </div>
+
+      <div class="col-md-2">
+        <label>Almacén</label>
+        <select id="mpAlmacen" class="form-control">
+          <option value="">Selecciona</option>
+          {% for a in almacenes %}
+          <option value="{{ a.id }}">{{ a.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-primary" id="btnAgregarLinea">Agregar</button>
+
+    <hr>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Presentación</th>
+          <th>Cantidad</th>
+          <th>Almacén</th>
+          <th>Costo</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tabla"></tbody>
+    </table>
+
+    <button class="btn btn-success">Guardar</button>
+  </form>
+</div>
+
+{{ productos_conversiones_json|json_script:"productos-conversiones-data" }}
+
+<script>
+(function () {
+  const productosConversiones = JSON.parse(
+    document.getElementById("productos-conversiones-data").textContent
+  );
+
+  let lineas = [];
+
+  const mpProducto = document.getElementById("mpProducto");
+  const mpConversion = document.getElementById("mpConversion");
+  const mpCantidad = document.getElementById("mpCantidad");
+  const mpCosto = document.getElementById("mpCosto");
+  const mpAlmacen = document.getElementById("mpAlmacen");
+  const tabla = document.getElementById("tabla");
+  const detalleJson = document.getElementById("detalle_json");
+  const btnAgregarLinea = document.getElementById("btnAgregarLinea");
+
+  function renderConversiones(productoId) {
+    mpConversion.innerHTML = '<option value="">Base (kg)</option>';
+
+    const conversiones = productosConversiones[String(productoId)] || [];
+    conversiones.forEach(function (c) {
+      const option = document.createElement("option");
+      option.value = c.id;
+      option.textContent = c.nombre + " (" + c.texto + ")";
+      mpConversion.appendChild(option);
+    });
+  }
+
+  mpProducto.addEventListener("change", function () {
+    renderConversiones(this.value);
+  });
+
+  function syncJson() {
+    detalleJson.value = JSON.stringify(lineas);
+  }
+
+  function render() {
+    tabla.innerHTML = "";
+
+    lineas.forEach(function (l, idx) {
+      const tr = document.createElement("tr");
+
+      const tdProducto = document.createElement("td");
+      tdProducto.textContent = l.producto_nombre;
+
+      const tdPresentacion = document.createElement("td");
+      tdPresentacion.textContent = l.conversion_texto || "Base (kg)";
+
+      const tdCantidad = document.createElement("td");
+      tdCantidad.textContent = l.cantidad;
+
+      const tdAlmacen = document.createElement("td");
+      tdAlmacen.textContent = l.almacen_nombre;
+
+      const tdCosto = document.createElement("td");
+      tdCosto.textContent = l.costo_unitario;
+
+      const tdAccion = document.createElement("td");
+      const btnQuitar = document.createElement("button");
+      btnQuitar.type = "button";
+      btnQuitar.className = "btn btn-sm btn-outline-danger";
+      btnQuitar.textContent = "Quitar";
+      btnQuitar.addEventListener("click", function () {
+        lineas.splice(idx, 1);
+        render();
+        syncJson();
+      });
+
+      tdAccion.appendChild(btnQuitar);
+
+      tr.appendChild(tdProducto);
+      tr.appendChild(tdPresentacion);
+      tr.appendChild(tdCantidad);
+      tr.appendChild(tdAlmacen);
+      tr.appendChild(tdCosto);
+      tr.appendChild(tdAccion);
+
+      tabla.appendChild(tr);
+    });
+  }
+
+  btnAgregarLinea.addEventListener("click", function () {
+    const pid = mpProducto.value;
+    const aid = mpAlmacen.value;
+    const cantidad = mpCantidad.value;
+    const costo = mpCosto.value;
+    const conversionId = mpConversion.value || null;
+
+    if (!pid) {
+      alert("Selecciona un producto.");
+      return;
+    }
+
+    if (!aid) {
+      alert("Selecciona un almacén.");
+      return;
+    }
+
+    if (!cantidad || Number(cantidad) <= 0) {
+      alert("Captura una cantidad válida.");
+      return;
+    }
+
+    if (costo === "" || Number(costo) < 0) {
+      alert("Captura un costo válido.");
+      return;
+    }
+
+    const productoNombre = mpProducto.options[mpProducto.selectedIndex].text;
+    const almacenNombre = mpAlmacen.options[mpAlmacen.selectedIndex].text;
+    const conversionTexto = conversionId
+      ? mpConversion.options[mpConversion.selectedIndex].text
+      : "Base (kg)";
+
+    lineas.push({
+      producto_id: pid,
+      producto_nombre: productoNombre,
+      cantidad: cantidad,
+      costo_unitario: costo,
+      almacen_id: aid,
+      almacen_nombre: almacenNombre,
+      conversion_id: conversionId,
+      conversion_texto: conversionTexto
+    });
+
+    render();
+    syncJson();
+
+    mpProducto.value = "";
+    mpConversion.innerHTML = '<option value="">Base (kg)</option>';
+    mpCantidad.value = "";
+    mpCosto.value = "";
+    mpAlmacen.value = "";
+  });
+
+  try {
+    const inicial = JSON.parse(detalleJson.value || "[]");
+    if (Array.isArray(inicial)) {
+      lineas = inicial;
+      render();
+      syncJson();
+    }
+  } catch (e) {
+    lineas = [];
+  }
+})();
+</script>
+{% endblock %}

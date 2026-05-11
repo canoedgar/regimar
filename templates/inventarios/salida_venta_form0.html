@@ -1,0 +1,1422 @@
+{% extends "base.html" %}
+{% load static %}
+{# Wizard / Stepper - Salida por venta #}
+
+{% block title %}Salida por venta | Sistema de Gestión{% endblock %}
+{% block active_ventas %}active{% endblock %}
+{% block page_title %}Salida por venta{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+
+        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-3">
+          <div>
+            <h5 class="fw-bold mb-1">
+              <i class="bi bi-cart-check me-2"></i>
+              Nueva venta
+            </h5>
+            <p class="text-muted mb-0">Sigue el asistente paso a paso para capturar la venta.</p>
+          </div>
+
+          <div class="text-end">
+            <span class="badge text-bg-light border" id="stepBadge">Paso 1 de 5</span>
+          </div>
+        </div>
+
+        <div class="wizard-steps mb-4">
+          <div class="wizard-step active" data-step-indicator="1">
+            <div class="dot">1</div>
+            <div class="label">Datos</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="2">
+            <div class="dot">2</div>
+            <div class="label">Cliente</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="3">
+            <div class="dot">3</div>
+            <div class="label">Productos</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="4">
+            <div class="dot">4</div>
+            <div class="label">Vista previa</div>
+          </div>
+          <div class="wizard-step" data-step-indicator="5">
+            <div class="dot">5</div>
+            <div class="label">Guardar</div>
+          </div>
+        </div>
+
+        <form method="post" novalidate id="ventaForm">
+          {% csrf_token %}
+
+          <div class="d-none">
+            {{ form.cliente }}
+          </div>
+
+          {{ formset.management_form }}
+
+          <div class="d-none">
+            <table>
+              <tbody id="hiddenFormsetTbody">
+                {% for f in formset %}
+                  <tr class="hidden-row">
+                    <td>{{ f.producto }}</td>
+                    <td>{{ f.cantidad }}</td>
+                    <td>{{ f.precio_unitario }}</td>
+                    <td>
+                      {% if f.DELETE %}{{ f.DELETE }}{% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <template id="hiddenRowTemplate">
+            <tr class="hidden-row">
+              <td>{{ formset.empty_form.producto }}</td>
+              <td>{{ formset.empty_form.cantidad }}</td>
+              <td>{{ formset.empty_form.precio_unitario }}</td>
+              <td>{% if formset.empty_form.DELETE %}{{ formset.empty_form.DELETE }}{% endif %}</td>
+            </tr>
+          </template>
+
+          <div id="allocationsPayload" class="d-none"></div>
+
+          <section class="wizard-panel" data-step="1">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Folio</label>
+                {{ form.folio }}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha</label>
+                {{ form.fecha }}
+              </div>              
+
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Documento referencia</label>
+                {{ form.documento_referencia }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Motivo</label>
+                {{ form.motivo }}
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Observaciones</label>
+                {{ form.observaciones }}
+              </div>
+            </div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="2">
+            <div class="row g-3 align-items-end">
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Cliente (Catálogo)</label>
+                <div class="input-group">
+                  <input type="text" class="form-control" id="clienteSearch" list="clientesDatalist" placeholder="Buscar por nombre o RFC…">
+                  <button type="button" class="btn btn-outline-secondary" id="btnClearCliente" title="Limpiar">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+                <div class="form-text">
+                  Selecciona un cliente del catálogo. Al elegirlo, se llenará el campo de cliente de la venta.
+                </div>
+                <div class="small mt-2">
+                  <span class="badge text-bg-light border">Seleccionado:</span>
+                  <span id="clienteSelectedText" class="ms-1 text-muted">—</span>
+                </div>
+              </div>
+
+              <div class="col-md-4 text-md-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClienteNuevo">
+                  <i class="bi bi-person-plus me-1"></i> Nuevo cliente
+                </button>
+              </div>
+            </div>
+
+            <datalist id="clientesDatalist">
+              {% for c in clientes %}
+                <option value="{{ c.nombre_fiscal }} ({{ c.rfc }})"
+                        data-id="{{ c.id }}"
+                        data-nombre="{{ c.nombre_fiscal }}"
+                        data-rfc="{{ c.rfc }}">
+                </option>
+              {% endfor %}
+            </datalist>
+
+            <hr class="my-4">
+
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle me-2"></i>
+              Si es venta de mostrador y no quieres capturar cliente, puedes dejarlo vacío.
+            </div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="3">
+            <div class="row g-3">
+              <div class="col-lg-8">
+                <label class="form-label fw-semibold">Buscar producto</label>
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                  <input type="text"
+                         class="form-control"
+                         id="productoSearch"
+                         placeholder="Buscar producto o escanear código..."
+                         autocomplete="off">
+                </div>
+                <div class="form-text">
+                  Usa <kbd>↑</kbd> <kbd>↓</kbd> para navegar y <kbd>Enter</kbd> para seleccionar.
+                </div>
+              </div>
+
+              <div class="col-lg-4">
+                <div class="border rounded-3 p-3 bg-body-tertiary h-100" id="productoSelectedBox">
+                  <div class="small text-muted mb-1">Producto seleccionado</div>
+                  <div class="fw-semibold fs-6" id="selectedProductoNombre">Ninguno</div>
+                  <div class="small text-muted mt-2">
+                    Stock total disponible:
+                    <span class="fw-semibold" id="selectedProductoStock">—</span>
+                    <span class="text-muted">kg</span>
+                  </div>
+                  <div class="small text-muted">
+                    Precio sugerido:
+                    <span class="fw-semibold" id="selectedProductoPrecio">$0.00</span>
+                  </div>
+                  <div class="small text-muted">
+                    Presentación seleccionada:
+                    <span class="fw-semibold" id="selectedPresentacionInfo">—</span>
+                  </div>
+
+                  <div class="mt-3">
+                    <label class="form-label small fw-semibold">Presentación</label>
+                    <select class="form-select" id="productoPresentacionSelect" disabled>
+                      <option value="">Selecciona una presentación…</option>
+                    </select>
+                    <div class="form-text" id="productoPresentacionText">Selecciona un producto para ver sus presentaciones disponibles.</div>
+                  </div>
+
+                  <div class="mt-3">
+                    <label class="form-label small fw-semibold">Almacén</label>
+                    <select class="form-select" id="productoAlmacenSelect" disabled>
+                      <option value="">Selecciona un almacén…</option>
+                    </select>
+                    <div class="form-text" id="productoAlmacenStockText">Selecciona un producto para ver sus almacenes disponibles.</div>
+                  </div>
+
+                  <div class="row g-2 mt-2">
+                    <div class="col-6">
+                      <label class="form-label small fw-semibold">Cantidad</label>
+                      <input type="number"
+                             class="form-control form-control-lg"
+                             id="productoQty"
+                             min="0.01"
+                             step="0.01"
+                             value="1"
+                             disabled>
+                      <div class="form-text" id="productoQtyHelp">La cantidad corresponde a la presentación seleccionada.</div>
+                      <div class="invalid-feedback" id="productoQtyError">
+                        La cantidad excede el inventario disponible en kilogramos del almacén seleccionado.
+                      </div>
+                    </div>
+                    <div class="col-6 d-grid">
+                      <label class="form-label small fw-semibold opacity-0">Agregar</label>
+                      <button type="button" class="btn btn-success btn-lg" id="btnAddProducto" disabled>
+                        <i class="bi bi-plus-circle me-1"></i> Agregar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="border rounded-3 overflow-hidden">
+                  <div class="px-3 py-2 border-bottom bg-body-tertiary d-flex justify-content-between align-items-center">
+                    <div class="fw-semibold">Productos disponibles</div>
+                    <div class="small text-muted">
+                      Selecciona un producto y después el almacén desde el cual se surtirá.
+                    </div>
+                  </div>
+
+                  <div id="productosEmptyState" class="p-4 text-center text-muted d-none">
+                    <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                    No hay productos que coincidan con la búsqueda.
+                  </div>
+
+                  <div id="productosResults" class="list-group list-group-flush product-results"></div>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+              <h6 class="fw-bold mb-0">Carrito</h6>
+              <div class="text-muted small">
+                Productos: <span id="cartCount">0</span> · Total: <span class="fw-semibold" id="cartTotal">$0.00</span>
+              </div>
+            </div>
+
+            <div id="cartEmpty" class="border rounded p-4 text-center text-muted">
+              <i class="bi bi-bag-plus fs-3 d-block mb-2"></i>
+              Aún no agregas productos.
+            </div>
+
+            <div id="cartList" class="vstack gap-2 d-none"></div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="4">
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="alert alert-secondary mb-0 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                  <div>
+                    <i class="bi bi-printer me-2"></i>
+                    Vista previa en formato de <strong>nota horizontal espejo</strong> con <strong>original y copia</strong>.
+                  </div>
+                  <button type="button" class="btn btn-primary" id="btnPrintPreview">
+                    <i class="bi bi-printer me-1"></i> Imprimir
+                  </button>
+                </div>
+              </div>
+
+              <div class="col-xl-9">
+                <div class="border rounded-4 p-3 p-xl-4 bg-body-tertiary note-preview-wrap">
+                  <div id="ticketPreview" class="sale-note-sheet"></div>
+                </div>
+              </div>
+
+              <div class="col-xl-3">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body">
+                    <h6 class="fw-bold mb-2">Resumen</h6>
+                    <div class="small text-muted">Revisa que cliente y productos estén correctos antes de imprimir.</div>
+                    <hr>
+                    <div class="d-flex justify-content-between">
+                      <span>Total</span>
+                      <span class="fw-bold" id="summaryTotal">$0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Productos</span>
+                      <span class="fw-semibold" id="summaryCount">0</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                      <span>Kilos totales</span>
+                      <span class="fw-semibold" id="summaryKg">0</span>
+                    </div>
+                    <hr>
+                    <div class="small text-muted mb-0">
+                      El formato de impresión muestra la presentación vendida y resume también los kilos totales descontados del inventario.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="5">
+            <div class="alert alert-success">
+              <i class="bi bi-check2-circle me-2"></i>
+              Todo listo. Presiona <strong>Guardar venta</strong> para registrar la salida.
+            </div>
+
+            <div class="card border-0 shadow-sm">
+              <div class="card-body">
+                <h6 class="fw-bold mb-2">Checklist</h6>
+                <ul class="mb-0">
+                  <li>Datos generales capturados</li>
+                  <li>Cliente seleccionado (opcional)</li>
+                  <li>Productos agregados con su almacén de surtido (obligatorio)</li>
+                  <li>Vista previa revisada</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <hr class="my-4">
+
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <a href="{% url 'salidas_list' %}" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-1"></i> Cancelar
+            </a>
+
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-outline-secondary" id="btnPrev">
+                <i class="bi bi-chevron-left me-1"></i> Atrás
+              </button>
+
+              <button type="button" class="btn btn-primary" id="btnNext">
+                Siguiente <i class="bi bi-chevron-right ms-1"></i>
+              </button>
+
+              <button type="submit" class="btn btn-success d-none" id="btnSubmit">
+                <i class="bi bi-check2-circle me-1"></i> Guardar venta
+              </button>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="modal fade" id="modalClienteNuevo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-person-plus me-2"></i>
+          Nuevo cliente
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning small">
+          Captura lo mínimo requerido por el catálogo (RFC, Razón social, Régimen fiscal y CP fiscal).
+        </div>
+
+        <form id="clienteQuickForm">
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">RFC</label>
+              <input type="text" class="form-control" name="rfc" maxlength="13" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Razón social (SAT)</label>
+              <input type="text" class="form-control" name="nombre_fiscal" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Régimen fiscal</label>
+              <select class="form-select" name="regimen_fiscal" required>
+                <option value="" selected disabled>Selecciona…</option>
+                {% for k,v in REGIMEN_FISCAL_CHOICES %}
+                  <option value="{{ k }}">{{ v }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">CP domicilio fiscal</label>
+              <input type="text" class="form-control" name="domicilio_fiscal_cp" maxlength="5" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Teléfono (opcional)</label>
+              <input type="text" class="form-control" name="telefono">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email CFDI (opcional)</label>
+              <input type="email" class="form-control" name="email_cfdi">
+            </div>
+          </div>
+
+          <div class="text-danger small mt-3 d-none" id="clienteQuickError"></div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="btnSaveClienteQuick">
+          <i class="bi bi-save me-1"></i> Guardar cliente
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .wizard-steps{ display:flex; gap:12px; justify-content:space-between; flex-wrap:wrap; }
+  .wizard-step{ flex:1; min-width:120px; display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid rgba(0,0,0,.1); border-radius:12px; background:#fff; opacity:.55; }
+  .wizard-step .dot{ width:28px; height:28px; border-radius:999px; display:grid; place-items:center; background:rgba(13,110,253,.1); border:1px solid rgba(13,110,253,.25); font-weight:700; }
+  .wizard-step .label{ font-weight:600; font-size:.95rem; }
+  .wizard-step.active{ opacity:1; border-color:rgba(13,110,253,.35); box-shadow:0 6px 16px rgba(0,0,0,.06); }
+  .wizard-step.done{ opacity:1; border-color:rgba(25,135,84,.35); }
+  .wizard-step.done .dot{ background:rgba(25,135,84,.1); border-color:rgba(25,135,84,.25); }
+  .cart-item{ border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:12px; background:#fff; border-left:4px solid transparent; }
+  .cart-item:hover{ border-left-color:var(--bs-primary); }
+  .cart-name{ font-weight:700; }
+  .cart-meta{ font-size:.85rem; color:#6c757d; }
+  .qty-btn{ width:34px; height:34px; display:grid; place-items:center; border-radius:10px; }
+  .qty-input{ width:110px; }
+  .note-preview-wrap{ overflow:auto; }
+  .sale-note-sheet{ min-width:1180px; }
+  .sale-note-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+  .sale-note-copy{ background:#fff; border:1px solid rgba(0,0,0,.14); border-radius:18px; padding:18px 18px 14px; box-shadow:0 8px 24px rgba(0,0,0,.05); min-height:700px; }
+  .sale-note-copy.is-copy{ transform:scaleX(-1); }
+  .sale-note-copy.is-copy > *{ transform:scaleX(-1); }
+    .sale-note-header-row{ display:flex; align-items:flex-start; justify-content:space-between; }
+  .sale-note-header-row{ display:flex; align-items:flex-start; justify-content:space-between; }
+  .sale-note-top{ display:block; }
+  .sale-note-header{ margin-bottom:10px; }
+  .sale-note-logo{ width:180px; max-width:180px; max-height:120px; object-fit:contain; display:block; margin:0; }
+  .sale-note-brand{ text-align:right; margin-left:auto; max-width:260px; display:flex; flex-direction:column; }
+  .sale-note-brand .brand-name{ font-size:.98rem; font-weight:800; line-height:1.15; }
+  .sale-note-brand .brand-owner{ font-weight:600; font-size:.84rem; line-height:1.15; }
+  .sale-note-address{ margin-top:4px; text-align:left; white-space:pre-line; font-size:.76rem; line-height:1.2; min-height:auto; }
+  .sale-note-title{ font-size:1.3rem; font-weight:700; text-align:center; letter-spacing:.02em; margin-top:6px; }
+  .sale-note-message{ margin:10px 0 10px; font-size:.84rem; line-height:1.25; }
+  .sale-note-pagare{ margin-top:14px; border:1px solid #212529; padding:10px 12px; font-size:.88rem; }
+  .sale-note-pagare-title{ font-weight:800; text-transform:uppercase; margin-bottom:4px; }
+  .sale-note-fields{ display:grid; grid-template-columns:3fr 1.3fr 1.7fr; gap:0; border:1px solid #212529; border-bottom:0; }
+  .sale-note-fields.two-cols{ grid-template-columns:3fr 1.3fr 1.7fr; }
+  .sale-note-field{ border-bottom:1px solid #212529; border-right:1px solid #212529; min-height:65px; display:flex; flex-direction:column; }
+  .sale-note-field:last-child{ border-right:0; }
+  .sale-note-field.full{ grid-column:1 / span 3; }
+  .sale-note-field .label{ font-size:.78rem; font-weight:700; text-transform:uppercase; text-align:center; padding:6px 8px; border-bottom:1px solid #212529; background:#f6f7f8; }
+  .sale-note-field .value{ flex:1; padding:10px 12px; font-size:.95rem; white-space:pre-line; }
+  .sale-note-table{ width:100%; border-collapse:collapse; margin-top:14px; }
+  .sale-note-table th, .sale-note-table td{ border:1px solid #212529; padding:4px 6px; font-size:.78rem; vertical-align:middle; line-height:1.15; }
+  .sale-note-table th{ background:#f6f7f8; text-align:center; font-weight:800; }
+  .sale-note-table td.qty, .sale-note-table td.price, .sale-note-table td.amount{ text-align:center; white-space:nowrap; }
+  .sale-note-table td.desc{ min-width:0; }
+  .sale-note-total-row td{ font-weight:800; }
+  .sale-note-footer{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-top:12px; }
+  .sale-note-copy-tag{ font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#6c757d; }
+  .sale-note-sign{ min-width:180px; text-align:center; padding-top:26px; border-top:1px solid #212529; font-size:.85rem; }
+  @media (max-width: 1399px){ .sale-note-grid{ grid-template-columns:1fr; } .sale-note-sheet{ min-width:760px; } }
+  @media print{
+    body *{ visibility:hidden !important; }
+    .print-sale-note-root, .print-sale-note-root *{ visibility:visible !important; }
+    .print-sale-note-root{ position:fixed; inset:0; background:#fff; padding:8mm; }
+  }
+  .product-results{ max-height:360px; overflow:auto; }
+  .product-item{ cursor:pointer; transition:background-color .15s ease, border-color .15s ease; position:relative; }
+  .product-item:hover{ background:rgba(13,110,253,.04); }
+  .product-item.active{ background:rgba(13,110,253,.12); border-left:4px solid var(--bs-primary); }
+  .product-item.pos-focus{ outline:2px solid rgba(13,110,253,.35); outline-offset:-2px; }
+  .product-stock-ok{ color:#198754; font-weight:600; }
+  .product-stock-low{ color:#dc3545; font-weight:600; }
+  .allocation-chip{ display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .55rem; border:1px solid rgba(0,0,0,.08); border-radius:999px; background:#f8f9fa; font-size:.8rem; }
+  .allocation-chip button{ border:0; background:transparent; padding:0; line-height:1; color:#dc3545; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{{ productos_ui|json_script:"productos-data" }}
+<script>
+(function(){
+  const form = document.getElementById("ventaForm");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const btnSubmit = document.getElementById("btnSubmit");
+  const badge = document.getElementById("stepBadge");
+  const panels = Array.from(document.querySelectorAll(".wizard-panel"));
+  const indicators = Array.from(document.querySelectorAll(".wizard-step"));
+
+  const clienteInputReal = form.querySelector('input[name="cliente"]');
+  const clienteSearch = document.getElementById("clienteSearch");
+  const clientesDatalist = document.getElementById("clientesDatalist");
+  const clienteSelectedText = document.getElementById("clienteSelectedText");
+  const btnClearCliente = document.getElementById("btnClearCliente");
+
+  const productosData = JSON.parse(document.getElementById("productos-data").textContent || "[]");
+  const productoSearch = document.getElementById("productoSearch");
+  const productoQty = document.getElementById("productoQty");
+  const productoAlmacenSelect = document.getElementById("productoAlmacenSelect");
+  const productoAlmacenStockText = document.getElementById("productoAlmacenStockText");
+  const btnAddProducto = document.getElementById("btnAddProducto");
+  const productosResults = document.getElementById("productosResults");
+  const productosEmptyState = document.getElementById("productosEmptyState");
+  const selectedProductoNombre = document.getElementById("selectedProductoNombre");
+  const selectedProductoStock = document.getElementById("selectedProductoStock");
+  const selectedProductoPrecio = document.getElementById("selectedProductoPrecio");
+  const productoPresentacionSelect = document.getElementById("productoPresentacionSelect");
+  const productoPresentacionText = document.getElementById("productoPresentacionText");
+  const selectedPresentacionInfo = document.getElementById("selectedPresentacionInfo");
+  const productoQtyHelp = document.getElementById("productoQtyHelp");
+
+  const cartList = document.getElementById("cartList");
+  const cartEmpty = document.getElementById("cartEmpty");
+  const cartCount = document.getElementById("cartCount");
+  const cartTotal = document.getElementById("cartTotal");
+  const allocationsPayload = document.getElementById("allocationsPayload");
+
+  const totalForms = form.querySelector('input[name$="-TOTAL_FORMS"]');
+  const initialForms = form.querySelector('input[name$="-INITIAL_FORMS"]');
+  const hiddenTbody = document.getElementById("hiddenFormsetTbody");
+  const hiddenTpl = document.getElementById("hiddenRowTemplate");
+  const ticketPreview = document.getElementById("ticketPreview");
+  const btnPrintPreview = document.getElementById("btnPrintPreview");
+
+  const btnSaveClienteQuick = document.getElementById("btnSaveClienteQuick");
+  const clienteQuickForm = document.getElementById("clienteQuickForm");
+  const clienteQuickError = document.getElementById("clienteQuickError");
+
+  let step = 1;
+  const totalSteps = 5;
+  let selectedProducto = null;
+  let filteredProductos = [];
+  let highlightedIndex = -1;
+  const cart = new Map();
+
+  function money(n){
+    return Number(n || 0).toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+  }
+
+  function norm(s){
+    return (s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  }
+
+  function escapeHtml(str){
+    return String(str || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+
+  function decimal(v){
+    const n = Number(v || 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function formatPlainNumber(value, maxDecimals = 2){
+    const n = decimal(value);
+    return n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: maxDecimals });
+  }
+
+  function getPresentaciones(producto){
+    return Array.isArray(producto?.conversiones) ? producto.conversiones : [];
+  }
+
+  function getSelectedPresentacion(){
+    if (!selectedProducto || !productoPresentacionSelect) return null;
+    return getPresentaciones(selectedProducto).find(p => String(p.id) === String(productoPresentacionSelect.value)) || null;
+  }
+
+  function getCartKey(productoId, presentacionId){
+    return `${productoId}::${presentacionId}`;
+  }
+
+  function findOptionByValue(datalist, value){
+    const q = norm(value);
+    for (const opt of datalist.querySelectorAll("option")){
+      if (norm(opt.value) === q) return opt;
+    }
+    return null;
+  }
+
+  function cartToArray(){
+    return Array.from(cart.values()).sort((a, b) => {
+      const nameCmp = (a.nombre || "").localeCompare(b.nombre || "", "es");
+      if (nameCmp !== 0) return nameCmp;
+      return (a.presentacion_nombre || "").localeCompare(b.presentacion_nombre || "", "es");
+    });
+  }
+
+  function getTotal(){
+    let t = 0;
+    cart.forEach(i => { t += decimal(i.qty_presentacion) * decimal(i.precio); });
+    return t;
+  }
+
+  function getItemAllocationsQtyKg(item){
+    return (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_kg), 0);
+  }
+
+  function getAllocationDisponibleKg(producto, almacenId){
+    const almacen = (producto.almacenes || []).find(a => String(a.id) === String(almacenId));
+    if (!almacen) return 0;
+
+    let used = 0;
+    cart.forEach(item => {
+      if (String(item.producto_id) !== String(producto.id)) return;
+      used += (item.allocations || [])
+        .filter(a => String(a.almacen_id) === String(almacenId))
+        .reduce((acc, a) => acc + decimal(a.qty_kg), 0);
+    });
+
+    return Math.max(0, decimal(almacen.stock) - used);
+  }
+
+  function setIndicator(){
+    indicators.forEach(ind => {
+      const n = Number(ind.dataset.stepIndicator);
+      ind.classList.toggle("active", n === step);
+      ind.classList.toggle("done", n < step);
+    });
+    badge.textContent = `Paso ${step} de ${totalSteps}`;
+  }
+
+  function showStep(n){
+    step = Math.min(Math.max(1, n), totalSteps);
+    panels.forEach(p => p.classList.add("d-none"));
+    document.querySelector(`.wizard-panel[data-step="${step}"]`)?.classList.remove("d-none");
+    btnPrev.disabled = (step === 1);
+    btnNext.classList.toggle("d-none", step === totalSteps);
+    btnSubmit.classList.toggle("d-none", step !== totalSteps);
+    setIndicator();
+    if (step === 3) setTimeout(() => productoSearch?.focus(), 50);
+    if (step === 4) renderPreview();
+    if (step === 5) syncFormsetFromCart();
+  }
+
+  function getClienteNombre(text){
+    const value = String(text || "").trim();
+    if (!value) return "";
+    return value.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  }
+
+  function setClienteText(text){
+    if (clienteInputReal) clienteInputReal.value = text || "";
+    clienteSelectedText.textContent = getClienteNombre(text) || "—";
+  }
+
+  function renderPresentacionesProducto(producto){
+    productoPresentacionSelect.innerHTML = '<option value="">Selecciona una presentación…</option>';
+    const presentaciones = getPresentaciones(producto);
+    presentaciones.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.equivalencia_texto || `${formatPlainNumber(p.cantidad_origen)} ${p.unidad_origen} = ${formatPlainNumber(p.factor_conversion, 4)} ${producto.metrica_default || 'kg'}`;
+      productoPresentacionSelect.appendChild(opt);
+    });
+    productoPresentacionSelect.disabled = !producto || !presentaciones.length;
+  }
+
+  function renderAlmacenesProducto(producto){
+    productoAlmacenSelect.innerHTML = '<option value="">Selecciona un almacén…</option>';
+    (producto?.almacenes || []).forEach(a => {
+      const disponibleKg = getAllocationDisponibleKg(producto, a.id);
+      const opt = document.createElement("option");
+      opt.value = a.id;
+      opt.textContent = `${a.label || `${a.codigo} - ${a.nombre}`} · Disponible: ${formatPlainNumber(disponibleKg, 4)} kg`;
+      opt.disabled = disponibleKg <= 0;
+      productoAlmacenSelect.appendChild(opt);
+    });
+    productoAlmacenSelect.disabled = !producto;
+  }
+
+  function clearProductoSeleccionado(){
+    selectedProducto = null;
+    selectedProductoNombre.textContent = "Ninguno";
+    selectedProductoStock.textContent = "—";
+    selectedProductoPrecio.textContent = money(0);
+    selectedPresentacionInfo.textContent = "—";
+    productoPresentacionSelect.innerHTML = '<option value="">Selecciona una presentación…</option>';
+    productoPresentacionSelect.disabled = true;
+    productoPresentacionText.textContent = "Selecciona un producto para ver sus presentaciones disponibles.";
+    productoAlmacenSelect.innerHTML = '<option value="">Selecciona un almacén…</option>';
+    productoAlmacenSelect.disabled = true;
+    productoAlmacenStockText.textContent = "Selecciona un producto para ver sus almacenes disponibles.";
+    productoQtyHelp.textContent = "La cantidad corresponde a la presentación seleccionada.";
+    productoQty.value = "1";
+    productoQty.disabled = true;
+    productoQty.classList.remove("is-invalid");
+    btnAddProducto.disabled = true;
+    document.querySelectorAll(".product-item.active").forEach(el => el.classList.remove("active"));
+  }
+
+  function setProductoSeleccionado(producto){
+    selectedProducto = producto;
+    selectedProductoNombre.textContent = producto.nombre;
+    selectedProductoStock.textContent = formatPlainNumber(producto.stock, 4);
+    selectedProductoPrecio.textContent = money(producto.precio || 0);
+    selectedPresentacionInfo.textContent = "—";
+    productoQty.value = "1";
+    productoQty.classList.remove("is-invalid");
+    renderPresentacionesProducto(producto);
+    renderAlmacenesProducto(producto);
+    productoQty.disabled = true;
+    btnAddProducto.disabled = true;
+    productoPresentacionText.textContent = "Selecciona la presentación que se venderá.";
+    productoAlmacenStockText.textContent = "Selecciona el almacén desde el que se descontará el inventario.";
+
+    document.querySelectorAll(".product-item").forEach(el => {
+      el.classList.toggle("active", el.dataset.id === String(producto.id));
+    });
+  }
+
+  function validarCantidadSeleccionada(){
+    if (!selectedProducto){
+      productoQty.classList.remove("is-invalid");
+      return false;
+    }
+
+    const presentacion = getSelectedPresentacion();
+    const almacenId = productoAlmacenSelect.value;
+    if (!presentacion){
+      productoQty.classList.remove("is-invalid");
+      btnAddProducto.disabled = true;
+      return false;
+    }
+    if (!almacenId){
+      productoQty.classList.remove("is-invalid");
+      btnAddProducto.disabled = true;
+      return false;
+    }
+
+    const disponibleKg = getAllocationDisponibleKg(selectedProducto, almacenId);
+    const qPresentacion = decimal(productoQty.value || 0);
+    const factor = decimal(presentacion.factor_conversion || 0);
+    const requeridoKg = qPresentacion * factor;
+    const ok = qPresentacion > 0 && factor > 0 && requeridoKg <= disponibleKg;
+
+    productoQty.classList.toggle("is-invalid", !ok);
+    btnAddProducto.disabled = !ok;
+    productoQty.disabled = false;
+    productoQtyHelp.textContent = `Equivale a ${formatPlainNumber(requeridoKg, 4)} kg.`;
+    return ok;
+  }
+
+  function buildBusquedaTexto(p){
+    return norm([p.nombre || "", p.clave_busqueda || "", p.codigo || ""].join(" "));
+  }
+
+  function moveHighlight(delta){
+    if (!filteredProductos.length) return;
+    highlightedIndex += delta;
+    if (highlightedIndex < 0) highlightedIndex = filteredProductos.length - 1;
+    if (highlightedIndex >= filteredProductos.length) highlightedIndex = 0;
+    document.querySelectorAll(".product-item").forEach((el, idx) => el.classList.toggle("pos-focus", idx === highlightedIndex));
+    document.querySelectorAll(".product-item")[highlightedIndex]?.scrollIntoView({ block: "nearest" });
+  }
+
+  function selectHighlightedProducto(){
+    if (highlightedIndex < 0 || !filteredProductos[highlightedIndex]) return false;
+    setProductoSeleccionado(filteredProductos[highlightedIndex]);
+    return true;
+  }
+
+  function renderProductos(){
+    const q = norm(productoSearch.value || "");
+    productosResults.innerHTML = "";
+
+    filteredProductos = productosData.filter(p => !q || buildBusquedaTexto(p).includes(q));
+    highlightedIndex = filteredProductos.length ? 0 : -1;
+    productosEmptyState.classList.toggle("d-none", filteredProductos.length > 0);
+    if (!filteredProductos.length) return;
+
+    filteredProductos.forEach((p, idx) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "list-group-item list-group-item-action product-item";
+      item.dataset.id = p.id;
+      if (idx === highlightedIndex) item.classList.add("pos-focus");
+      if (selectedProducto && String(selectedProducto.id) === String(p.id)) item.classList.add("active");
+
+      const almacenesConStock = (p.almacenes || []).filter(a => decimal(getAllocationDisponibleKg(p, a.id)) > 0).length;
+      item.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div class="text-start">
+            <div class="fw-semibold">${escapeHtml(p.nombre)}</div>
+            <div class="small text-muted">
+              Stock total: <span class="product-stock-${decimal(p.stock) > 0 ? "ok" : "low"}">${escapeHtml(formatPlainNumber(p.stock, 4))} kg</span>
+              · Almacenes disponibles: <span class="fw-semibold">${almacenesConStock}</span>
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="small text-muted">Precio sugerido</div>
+            <div class="fw-semibold">${money(p.precio || 0)}</div>
+          </div>
+        </div>
+      `;
+      item.addEventListener("click", () => {
+        highlightedIndex = idx;
+        setProductoSeleccionado(p);
+      });
+      productosResults.appendChild(item);
+    });
+  }
+
+  function addSelectedProductoToCart(){
+    if (!selectedProducto){ alert("Selecciona un producto de la lista."); productoSearch.focus(); return; }
+    const presentacion = getSelectedPresentacion();
+    if (!presentacion){ alert("Selecciona la presentación que se venderá."); productoPresentacionSelect.focus(); return; }
+    if (!validarCantidadSeleccionada()){ productoQty.focus(); return; }
+
+    const almacenId = productoAlmacenSelect.value;
+    const almacen = (selectedProducto.almacenes || []).find(a => String(a.id) === String(almacenId));
+    const qPresentacion = decimal(productoQty.value || 0);
+    const factor = decimal(presentacion.factor_conversion || 0);
+    const qtyKg = qPresentacion * factor;
+    const disponibleKg = getAllocationDisponibleKg(selectedProducto, almacenId);
+    if (!almacen || !(qPresentacion > 0) || !(qtyKg > 0) || qtyKg > disponibleKg){ productoQty.classList.add("is-invalid"); productoQty.focus(); return; }
+
+    const key = getCartKey(selectedProducto.id, presentacion.id);
+    let item = cart.get(key);
+    if (!item){
+      item = {
+        id: key,
+        producto_id: String(selectedProducto.id),
+        nombre: selectedProducto.nombre,
+        metrica_default: selectedProducto.metrica_default || "kg",
+        precio: decimal(selectedProducto.precio || 0),
+        qty_presentacion: 0,
+        qty_kg: 0,
+        factor_conversion: factor,
+        presentacion_id: String(presentacion.id),
+        presentacion_nombre: presentacion.unidad_origen || selectedProducto.metrica_default || "kg",
+        presentacion_label: presentacion.equivalencia_texto || `${formatPlainNumber(presentacion.cantidad_origen)} ${presentacion.unidad_origen}`,
+        allocations: [],
+      };
+      cart.set(key, item);
+    }
+
+    const existingAllocation = item.allocations.find(a => String(a.almacen_id) === String(almacenId));
+    if (existingAllocation){
+      existingAllocation.qty_presentacion = decimal(existingAllocation.qty_presentacion) + qPresentacion;
+      existingAllocation.qty_kg = decimal(existingAllocation.qty_kg) + qtyKg;
+    } else {
+      item.allocations.push({
+        almacen_id: String(almacen.id),
+        almacen_nombre: almacen.label || `${almacen.codigo} - ${almacen.nombre}`,
+        qty_presentacion: qPresentacion,
+        qty_kg: qtyKg,
+      });
+    }
+
+    item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
+    item.qty_kg = getItemAllocationsQtyKg(item);
+    productoQty.value = "1";
+    productoQty.classList.remove("is-invalid");
+    renderProductos();
+    updateCartUI();
+    productoSearch.focus();
+  }
+
+  function refreshCartSummary(){
+    const items = cartToArray();
+    cartCount.textContent = String(items.length);
+    cartTotal.textContent = money(getTotal());
+    document.getElementById("summaryTotal").textContent = money(getTotal());
+    document.getElementById("summaryCount").textContent = String(items.length);
+  }
+
+  function renderAllocationsChips(item){
+    return (item.allocations || []).map((a, idx) => `
+      <span class="allocation-chip">
+        ${escapeHtml(a.almacen_nombre)} · ${escapeHtml(formatPlainNumber(a.qty_kg, 4))} kg
+        <button type="button" data-action="remove-allocation" data-index="${idx}" title="Quitar surtido">×</button>
+      </span>
+    `).join("");
+  }
+
+  function updateCartUI(){
+    const items = cartToArray();
+    refreshCartSummary();
+
+    if (!items.length){
+      cartEmpty.classList.remove("d-none");
+      cartList.classList.add("d-none");
+      cartList.innerHTML = "";
+      renderProductos();
+      return;
+    }
+
+    cartEmpty.classList.add("d-none");
+    cartList.classList.remove("d-none");
+    cartList.innerHTML = "";
+
+    for (const item of items){
+      const el = document.createElement("div");
+      el.className = "cart-item";
+      el.dataset.id = item.id;
+      el.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="flex-grow-1">
+            <div class="cart-name">${escapeHtml(item.nombre)}</div>
+            <div class="cart-meta">
+              Presentación: <span class="fw-semibold">${escapeHtml(item.presentacion_nombre)}</span>
+              · Cantidad: <span class="fw-semibold item-qty-total">${escapeHtml(formatPlainNumber(item.qty_presentacion, 4))}</span>
+              · Equivale a: <span class="fw-semibold item-kg-total">${escapeHtml(formatPlainNumber(item.qty_kg, 4))} kg</span>
+              · Precio: <span class="fw-semibold">${money(item.precio)}</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-2 allocations-wrap">${renderAllocationsChips(item)}</div>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-action="remove" title="Quitar producto">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mt-3">
+          <button type="button" class="btn btn-outline-secondary qty-btn" data-action="minus"><i class="bi bi-dash"></i></button>
+          <input type="number" class="form-control form-control-sm qty-input" data-action="qty" min="0.01" step="0.01" value="${item.qty_presentacion}">
+          <button type="button" class="btn btn-outline-secondary qty-btn" data-action="plus"><i class="bi bi-plus"></i></button>
+          <div class="ms-auto text-end">
+            <div class="small text-muted">Subtotal</div>
+            <div class="fw-bold item-subtotal">${money(decimal(item.qty_presentacion) * decimal(item.precio))}</div>
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <label class="form-label small text-muted mb-1">Precio unitario</label>
+          <input type="number" class="form-control form-control-sm" data-action="precio" min="0" step="0.01" value="${item.precio}">
+        </div>
+      `;
+      cartList.appendChild(el);
+    }
+    renderProductos();
+  }
+
+  function syncFormsetFromCart(){
+    hiddenTbody.innerHTML = "";
+    allocationsPayload.innerHTML = "";
+    const items = cartToArray();
+    const n = items.length;
+    if (initialForms) initialForms.value = "0";
+    if (totalForms) totalForms.value = String(n);
+
+    let allocIndex = 0;
+    items.forEach((it, idx) => {
+      const node = hiddenTpl.content.cloneNode(true);
+      const row = node.querySelector("tr");
+      row.querySelectorAll("input, select, textarea").forEach(el => {
+        const name = el.getAttribute("name");
+        const id = el.getAttribute("id");
+        if (name) el.setAttribute("name", name.replaceAll("__prefix__", idx));
+        if (id) el.setAttribute("id", id.replaceAll("__prefix__", idx));
+      });
+      row.querySelector('select[name$="-producto"]').value = it.producto_id;
+      row.querySelector('input[name$="-cantidad"]').value = String(it.qty_kg);
+      row.querySelector('input[name$="-precio_unitario"]').value = String(it.precio);
+      hiddenTbody.appendChild(row);
+
+      (it.allocations || []).forEach(a => {
+        [["linea_producto_id", it.producto_id], ["linea_almacen_id", a.almacen_id], ["linea_cantidad", a.qty_kg]].forEach(([name, value]) => {
+          const input = document.createElement("input");
+          input.type = "hidden";
+          input.name = name;
+          input.value = String(value);
+          input.dataset.allocIndex = String(allocIndex);
+          allocationsPayload.appendChild(input);
+        });
+        allocIndex += 1;
+      });
+    });
+
+    refreshCartSummary();
+  }
+
+  function formatDate(value){
+    if (!value) return "";
+    const d = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
+  }
+
+  function formatQty(value){
+    const n = decimal(value);
+    return Number.isInteger(n) ? String(n) : n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  function getTotalKg(){
+    let kg = 0;
+    cart.forEach(i => { kg += decimal(i.qty_kg); });
+    return kg;
+  }
+
+  function buildSaleNoteCopy(label){
+    const folio = form.querySelector('input[name="folio"]')?.value || "";
+    const fecha = form.querySelector('input[name="fecha"]')?.value || "";
+    const cliente = getClienteNombre(clienteInputReal?.value || "");
+    const items = cartToArray();
+    const observaciones = form.querySelector('textarea[name="observaciones"]')?.value || "";
+
+    const rows = items.length
+      ? items.map(it => {
+          const sub = decimal(it.qty_presentacion) * decimal(it.precio);
+          return `
+            <tr>
+              <td class="qty">${escapeHtml(formatQty(it.qty_presentacion))}</td>
+              <td class="qty">${escapeHtml(it.presentacion_nombre)}</td>
+              <td class="desc">${escapeHtml(it.nombre)}</td>
+              <td class="price">${money(it.precio)}</td>
+              <td class="amount">${money(sub)}</td>
+            </tr>
+          `;
+        }).join("")
+      : `
+          <tr>
+            <td colspan="5" class="text-center text-muted">Sin productos capturados</td>
+          </tr>
+        `;
+
+    return `
+      <article class="sale-note-copy ${label === 'COPIA' ? 'is-copy' : ''}">
+        <div class="sale-note-copy-tag">${label}</div>
+
+        <div class="sale-note-top mt-1">
+          <div class="sale-note-header">
+            <div class="sale-note-header-row">
+              <img src="{% static 'resources/logo.png' %}" alt="Logo" class="sale-note-logo">
+              <div class="sale-note-brand">
+                <div class="brand-name">CPC Alimentos</div>
+                <div class="brand-owner">Jaime Parada Villarreal</div>
+                <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
+Mayakhan Residencial Mexicali B.C
+Teléfono: 686 162 7239
+Email: cpcalimentosbc@gmail.com</div>
+              </div>
+            </div>
+            <div class="sale-note-title">NOTA DE VENTA</div>
+          </div>
+        </div>
+
+        <div class="sale-note-message">Atendiendo a su amable solicitud enviamos la nota de venta correspondiente quedando a sus órdenes.</div>
+
+        <div class="sale-note-fields">
+          <div class="sale-note-field">
+            <div class="label">Cliente</div>
+            <div class="value">${escapeHtml(cliente || 'MOSTRADOR')}</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Folio</div>
+            <div class="value text-center">${escapeHtml(folio)}</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Fecha de entrega</div>
+            <div class="value text-center">${escapeHtml(formatDate(fecha))}</div>
+          </div>
+
+          <div class="sale-note-field">
+            <div class="label">Dirección</div>
+            <div class="value">&nbsp;</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Contacto</div>
+            <div class="value">&nbsp;</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Forma de pago</div>
+            <div class="value text-center">Contado</div>
+          </div>
+        </div>
+
+        <table class="sale-note-table">
+          <thead>
+            <tr>
+              <th style="width: 11%;">Cantidad</th>
+              <th style="width: 10%;">Métrica</th>
+              <th>Descripción</th>
+              <th style="width: 16%;">P. Unitario</th>
+              <th style="width: 16%;">Importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr class="sale-note-total-row">
+              <td class="qty">${escapeHtml(formatQty(getTotalKg()))}</td>
+              <td class="text-center">kg</td>
+              <td class="text-end">TOTAL</td>
+              <td></td>
+              <td class="amount">${money(getTotal())}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="mt-4">
+          <h6 class="fw-bold text-center mb-2">PAGARÉ</h6>
+
+          <p style="font-size: 12px; text-align: justify;">
+            Por este pagaré me comprometo a pagar a la orden de: Jaime Parada Villarreal en la Ciudad de Mexicali, Baja California, México.
+          </p>
+
+          <p style="font-size: 12px; text-align: justify;">
+            En caso de no cumplir con el pago en la fecha acordada, se generará un interés moratorio del 5% mensual.
+          </p>
+
+          <p style="font-size: 12px; text-align: justify;">
+            Deudor: <strong id="clientePagareNombre">${escapeHtml(cliente || 'MOSTRADOR')}</strong>
+          </p>
+        </div>
+
+        <div class="sale-note-footer">
+          <div class="small text-muted">${escapeHtml(observaciones || '')}</div>
+          <div class="sale-note-sign">Firma de recibido</div>
+        </div>
+      </article>
+    `;
+  }
+
+  function renderPreview(){
+    syncFormsetFromCart();
+    ticketPreview.innerHTML = `
+      <div class="sale-note-grid">
+        ${buildSaleNoteCopy('ORIGINAL')}
+        ${buildSaleNoteCopy('COPIA')}
+      </div>
+    `;
+    document.getElementById("summaryKg").textContent = formatQty(getTotalKg());
+  }
+
+  function buildPrintDocument(){
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nota de venta</title>
+  <style>
+    @page{ size: landscape; margin: 8mm; }
+    *{ box-sizing: border-box; }
+    body{ margin:0; font-family: Arial, Helvetica, sans-serif; color:#111; }
+    .sale-note-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
+    .sale-note-copy{ border:1px solid #222; border-radius:12px; padding:14px 14px 10px; min-height:185mm; }
+    .sale-note-copy.is-copy{ transform:scaleX(-1); }
+    .sale-note-copy.is-copy > *{ transform:scaleX(-1); }
+  .sale-note-header-row{ display:flex; align-items:flex-start; justify-content:space-between; }
+    .sale-note-top{ display:block; }
+    .sale-note-header{ margin-bottom:8px; }
+    .sale-note-logo{ width:160px; max-width:160px; max-height:100px; object-fit:contain; display:block; margin:0; }
+    .sale-note-title{ font-size:20px; font-weight:700; text-align:center; margin-top:4px; }
+    .sale-note-brand{ text-align:right; margin-left:auto; max-width:260px; display:flex; flex-direction:column; }
+    .brand-name{ font-size:15px; font-weight:700; line-height:1.1; }
+    .brand-owner{ font-size:12px; font-weight:600; line-height:1.1; }
+    .sale-note-address{ margin-top:4px; font-size:10px; line-height:1.15; white-space:pre-line; text-align:left; min-height:auto; }
+    .sale-note-message{ margin:8px 0 8px; font-size:11px; line-height:1.2; }
+    .sale-note-pagare{ margin-top:10px; border:1px solid #111; padding:8px 10px; font-size:11px; }
+    .sale-note-pagare-title{ font-weight:700; text-transform:uppercase; margin-bottom:4px; }
+    .sale-note-fields{ display:grid; grid-template-columns:3fr 1.3fr 1.7fr; border:1px solid #111; border-bottom:0; }
+    .sale-note-field{ min-height:54px; border-right:1px solid #111; border-bottom:1px solid #111; display:flex; flex-direction:column; }
+    .sale-note-field:last-child{ border-right:0; }
+    .label{ padding:4px 6px; border-bottom:1px solid #111; background:#f2f2f2; text-align:center; font-weight:700; font-size:11px; text-transform:uppercase; }
+    .value{ flex:1; padding:7px 8px; font-size:12px; }
+    .text-center{ text-align:center; }
+    .text-end{ text-align:right; }
+    .sale-note-table{ width:100%; border-collapse:collapse; margin-top:10px; }
+    .sale-note-table th,.sale-note-table td{ border:1px solid #111; padding:3px 5px; font-size:10px; vertical-align:middle; line-height:1.1; }
+    .sale-note-table th{ background:#f2f2f2; font-weight:700; text-align:center; }
+    .qty,.price,.amount{ text-align:center; white-space:nowrap; }
+    .sale-note-total-row td{ font-weight:700; }
+    .sale-note-footer{ display:flex; justify-content:space-between; gap:10px; align-items:flex-end; margin-top:10px; }
+    .sale-note-copy-tag{ font-size:11px; font-weight:700; letter-spacing:1px; color:#666; }
+    .sale-note-sign{ min-width:160px; text-align:center; padding-top:20px; border-top:1px solid #111; font-size:11px; }
+    .note-observaciones{ font-size:11px; color:#444; white-space:pre-line; }
+  </style>
+</head>
+<body>
+  <div class="sale-note-grid">
+    ${buildSaleNoteCopy('ORIGINAL')}
+    ${buildSaleNoteCopy('COPIA')}
+  </div>
+</body>
+</html>`;
+  }
+
+  function validateStep(current){
+    if (current === 1){
+      const fecha = form.querySelector('input[name="fecha"]');
+      if (fecha && !fecha.value){ alert("Captura la fecha."); fecha.focus(); return false; }
+      return true;
+    }
+    if (current === 2) return true;
+    if (current === 3){
+      if (cart.size === 0){ alert("Agrega al menos un producto."); productoSearch.focus(); return false; }
+      for (const it of cart.values()){
+        if (!(decimal(it.qty_presentacion) > 0) || !(decimal(it.qty_kg) > 0)){ alert(`El producto "${it.nombre}" tiene una cantidad inválida.`); return false; }
+        if (!(it.allocations || []).length){ alert(`El producto "${it.nombre}" no tiene almacenes asignados.`); return false; }
+      }
+      return true;
+    }
+    return true;
+  }
+
+  function getCsrfToken(){
+    return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || "";
+  }
+
+  indicators.forEach(ind => ind.addEventListener("click", () => {
+    const target = Number(ind.dataset.stepIndicator);
+    if (target <= step) showStep(target);
+  }));
+
+  btnPrev.addEventListener("click", () => showStep(step - 1));
+  btnNext.addEventListener("click", () => { if (validateStep(step)){ if (step === 3) syncFormsetFromCart(); showStep(step + 1); } });
+
+  clienteSearch.addEventListener("input", () => {
+    const opt = findOptionByValue(clientesDatalist, clienteSearch.value);
+    if (opt) setClienteText(opt.value);
+  });
+  btnClearCliente.addEventListener("click", () => { clienteSearch.value = ""; setClienteText(""); clienteSearch.focus(); });
+
+  productoSearch.addEventListener("input", renderProductos);
+  productoSearch.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowDown"){ e.preventDefault(); moveHighlight(1); }
+    else if (e.key === "ArrowUp"){ e.preventDefault(); moveHighlight(-1); }
+    else if (e.key === "Enter"){ e.preventDefault(); selectHighlightedProducto(); }
+  });
+
+  productoPresentacionSelect.addEventListener("change", () => {
+    const presentacion = getSelectedPresentacion();
+    if (!presentacion){
+      selectedPresentacionInfo.textContent = "—";
+      productoQty.disabled = true;
+      btnAddProducto.disabled = true;
+      productoPresentacionText.textContent = "Selecciona la presentación que se venderá.";
+      return;
+    }
+    selectedPresentacionInfo.textContent = presentacion.equivalencia_texto || `${formatPlainNumber(presentacion.cantidad_origen)} ${presentacion.unidad_origen}`;
+    productoPresentacionText.textContent = `Cada unidad descuenta ${formatPlainNumber(presentacion.factor_conversion, 4)} kg del inventario.`;
+    if (productoAlmacenSelect.value){
+      productoQty.disabled = false;
+      validarCantidadSeleccionada();
+    }
+  });
+
+  productoAlmacenSelect.addEventListener("change", () => {
+    if (!selectedProducto){ return; }
+    const aid = productoAlmacenSelect.value;
+    if (!aid){
+      productoQty.disabled = true;
+      btnAddProducto.disabled = true;
+      productoAlmacenStockText.textContent = "Selecciona el almacén desde el que se descontará el inventario.";
+      return;
+    }
+    const disponibleKg = getAllocationDisponibleKg(selectedProducto, aid);
+    productoQty.disabled = !getSelectedPresentacion();
+    productoAlmacenStockText.textContent = `Disponible en el almacén seleccionado: ${formatPlainNumber(disponibleKg, 4)} kg.`;
+    validarCantidadSeleccionada();
+    if (disponibleKg > 0 && getSelectedPresentacion()){ productoQty.focus(); productoQty.select(); }
+  });
+
+  productoQty.addEventListener("input", validarCantidadSeleccionada);
+  productoQty.addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); addSelectedProductoToCart(); } });
+  btnAddProducto.addEventListener("click", addSelectedProductoToCart);
+
+  cartList.addEventListener("click", (e) => {
+    const wrap = e.target.closest(".cart-item");
+    if (!wrap) return;
+    const id = String(wrap.dataset.id);
+    const item = cart.get(id);
+    if (!item) return;
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const action = btn.dataset.action;
+
+    if (action === "remove"){
+      cart.delete(id);
+      updateCartUI();
+      return;
+    }
+    if (action === "remove-allocation"){
+      const idx = Number(btn.dataset.index);
+      item.allocations.splice(idx, 1);
+      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
+      item.qty_kg = getItemAllocationsQtyKg(item);
+      if (item.qty_kg <= 0) cart.delete(id);
+      updateCartUI();
+      return;
+    }
+    if (action === "plus"){
+      const alloc = item.allocations?.[0];
+      if (!alloc) return;
+      const producto = productosData.find(p => String(p.id) === String(item.producto_id));
+      if (!producto) return;
+      const disponible = getAllocationDisponibleKg(producto, alloc.almacen_id);
+      if (disponible < decimal(item.factor_conversion)){ alert("Ya no hay disponible suficiente en el primer almacén asignado. Agrega surtido desde otro almacén en la parte superior."); return; }
+      alloc.qty_presentacion = decimal(alloc.qty_presentacion) + 1;
+      alloc.qty_kg = decimal(alloc.qty_kg) + decimal(item.factor_conversion);
+      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
+      item.qty_kg = getItemAllocationsQtyKg(item);
+      updateCartUI();
+      return;
+    }
+    if (action === "minus"){
+      const alloc = item.allocations?.[0];
+      if (!alloc) return;
+      alloc.qty_presentacion = decimal(alloc.qty_presentacion) - 1;
+      alloc.qty_kg = decimal(alloc.qty_presentacion) * decimal(item.factor_conversion);
+      item.allocations = item.allocations.filter(a => decimal(a.qty_presentacion) > 0 && decimal(a.qty_kg) > 0);
+      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
+      item.qty_kg = getItemAllocationsQtyKg(item);
+      if (item.qty_kg <= 0) cart.delete(id);
+      updateCartUI();
+    }
+  });
+
+  cartList.addEventListener("input", (e) => {
+    const wrap = e.target.closest(".cart-item");
+    if (!wrap) return;
+    const id = String(wrap.dataset.id);
+    const item = cart.get(id);
+    if (!item) return;
+    const action = e.target.dataset.action;
+
+    if (action === "qty"){
+      const vPresentacion = decimal(e.target.value || 0);
+      if (!(vPresentacion > 0)) { e.target.classList.add("is-invalid"); return; }
+      const baseAlloc = item.allocations?.[0];
+      if (!baseAlloc){ e.target.classList.add("is-invalid"); return; }
+      const othersPresentacion = (item.allocations || []).slice(1).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
+      const producto = productosData.find(p => String(p.id) === String(item.producto_id));
+      const disponiblePrimarioKg = producto ? getAllocationDisponibleKg(producto, baseAlloc.almacen_id) + decimal(baseAlloc.qty_kg) : decimal(baseAlloc.qty_kg);
+      const requeridoPrimarioPresentacion = vPresentacion - othersPresentacion;
+      const requeridoPrimarioKg = requeridoPrimarioPresentacion * decimal(item.factor_conversion);
+      if (requeridoPrimarioPresentacion <= 0 || requeridoPrimarioKg > disponiblePrimarioKg){ e.target.classList.add("is-invalid"); return; }
+      baseAlloc.qty_presentacion = requeridoPrimarioPresentacion;
+      baseAlloc.qty_kg = requeridoPrimarioKg;
+      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
+      item.qty_kg = getItemAllocationsQtyKg(item);
+      e.target.classList.remove("is-invalid");
+      wrap.querySelector(".item-qty-total").textContent = formatPlainNumber(item.qty_presentacion, 4);
+      wrap.querySelector(".item-kg-total").textContent = `${formatPlainNumber(item.qty_kg, 4)} kg`;
+      wrap.querySelector(".allocations-wrap").innerHTML = renderAllocationsChips(item);
+      wrap.querySelector(".item-subtotal").textContent = money(decimal(item.qty_presentacion) * decimal(item.precio));
+      refreshCartSummary();
+      renderProductos();
+      return;
+    }
+
+    if (action === "precio"){
+      const v = decimal(e.target.value || 0);
+      if (v >= 0){
+        item.precio = v;
+        wrap.querySelector(".item-subtotal").textContent = money(decimal(item.qty_presentacion) * decimal(item.precio));
+        refreshCartSummary();
+      }
+    }
+  });
+
+  form.addEventListener("submit", (e) => {
+    syncFormsetFromCart();
+    if (cart.size === 0){ e.preventDefault(); alert("Agrega al menos un producto."); showStep(3); }
+  });
+
+  btnSaveClienteQuick.addEventListener("click", async () => {
+    clienteQuickError.classList.add("d-none");
+    clienteQuickError.textContent = "";
+    const data = new FormData(clienteQuickForm);
+    try {
+      const res = await fetch("{% url 'cliente_quick_create' %}", { method: "POST", headers: { "X-CSRFToken": getCsrfToken() }, body: data });
+      const payload = await res.json();
+      if (!res.ok || !payload.ok){ clienteQuickError.textContent = payload.error || "No se pudo guardar el cliente."; clienteQuickError.classList.remove("d-none"); return; }
+      const opt = document.createElement("option");
+      opt.value = `${payload.nombre_fiscal} (${payload.rfc})`;
+      opt.dataset.id = payload.id; opt.dataset.nombre = payload.nombre_fiscal; opt.dataset.rfc = payload.rfc;
+      clientesDatalist.appendChild(opt);
+      clienteSearch.value = opt.value;
+      setClienteText(opt.value);
+      bootstrap.Modal.getInstance(document.getElementById("modalClienteNuevo"))?.hide();
+    } catch (err){
+      clienteQuickError.textContent = "Error de red al guardar el cliente.";
+      clienteQuickError.classList.remove("d-none");
+    }
+  });
+
+  btnPrintPreview?.addEventListener("click", () => {
+    if (cart.size === 0){ alert("Agrega al menos un producto antes de imprimir."); showStep(3); return; }
+    renderPreview();
+    const printWindow = window.open("", "_blank", "width=1400,height=900");
+    if (!printWindow){ alert("No se pudo abrir la ventana de impresión."); return; }
+    printWindow.document.open();
+    printWindow.document.write(buildPrintDocument());
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  });
+
+  renderProductos();
+  updateCartUI();
+  showStep(1);
+})();
+</script>
+{% endblock %}

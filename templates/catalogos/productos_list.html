@@ -41,8 +41,8 @@
               <th>Precio</th>
               <th>Stock</th>
               <th>Mín.</th>
-              <th>Máx.</th>
-              <th>Tipo</th>
+              <th>Máx.</th>              
+              <th>Conversiones</th>
               <th></th>
             </tr>
           </thead>
@@ -66,15 +66,21 @@
                 <td>${{ producto.precio }}</td>
                 <td>{{ producto.stock }}</td>
                 <td>{{ producto.stock_minimo }}</td>
-                <td>{{ producto.stock_maximo }}</td>
+                <td>{{ producto.stock_maximo }}</td>                
                 <td>
-                  {% if producto.es_equipo %}
-                    <span class="badge bg-primary">Equipo</span>
-                  {% else %}
-                    <span class="badge bg-secondary">Consumible</span>
-                  {% endif %}
+                  {% with conversiones=producto.conversiones_metricas.all %}
+                    {% if conversiones %}
+                      <div class="small">
+                        {% for conversion in conversiones %}
+                          <div>{{ conversion.equivalencia_texto }}</div>
+                        {% endfor %}
+                      </div>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  {% endwith %}
                 </td>
-                
+
                 <td class="text-end">
                   <a href="{% url 'productos_edit' producto.pk %}"
                      class="btn btn-sm btn-outline-secondary">
@@ -98,7 +104,7 @@
               </tr>
             {% empty %}
               <tr>
-                <td colspan="9" class="text-center text-muted">
+                <td colspan="11" class="text-center text-muted">
                   No hay productos registrados aún.
                 </td>
               </tr>

@@ -96,7 +96,7 @@
               {% endif %}
             </div>
 
-            <div class="col-md-6 mb-3; plaintext">
+            <div class="col-md-6 mb-3">
               <label class="form-label fw-semibold">Stock actual</label>
               {{ form.stock }}
               {% if form.stock.errors %}
@@ -121,7 +121,8 @@
                 <div class="text-danger small">{{ form.stock_maximo.errors }}</div>
               {% endif %}
             </div>
-          </div>      
+          </div>
+
           <div class="row">
             <div class="form-check form-switch mb-3">
               {{ form.es_equipo }}
@@ -129,11 +130,11 @@
                 Requiere número de serie
               </label>
             </div>
-          </div>  
+          </div>
 
           <div class="mb-3">
             <label class="form-label fw-semibold">Imagen actual</label>
-          
+
             {% if form.instance.pk and producto and producto.imagen_base64 %}
               <div class="border rounded p-2 bg-light">
                 <img
@@ -154,7 +155,116 @@
               <label class="form-check-label">{{ form.eliminar_imagen.label }}</label>
             </div>
           </div>
-                    
+
+          <hr class="my-4">
+
+          <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+            <div>
+              <h5 class="fw-bold mb-1">Presentaciones / conversiones</h5>
+              <p class="text-muted mb-0 small">
+                Define las presentaciones no default del producto y su equivalencia hacia la métrica principal.
+                Ejemplo: 1 Caja = 10 {{ form.metrica.value|default:"kg" }}.
+              </p>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-agregar-conversion">
+              <i class="bi bi-plus-circle me-1"></i> Agregar presentación
+            </button>
+          </div>
+
+          {{ formset_conversiones.management_form }}
+
+          {% if formset_conversiones.non_form_errors %}
+            <div class="alert alert-danger py-2">
+              {{ formset_conversiones.non_form_errors }}
+            </div>
+          {% endif %}
+
+          <div class="table-responsive">
+            <table class="table table-sm align-middle" id="tabla-conversiones">
+              <thead class="table-light">
+                <tr>
+                  <th>Presentación</th>
+                  <th>Unidad origen</th>
+                  <th>Cantidad origen</th>
+                  <th>Equivale a</th>
+                  <th>Activo</th>
+                  <th>Eliminar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for conversion_form in formset_conversiones %}
+                  <tr>
+                    {% for hidden in conversion_form.hidden_fields %}
+                      {{ hidden }}
+                    {% endfor %}
+                    <td>
+                      {{ conversion_form.nombre }}
+                      {% if conversion_form.nombre.errors %}<div class="text-danger small">{{ conversion_form.nombre.errors }}</div>{% endif %}
+                    </td>
+                    <td>
+                      {{ conversion_form.unidad_origen }}
+                      {% if conversion_form.unidad_origen.errors %}<div class="text-danger small">{{ conversion_form.unidad_origen.errors }}</div>{% endif %}
+                    </td>
+                    <td>
+                      {{ conversion_form.cantidad_origen }}
+                      {% if conversion_form.cantidad_origen.errors %}<div class="text-danger small">{{ conversion_form.cantidad_origen.errors }}</div>{% endif %}
+                    </td>
+                    <td>
+                      <div class="input-group input-group-sm">
+                        {{ conversion_form.factor_conversion }}
+                        <span class="input-group-text">{{ form.metrica.value|default:"kg" }}</span>
+                      </div>
+                      {% if conversion_form.factor_conversion.errors %}<div class="text-danger small">{{ conversion_form.factor_conversion.errors }}</div>{% endif %}
+                    </td>
+                    <td class="text-center">
+                      {{ conversion_form.activo }}
+                    </td>
+                    <td class="text-center">
+                      {% if conversion_form.instance.pk %}
+                        {{ conversion_form.DELETE }}
+                      {% else %}
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-conversion" title="Quitar fila">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <template id="empty-conversion-form-template">
+            <tr>
+              {% for hidden in formset_conversiones.empty_form.hidden_fields %}
+                {{ hidden }}
+              {% endfor %}
+              <td>
+                {{ formset_conversiones.empty_form.nombre }}
+              </td>
+              <td>
+                {{ formset_conversiones.empty_form.unidad_origen }}
+              </td>
+              <td>
+                {{ formset_conversiones.empty_form.cantidad_origen }}
+              </td>
+              <td>
+                <div class="input-group input-group-sm">
+                  {{ formset_conversiones.empty_form.factor_conversion }}
+                  <span class="input-group-text">{{ form.metrica.value|default:"kg" }}</span>
+                </div>
+              </td>
+              <td class="text-center">
+                {{ formset_conversiones.empty_form.activo }}
+              </td>
+              <td class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-conversion" title="Quitar fila">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </template>
+
           <div class="d-flex justify-content-between mt-4">
             <a href="{% url 'productos_list' %}" class="btn btn-outline-secondary px-4">
               <i class="bi bi-arrow-left me-1"></i> Cancelar
@@ -175,4 +285,34 @@
 
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const btnAgregar = document.getElementById('btn-agregar-conversion');
+  const tabla = document.getElementById('tabla-conversiones');
+  const tbody = tabla ? tabla.querySelector('tbody') : null;
+  const totalForms = document.getElementById('id_{{ formset_conversiones.prefix }}-TOTAL_FORMS');
+  const template = document.getElementById('empty-conversion-form-template');
+
+  if (btnAgregar && tbody && totalForms && template) {
+    btnAgregar.addEventListener('click', function () {
+      const formIndex = parseInt(totalForms.value, 10);
+      const html = template.innerHTML.replace(/__prefix__/g, formIndex);
+      tbody.insertAdjacentHTML('beforeend', html);
+      totalForms.value = formIndex + 1;
+    });
+
+    tbody.addEventListener('click', function (e) {
+      const btnEliminar = e.target.closest('.btn-eliminar-conversion');
+      if (!btnEliminar) return;
+
+      e.preventDefault();
+      const row = btnEliminar.closest('tr');
+      if (row) {
+        row.remove();
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

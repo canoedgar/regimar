@@ -80,6 +80,79 @@ class Producto(models.Model):
     def __str__(self):
         return self.nombre
 
+
+class ProductoMetricaConversion(models.Model):
+    producto = models.ForeignKey(
+        Producto,
+        on_delete=models.CASCADE,
+        related_name="conversiones_metricas",
+    )
+    nombre = models.CharField(
+        max_length=100,
+        help_text="Nombre visible de la presentación. Ejemplo: Caja 10 kgs.",
+    )
+    nombre_normalizado = models.CharField(max_length=120, editable=False)
+    unidad_origen = models.CharField(
+        max_length=30,
+        help_text="Unidad o presentación que venderá el usuario. Ejemplo: Caja.",
+    )
+    cantidad_origen = models.DecimalField(
+        max_digits=6,
+        decimal_places=0,
+        default=Decimal("1"),
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Cantidad base de la unidad origen. Normalmente 1.",
+    )
+    factor_conversion = models.DecimalField(
+        max_digits=6,
+        decimal_places=0,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Cuánto equivale la cantidad origen en la métrica default del producto.",
+    )
+    activo = models.BooleanField(default=True)
+    fecha_alta = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Conversión de métrica"
+        verbose_name_plural = "Conversiones de métricas"
+        ordering = ["producto__nombre", "nombre"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["producto", "nombre_normalizado"],
+                name="uq_producto_conversion_nombre_normalizado",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        self.nombre_normalizado = normalizar_nombre(self.nombre)
+        super().save(*args, **kwargs)
+
+    @property
+    def metrica_default(self):
+        return self.producto.metrica
+
+    @property
+    def equivalencia_texto(self):
+        def decimal_legible(valor):
+            if valor is None:
+                return "0"
+            texto = format(valor, "f")
+            if "." in texto:
+                texto = texto.rstrip("0").rstrip(".")
+            return texto or "0"
+
+        cantidad_origen = decimal_legible(self.cantidad_origen)
+        factor = decimal_legible(self.factor_conversion)
+
+        return f"{cantidad_origen} {self.unidad_origen} = {factor} {self.metrica_default}"
+
+    def convertir_a_default(self, cantidad):
+        cantidad = Decimal(cantidad or 0)
+        return (cantidad / self.cantidad_origen) * self.factor_conversion
+
+    def __str__(self):
+        return f"{self.producto.nombre} - {self.nombre}"
+
 #Inicio proveedores        
 
 class Proveedor(models.Model):

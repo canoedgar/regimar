@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Sistema de gestión{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  {% load static %}
+  {% load roles %}
+
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+
+  {% block extra_css %}
+  <style>
+    .bg-solar-auth {
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #021b79 0%, #0575e6 40%, #fbb034 100%);
+      display: flex;
+      align-items: center;
+    }
+  
+    .auth-logo {
+      width: 180px; 
+      max-height: 100%;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+  
+    .nav-submenu {
+      padding-left: 1.5rem;
+      margin-top: 0.25rem;
+    }
+
+    .nav-submenu .nav-link {
+      font-size: 0.9rem;
+      padding: 0.15rem 0;
+    }
+
+    .nav-subtitle {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 0.35rem;
+    }
+     
+    .auth-wrapper {
+      max-width: 900px;
+      width: 100%;
+    }
+  
+    .auth-card {
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.35);
+      background: #ffffff;
+    }
+  
+    .auth-hero {
+      background: linear-gradient(160deg, #022140 0%, #034078 60%, #0a9396 100%);
+      color: #fff;
+    }
+  
+    .auth-hero h2 {
+      font-weight: 700;
+    }
+  
+    .sun-icon {
+      font-size: 3rem;
+    }
+  
+    .auth-form-title {
+      font-weight: 600;
+      color: #034078;
+    }
+  
+    .form-control:focus {
+      border-color: #fbb034;
+      box-shadow: 0 0 0 0.2rem rgba(251, 176, 52, 0.25);
+    }
+  
+    .btn-solar {
+      background: linear-gradient(135deg, #fbb034 0%, #ffdd00 100%);
+      border: none;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+  
+    .btn-solar:hover {
+      filter: brightness(0.95);
+    }
+  
+    @media (max-width: 767.98px) {
+      .auth-hero {
+        text-align: center;
+      }
+    }
+  </style>
+  {% endblock %}
+</head>
+
+<body class="{% block body_class %}bg-solar-main{% endblock %}">
+
+{% block layout %}
+<div class="d-flex solar-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="solar-sidebar" id="solarSidebar">
+
+    <div class="brand d-flex justify-content-between align-items-center px-2 pt-2 pb-1">
+
+      <!-- LOGO -->
+      <a href="{% url 'home' %}" class="d-flex align-items-center text-decoration-none text-white">
+        <img src="{% static 'resources/logo.png' %}" alt="Logo" class="logo-sidebar me-2">
+        <span class="brand-title mb-0">Sistema de gestión</span>
+      </a>
+
+      <!-- Cerrar en móvil -->
+      <button class="btn btn-sm btn-outline-light d-md-none ms-2" type="button" onclick="closeSidebar()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Filtrar menús -->
+    <div class="px-2 mt-3">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text">
+          <i class="bi bi-search"></i>
+        </span>
+        <input id="menuSearch"
+               type="text"
+               class="form-control"
+               placeholder="Buscar en menús…"
+               autocomplete="off">
+      </div>
+    </div>
+    
+
+    <nav class="nav flex-column mt-3">
+
+      <!-- GENERAL -->
+      <div class="nav-section-title">General</div>
+
+      <a href="{% url 'home' %}" class="nav-link {% block active_home %}{% endblock %}">
+        <i class="bi bi-speedometer2"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <!-- VENTAS -->
+      {% if request.user.is_superuser or request.user|has_group:"Ventas" %}
+        <div class="nav-section-title">Ventas</div>
+
+        <a href="{% url 'salida_venta_create' %}" class="nav-link {% block active_ventas %}{% endblock %}">
+          <i class="bi bi-cash-coin"></i>
+          Ventas
+        </a>
+      {% endif %}
+
+
+
+      <!-- INVENTARIO -->
+      {% if request.user.is_superuser or request.user|has_group:"Inventarios" %}
+        <a class="nav-link d-flex justify-content-between align-items-center {% block active_inventario %}{% endblock %}"
+          data-bs-toggle="collapse"
+          href="#inventarioSubmenu">
+          <span>
+            <i class="bi bi-box-seam"></i>
+            <span class="ms-2">Inventario</span>
+          </span>
+          <i class="bi bi-chevron-down small"></i>
+        </a>
+
+        <div class="collapse {% block inventario_show %}{% endblock %}" id="inventarioSubmenu">
+          <nav class="nav flex-column nav-submenu">
+
+            <!-- ENTRADAS -->
+            <span class="nav-subtitle">Entradas</span>
+
+            <a href="{% url 'entradas_list' %}" class="nav-link {% block active_entradas_list %}{% endblock %}">
+              <i class="bi bi-arrow-down-circle me-1"></i>
+              Listado de entradas
+            </a>
+
+            {# Entrada con factura XML / OC con CFDI #}
+            <a href="{% url 'entrada_ocf_create' %}"
+              class="nav-link {% block active_entradas_xml %}{% endblock %}">
+              <i class="bi bi-file-earmark-code me-1"></i>
+              Entrada desde factura XML
+            </a>
+
+            {# Entrada manual sin factura, con nota o remisión #}
+            <a href="{% url 'entrada_manual_create' %}"
+              class="nav-link {% block active_entradas_manual %}{% endblock %}">
+              <i class="bi bi-journal-text me-1"></i>
+              Entrada nota / remisión
+            </a>
+
+            {# Retorno de inventario de cliente (devoluciones) #}
+            <a href="#"
+              class="nav-link {% block active_entradas_retorno %}{% endblock %}">
+              <i class="bi bi-arrow-repeat me-1"></i>
+              Retorno de inventario
+            </a>
+
+            <!-- AJUSTES -->
+            <span class="nav-subtitle">Ajustes</span>
+
+            {# Ajustes de inventario: correcciones, diferencias físicas, etc. #}
+            <a href="{% url 'ajuste_inventario' %}"
+              class="nav-link {% block active_ajustes_inventario %}{% endblock %}">
+              <i class="bi bi-sliders me-1"></i>
+              Ajustes de inventario
+            </a>
+
+            <!-- SALIDAS -->
+            <span class="nav-subtitle">Salidas</span>
+
+            <a href="{% url 'salidas_list' %}"
+              class="nav-link {% block active_salidas_list %}{% endblock %}">
+              <i class="bi bi-arrow-up-circle me-1"></i>
+              Listado de salidas
+            </a>
+
+            {# Salida típica por venta (instalaciones/proyectos) #}
+            <a href="{% url 'salida_proyecto_create' %}"
+              class="nav-link {% block active_salidas_venta %}{% endblock %}">
+              <i class="bi bi-cart-check me-1"></i>
+              Salida por proyecto
+            </a>          
+
+            {# Merma, daño, robo, etc. #}
+            <a href="#"
+              class="nav-link {% block active_salidas_merma %}{% endblock %}">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              Salida por merma / daño
+            </a>         
+
+            {# Traslado entre almacenes (cuando haya multi-almacén) #}
+            <a href="#"
+              class="nav-link {% block active_salidas_traslado %}{% endblock %}">
+              <i class="bi bi-arrow-left-right me-1"></i>
+              Traspaso entre almacenes
+            </a>
+
+            <!-- CONSULTAS -->
+            <span class="nav-subtitle">Consultas</span>
+
+            <a href="{% url 'inventario_actual' %}"
+              class="nav-link {% block active_inventario_actual %}{% endblock %}">
+              <i class="bi bi-clipboard-data me-1"></i>
+              Inventario actual
+            </a>
+
+            <a href="{% url 'kardex' %}"
+              class="nav-link {% block active_kardex %}{% endblock %}">
+              <i class="bi bi-clock-history me-1"></i>
+              Kardex de inventario
+            </a>
+
+
+          </nav>
+        </div>
+      {% endif %}
+
+      <!-- CATÁLOGOS -->
+      {% if request.user.is_superuser or request.user|has_group:"Catalogos" %}
+        <a class="nav-link d-flex justify-content-between align-items-center {% block active_catalogos %}{% endblock %}"
+          data-bs-toggle="collapse"
+          href="#catalogosSubmenu">
+          <span>
+            <i class="bi bi-folder2-open"></i>
+            <span class="ms-2">Catálogos</span>
+          </span>
+          <i class="bi bi-chevron-down small"></i>
+        </a>
+
+        <div class="collapse {% block catalogos_show %}{% endblock %}" id="catalogosSubmenu">
+          <nav class="nav flex-column nav-submenu">
+
+            <a href="{% url 'proveedores_list' %}" class="nav-link {% block active_proveedores %}{% endblock %}">
+              <i class="bi bi-truck me-1"></i>
+              Proveedores
+            </a>
+
+            <a href="{% url 'clientes_list' %}" class="nav-link {% block active_clientes %}{% endblock %}">
+              <i class="bi bi-people me-1"></i>
+              Clientes
+            </a>
+
+            <a href="{% url 'categorias_list' %}" class="nav-link {% block active_categorias %}{% endblock %}">
+              <i class="bi bi-tag me-1"></i>
+              Categorías
+            </a>
+
+            <a href="{% url 'productos_list' %}" class="nav-link {% block active_productos %}{% endblock %}">
+              <i class="bi bi-box2-heart me-1"></i>
+              Productos
+            </a>
+
+            <a href="{% url 'almacenes_list' %}" class="nav-link {% block active_almacenes %}{% endblock %}">
+              <i class="bi bi-building me-1"></i>
+              Almacenes
+            </a>
+
+            <a href="{% url 'proyectos_list' %}" class="nav-link {% block active_proyectos %}{% endblock %}">
+              <i class="bi bi-kanban me-1"></i>
+              Proyectos
+            </a>
+
+            <span class="nav-subtitle">Importaciones</span>
+
+            <a href="{% url 'importar_productos' %}" class="nav-link {% block active_importar_productos %}{% endblock %}">
+              <i class="bi bi-upload me-1"></i>
+              Productos
+            </a>
+
+            <a href="{% url 'importar_proveedores' %}" class="nav-link {% block active_importar_proveedores %}{% endblock %}">
+              <i class="bi bi-upload me-1"></i>
+              Proveedores
+            </a>
+
+            <a href="{% url 'importar_clientes' %}" class="nav-link {% block active_importar_clientes %}{% endblock %}">
+              <i class="bi bi-upload me-1"></i>
+              Clientes
+            </a>
+
+          </nav>
+        </div>
+
+      {% endif %}
+
+      <!-- SISTEMA -->
+      {% if request.user.is_superuser %}
+        <div class="nav-section-title">Sistema</div>
+
+        <a class="nav-link d-flex justify-content-between align-items-center {% block active_config %}{% endblock %}"
+          data-bs-toggle="collapse"
+          href="#configSubmenu">
+          <span>
+            <i class="bi bi-gear"></i>
+            <span class="ms-2">Configuración</span>
+          </span>
+          <i class="bi bi-chevron-down small"></i>
+        </a>
+
+        <div class="collapse {% block config_show %}{% endblock %}" id="configSubmenu">
+          <nav class="nav flex-column nav-submenu">
+            <a href="{% url 'users_list' %}" class="nav-link {% block active_users %}{% endblock %}">
+              <i class="bi bi-people-fill me-1"></i>
+              Usuarios
+            </a>
+          </nav>
+        </div>
+      {% endif %}
+
+      <a href="{% url 'logout' %}" class="nav-link">
+        <i class="bi bi-box-arrow-right"></i>Cerrar sesión
+      </a>
+
+    </nav>
+  </aside>
+
+  <div id="sidebarOverlay" class="sidebar-overlay d-md-none" onclick="closeSidebar()"></div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="solar-main">
+    <header class="solar-main-header">
+
+      <button class="btn btn-sm btn-outline-secondary sidebar-toggle-btn d-md-none" onclick="toggleSidebar()">
+        ☰
+      </button>
+
+      <h2 class="solar-main-header-title mb-0">
+        {% block page_title %}Dashboard{% endblock %}
+      </h2>
+
+      <div>
+        <span class="solar-badge-user">
+          👤 
+          {% if request.user.is_authenticated %}
+            {{ request.user.username }}
+          {% else %}
+            Invitado
+          {% endif %}
+        </span>
+      </div>
+
+    </header>
+
+    <main class="solar-main-content">
+
+      {# 🔔 Notificaciones globales del sistema #}
+      {% include "partials/messages.html" %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+</div>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  function toggleSidebar() {
+    const sidebar = document.getElementById('solarSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const isOpen = sidebar.classList.toggle('show');
+
+    if (overlay) {
+      if (isOpen) overlay.classList.add('show');
+      else overlay.classList.remove('show');
+    }
+  }
+
+  function closeSidebar() {
+    document.getElementById('solarSidebar')?.classList.remove('show');
+    document.getElementById('sidebarOverlay')?.classList.remove('show');
+  }
+</script>
+
+<script>
+  (function () {
+    const input = document.getElementById("menuSearch");
+    if (!input) return;
+
+    const rootNav = document.querySelector("#solarSidebar nav.nav");
+    const allLinks = rootNav.querySelectorAll("a.nav-link");
+    const subtitles = rootNav.querySelectorAll(".nav-subtitle");
+    const inventarioSubmenu = document.getElementById("inventarioSubmenu");
+    const inventarioToggle = rootNav.querySelector('a[href="#inventarioSubmenu"]');
+
+    function norm(s) {
+      return (s || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")   // quita acentos
+        .trim();
+    }
+
+    function setShown(el, show) {
+      el.classList.toggle("d-none", !show);
+    }
+
+    function filterMenu() {
+      const q = norm(input.value);
+
+      // reset si está vacío
+      if (!q) {
+        allLinks.forEach(a => a.classList.remove("d-none"));
+        subtitles.forEach(s => s.classList.remove("d-none"));
+        // no forces el collapse aquí, respeta el estado actual
+        return;
+      }
+
+      // filtra links por texto visible
+      allLinks.forEach(a => {
+        const txt = norm(a.textContent);
+        setShown(a, txt.includes(q));
+      });
+
+      // oculta subtítulos si debajo no queda nada visible
+      subtitles.forEach(sub => {
+        const sectionLinks = [];
+        let node = sub.nextElementSibling;
+        while (node && !node.classList.contains("nav-subtitle")) {
+          if (node.matches?.("a.nav-link")) sectionLinks.push(node);
+          node = node.nextElementSibling;
+        }
+        const anyVisible = sectionLinks.some(a => !a.classList.contains("d-none"));
+        setShown(sub, anyVisible);
+      });
+
+      // Si hay match dentro de Inventario, abre el collapse para que se vea
+      if (inventarioSubmenu && inventarioToggle) {
+        const anyInvVisible = inventarioSubmenu.querySelectorAll("a.nav-link:not(.d-none)").length > 0;
+        if (anyInvVisible) {
+          inventarioSubmenu.classList.add("show");
+        }
+      }
+    }
+
+    input.addEventListener("input", filterMenu);
+
+    // Opcional: tecla ESC limpia búsqueda
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        input.value = "";
+        filterMenu();
+      }
+    });
+  })();
+</script>
+
+
+<script>
+  (function () {
+    const rootNav = document.querySelector("#solarSidebar nav.nav");
+    if (!rootNav) return;
+
+    const currentPath = window.location.pathname.replace(/\/+$/, ""); // sin trailing slash
+    const allLinks = rootNav.querySelectorAll("a.nav-link[href]");
+
+    // 1) Marca el link activo
+    let activeLink = null;
+    allLinks.forEach(a => {
+      const href = a.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
+
+      // Normaliza para comparar
+      const linkPath = new URL(href, window.location.origin).pathname.replace(/\/+$/, "");
+      if (linkPath === currentPath) {
+        activeLink = a;
+      }
+    });
+
+    if (activeLink) {
+      activeLink.classList.add("active", "is-active");
+    }
+
+    // 2) Si el activo está dentro del submenu de inventario, abre y marca el padre
+    const inventarioSubmenu = document.getElementById("inventarioSubmenu");
+    const inventarioToggle = rootNav.querySelector('a[href="#inventarioSubmenu"]');
+
+    if (inventarioSubmenu && inventarioToggle && activeLink) {
+      const isInsideInventario = inventarioSubmenu.contains(activeLink);
+
+      if (isInsideInventario) {
+        inventarioSubmenu.classList.add("show");
+        inventarioToggle.classList.add("active", "is-active");
+        inventarioToggle.setAttribute("aria-expanded", "true");
+      }
+    }
+
+    // 3) Si el activo está dentro del submenu de catálogos, abrirlo
+    const catalogosSubmenu = document.getElementById("catalogosSubmenu");
+    const catalogosToggle = rootNav.querySelector('a[href="#catalogosSubmenu"]');
+
+    if (catalogosSubmenu && catalogosToggle && activeLink) {
+      const isInsideCatalogos = catalogosSubmenu.contains(activeLink);
+
+      if (isInsideCatalogos) {
+        catalogosSubmenu.classList.add("show");
+        catalogosToggle.classList.add("active", "is-active");
+        catalogosToggle.setAttribute("aria-expanded", "true");
+      }
+}
+  })();
+</script>
+
+
+{% block extra_js %}{% endblock %}
+
+</body>
+</html>

@@ -2,7 +2,8 @@
 
 #Productos
 from django import forms
-from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen
+from django.forms import inlineformset_factory
+from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ProductoMetricaConversion
 
 from django.core.exceptions import ValidationError
 
@@ -129,6 +130,64 @@ class ProductoForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class ProductoMetricaConversionForm(forms.ModelForm):
+    class Meta:
+        model = ProductoMetricaConversion
+        fields = [
+            "nombre",
+            "unidad_origen",
+            "cantidad_origen",
+            "factor_conversion",
+            "activo",
+        ]
+        widgets = {
+            "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej: Caja 10 kgs"}),
+            "unidad_origen": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej: Caja"}),
+            "cantidad_origen": forms.NumberInput(attrs={"class": "form-control", "step": "0.0001", "min": "0.0001"}),
+            "factor_conversion": forms.NumberInput(attrs={"class": "form-control", "step": "0.0001", "min": "0.0001"}),
+            "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.producto = kwargs.pop("producto", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.cleaned_data.get("DELETE"):
+            return cleaned
+
+        nombre = cleaned.get("nombre")
+        unidad_origen = cleaned.get("unidad_origen")
+        cantidad_origen = cleaned.get("cantidad_origen")
+        factor_conversion = cleaned.get("factor_conversion")
+
+        if any([nombre, unidad_origen, cantidad_origen, factor_conversion]) and not all([
+            nombre,
+            unidad_origen,
+            cantidad_origen,
+            factor_conversion,
+        ]):
+            raise ValidationError("Completa todos los campos de la conversión o elimina la fila vacía.")
+
+        if cantidad_origen and factor_conversion and factor_conversion <= 0:
+            self.add_error("factor_conversion", "El factor de conversión debe ser mayor a 0.")
+
+        if cantidad_origen and cantidad_origen <= 0:
+            self.add_error("cantidad_origen", "La cantidad origen debe ser mayor a 0.")
+
+        return cleaned
+
+
+ProductoMetricaConversionFormSet = inlineformset_factory(
+    Producto,
+    ProductoMetricaConversion,
+    form=ProductoMetricaConversionForm,
+    extra=0,
+    can_delete=True,
+)
 
 #Fin Productos
 
