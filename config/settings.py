@@ -14,7 +14,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-insegura")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.1.204").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 # =========================
 # APPS INSTALADAS
@@ -31,7 +31,7 @@ INSTALLED_APPS = [
     "django.contrib.humanize",     
 
 
-    # Apps propias
+    # Apps creadas por el desarrollador
     "accounts",
     "catalogos",
     "inventarios",
@@ -76,24 +76,16 @@ WSGI_APPLICATION = "config.wsgi.application"
 # BASE DE DATOS (PostgreSQL)
 # =========================
 
-#DATABASES = {
-#    "default": {
-#        "ENGINE": "django.db.backends.postgresql",
-#        "NAME": os.getenv("DB_NAME", "solarcrm_dev"),
-#        "USER": os.getenv("DB_USER", "solaruser"),
-#        "PASSWORD": os.getenv("DB_PASSWORD", ""),
-#        "HOST": os.getenv("DB_HOST", "localhost"),
-#        "PORT": os.getenv("DB_PORT", "5432"),
-#    }
-#}
-
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": os.getenv("DB_ENGINE", "django.db.backends.mysql"),
+        "NAME": os.getenv("DB_NAME"),
+        "USER": os.getenv("DB_USER"),
+        "PASSWORD": os.getenv("DB_PASSWORD"),
+        "HOST": os.getenv("DB_HOST"),
+        "PORT": os.getenv("DB_PORT", "3306"),
     }
 }
-
 
 # =========================
 # PASSWORDS
