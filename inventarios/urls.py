@@ -1,7 +1,6 @@
 # inventarios/urls.py
 from django.urls import path
-#from .views import entrada_ocf_create, inventario_actual, entrada_detalle, kardex, kardex_export, salidas_list, salida_proyecto_create, cliente_quick_create, entrada_manual_create
-from .views import ajustes as v_ajustes, salidas as v_salidas, entradas as v_entradas, facturaentrada as v_factura, kardex as v_kardex
+from .views import ajustes as v_ajustes, salidas as v_salidas, entradas as v_entradas, facturaentrada as v_factura, kardex as v_kardex, ventas as v_ventas
 from catalogos.views import cliente_quick_create
 
 urlpatterns = [
@@ -17,6 +16,12 @@ urlpatterns = [
     path("kardex_export/", v_kardex.kardex_export, name="kardex_export"),    
     path("salidas/venta/nueva/", v_salidas.salida_venta_create, name="salida_venta_create"),
     path("api/clientes/quick-create/", cliente_quick_create, name="cliente_quick_create"),
-    path("salidas/<int:pk>/", v_salidas.salida_detalle, name="salida_detalle")
+    path("salidas/<int:pk>/", v_salidas.salida_detalle, name="salida_detalle"),
+
+    # View especializada para notas de venta
+    path("ventas/", v_ventas.ventas_list, name="ventas_list"),
+    path("ventas/notas/imprimir/", v_ventas.nota_venta_print, name="notas_venta_print_bulk"),
+    path("ventas/notas/<int:pk>/imprimir/", v_ventas.nota_venta_print, name="nota_venta_print"),
+    path("ventas/notas/<int:pk>/cancelar/", v_ventas.cancelar_nota_venta, name="cancelar_nota_venta"),
 
 ]

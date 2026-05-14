@@ -23,29 +23,25 @@
           </div>
 
           <div class="text-end">
-            <span class="badge text-bg-light border" id="stepBadge">Paso 1 de 5</span>
+            <span class="badge text-bg-light border" id="stepBadge">Paso 1 de 4</span>
           </div>
         </div>
 
         <div class="wizard-steps mb-4">
           <div class="wizard-step active" data-step-indicator="1">
             <div class="dot">1</div>
-            <div class="label">Datos</div>
+            <div class="label">Venta / Cliente</div>
           </div>
           <div class="wizard-step" data-step-indicator="2">
             <div class="dot">2</div>
-            <div class="label">Cliente</div>
+            <div class="label">Productos</div>
           </div>
           <div class="wizard-step" data-step-indicator="3">
             <div class="dot">3</div>
-            <div class="label">Productos</div>
+            <div class="label">Vista previa</div>
           </div>
           <div class="wizard-step" data-step-indicator="4">
             <div class="dot">4</div>
-            <div class="label">Vista previa</div>
-          </div>
-          <div class="wizard-step" data-step-indicator="5">
-            <div class="dot">5</div>
             <div class="label">Guardar</div>
           </div>
         </div>
@@ -55,6 +51,8 @@
 
           <div class="d-none">
             {{ form.cliente }}
+            {{ form.cliente_direccion }}
+            {{ form.cliente_contacto }}
           </div>
 
           {{ formset.management_form }}
@@ -88,104 +86,80 @@
           <div id="allocationsPayload" class="d-none"></div>
 
           <section class="wizard-panel" data-step="1">
-            <div class="row g-3">
-              <div class="col-md-4">
+            <div class="row g-3 align-items-start">
+              <div class="col-md-3">
                 <label class="form-label fw-semibold">Folio</label>
                 {{ form.folio }}
+                <div class="form-text">Asignado automáticamente.</div>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-3">
                 <label class="form-label fw-semibold">Fecha</label>
                 {{ form.fecha }}
-              </div>              
-
-              <div class="col-md-4">
-                <label class="form-label fw-semibold">Documento referencia</label>
-                {{ form.documento_referencia }}
+              </div>
+              <div class="col-md-6">
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
+                  <label class="form-label fw-semibold mb-0">Cliente</label>
+                  <button type="button" class="btn btn-sm btn-outline-info rounded-circle info-mini-btn" data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="left" title="Cliente en la nota" data-bs-content="Busca y selecciona un cliente del catálogo. La dirección y el nombre de contacto se cargan automáticamente, pero puedes modificarlos solo para esta venta sin afectar el catálogo.">
+                    <i class="bi bi-info-lg"></i>
+                  </button>
+                </div>
+                <div class="input-group">
+                  <input type="search" class="form-control" id="clienteSearch" placeholder="Buscar cliente por nombre, RFC, contacto o teléfono…" autocomplete="off">
+                  <button type="button" class="btn btn-outline-secondary" id="btnClearCliente" title="Limpiar">
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                  <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClienteNuevo" title="Nuevo cliente">
+                    <i class="bi bi-person-plus"></i>
+                  </button>
+                </div>
+                <div id="clientesResults" class="list-group mt-2 client-results d-none"></div>
+                <div class="small mt-2 text-muted">
+                  <span class="badge text-bg-light border">Seleccionado</span>
+                  <span id="clienteSelectedText" class="ms-1">MOSTRADOR</span>
+                </div>
               </div>
 
-              <div class="col-12">
-                <label class="form-label fw-semibold">Motivo</label>
-                {{ form.motivo }}
-              </div>
+              <script type="application/json" id="clientes-data">[{% for c in clientes %}{"id":"{{ c.id }}","value":"{{ c.nombre_fiscal|escapejs }} ({{ c.rfc|escapejs }})","nombre":"{{ c.nombre_fiscal|escapejs }}","rfc":"{{ c.rfc|escapejs }}","telefono":"{{ c.telefono|escapejs }}","contacto":"{{ c.contacto|escapejs }}","email":"{{ c.email_cfdi|escapejs }}","direccion":"{{ c.calle|escapejs }}{% if c.num_ext %} {{ c.num_ext|escapejs }}{% endif %}{% if c.num_int %} Int. {{ c.num_int|escapejs }}{% endif %}{% if c.colonia %}, {{ c.colonia|escapejs }}{% endif %}{% if c.localidad %}, {{ c.localidad|escapejs }}{% endif %}{% if c.municipio %}, {{ c.municipio|escapejs }}{% endif %}{% if c.estado %}, {{ c.estado|escapejs }}{% endif %}{% if c.cp %}, CP {{ c.cp|escapejs }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
 
-              <div class="col-12">
-                <label class="form-label fw-semibold">Observaciones</label>
-                {{ form.observaciones }}
+              <div class="col-md-7">
+                <label class="form-label fw-semibold">Dirección para esta venta</label>
+                <textarea class="form-control" id="clienteDireccionVenta" rows="2" placeholder="Dirección que aparecerá en la nota"></textarea>
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold">Contacto</label>
+                <input type="text" class="form-control" id="clienteContactoVenta" placeholder="Contacto para esta nota">
+                <div class="form-text">El cambio aplica solo a esta venta.</div>
               </div>
             </div>
           </section>
 
           <section class="wizard-panel d-none" data-step="2">
-            <div class="row g-3 align-items-end">
-              <div class="col-md-8">
-                <label class="form-label fw-semibold">Cliente (Catálogo)</label>
-                <div class="input-group">
-                  <input type="text" class="form-control" id="clienteSearch" list="clientesDatalist" placeholder="Buscar por nombre o RFC…">
-                  <button type="button" class="btn btn-outline-secondary" id="btnClearCliente" title="Limpiar">
-                    <i class="bi bi-x-lg"></i>
-                  </button>
-                </div>
-                <div class="form-text">
-                  Selecciona un cliente del catálogo. Al elegirlo, se llenará el campo de cliente de la venta.
-                </div>
-                <div class="small mt-2">
-                  <span class="badge text-bg-light border">Seleccionado:</span>
-                  <span id="clienteSelectedText" class="ms-1 text-muted">—</span>
-                </div>
-              </div>
-
-              <div class="col-md-4 text-md-end">
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalClienteNuevo">
-                  <i class="bi bi-person-plus me-1"></i> Nuevo cliente
-                </button>
-              </div>
-            </div>
-
-            <datalist id="clientesDatalist">
-              {% for c in clientes %}
-                <option value="{{ c.nombre_fiscal }} ({{ c.rfc }})"
-                        data-id="{{ c.id }}"
-                        data-nombre="{{ c.nombre_fiscal }}"
-                        data-rfc="{{ c.rfc }}">
-                </option>
-              {% endfor %}
-            </datalist>
-
-            <hr class="my-4">
-
-            <div class="alert alert-info mb-0">
-              <i class="bi bi-info-circle me-2"></i>
-              Si es venta de mostrador y no quieres capturar cliente, puedes dejarlo vacío.
-            </div>
-          </section>
-
-          <section class="wizard-panel d-none" data-step="3">
             <div class="step3-split-layout row g-3 align-items-start">
               <div class="col-xl-7 col-lg-7">
                 <div class="step3-panel-card h-100">
                   <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
                     <div>
-                      <h6 class="fw-bold mb-0">Selección de productos</h6>
-                      <div class="small text-muted">Vista equilibrada para oficina y uso móvil.</div>
+                      <h6 class="fw-bold mb-0">Productos</h6>
+                      <div class="small text-muted">Captura compacta para celular y caja.</div>
                     </div>
-                    <span class="badge text-bg-light border">Modo split</span>
+                    
                   </div>
 
                   <label class="form-label fw-semibold">Buscar producto</label>
                   <div class="input-group input-group-lg mb-2">
-                    <span class="input-group-text"><i class="bi bi-upc-scan"></i></span>
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
                     <input type="text"
                            class="form-control"
                            id="productoSearch"
-                           placeholder="Buscar producto o escanear código..."
+                           placeholder="Buscar producto..."
                            autocomplete="off">
                   </div>
-                  <div class="form-text mb-3">Usa <kbd>↑</kbd> <kbd>↓</kbd> para navegar y <kbd>Enter</kbd> para seleccionar.</div>
+                  <div class="form-text mb-3">Busca por nombre o clave y selecciona el producto.</div>
 
                   <div class="border rounded-3 overflow-hidden">
                     <div class="px-3 py-2 border-bottom bg-body-tertiary d-flex justify-content-between align-items-center">
                       <div class="fw-semibold">Productos disponibles</div>
-                      <div class="small text-muted">Selecciona el producto y luego define presentación y surtido.</div>
+                      <div class="small text-muted">Selecciona un producto para capturar presentación, almacén, cantidad y precio.</div>
                     </div>
 
                     <div id="productosEmptyState" class="p-4 text-center text-muted d-none">
@@ -234,24 +208,31 @@
                     </div>
 
                     <div class="row g-2 mt-2">
-                      <div class="col-sm-6">
+                      <div class="col-6">
                         <label class="form-label small fw-semibold">Cantidad</label>
                         <input type="number"
                                class="form-control form-control-lg"
                                id="productoQty"
+                               inputmode="decimal"
                                min="0.01"
                                step="0.01"
                                value="1"
                                disabled>
-                        <div class="form-text" id="productoQtyHelp">La cantidad corresponde a la presentación seleccionada.</div>
                         <div class="invalid-feedback" id="productoQtyError">
                           La cantidad excede el inventario disponible en kilogramos del almacén seleccionado.
                         </div>
                       </div>
-                      <div class="col-sm-6 d-grid">
-                        <label class="form-label small fw-semibold opacity-0">Agregar</label>
+                      <div class="col-6">
+                        <label class="form-label small fw-semibold">Precio por KG</label>
+                        <input type="number" class="form-control form-control-lg" id="productoPrecio" inputmode="decimal" min="0.01" step="0.01" value="0" disabled>
+                        <div class="invalid-feedback">El precio debe ser mayor a 0.</div>
+                      </div>
+                      <div class="col-12">
+                        <div class="form-text" id="productoQtyHelp">La cantidad corresponde a la presentación seleccionada.</div>
+                      </div>
+                      <div class="col-12 d-grid">
                         <button type="button" class="btn btn-success btn-lg" id="btnAddProducto" disabled>
-                          <i class="bi bi-plus-circle me-1"></i> Agregar
+                          <i class="bi bi-plus-circle me-1"></i> Agregar / actualizar producto
                         </button>
                       </div>
                     </div>
@@ -259,8 +240,8 @@
 
                   <div class="step3-panel-card">
                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                      <h6 class="fw-bold mb-0">Carrito</h6>
-                      <div class="text-muted small">Productos: <span id="cartCount">0</span> · Total: <span class="fw-semibold" id="cartTotal">$0.00</span></div>
+                      <h6 class="fw-bold mb-0">Carrito visual</h6>
+                      <div class="text-muted small"><span id="cartCount">0</span> prod. · <span class="fw-semibold" id="cartTotal">$0.00</span></div>
                     </div>
 
                     <div id="cartEmpty" class="border rounded p-4 text-center text-muted bg-body-tertiary">
@@ -275,77 +256,64 @@
             </div>
           </section>
 
-          <section class="wizard-panel d-none" data-step="4">
+          <section class="wizard-panel d-none" data-step="3">
             <div class="row g-3">
               <div class="col-12">
-                <div class="alert alert-secondary mb-0 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                  <div>
-                    <i class="bi bi-printer me-2"></i>
-                    Vista previa de la <strong>nota de venta</strong>. La <strong>copia espejo</strong> solo se genera al momento de imprimir.
-                  </div>
-                  <button type="button" class="btn btn-primary" id="btnPrintPreview">
-                    <i class="bi bi-printer me-1"></i> Imprimir
-                  </button>
+                <div class="alert alert-secondary mb-0">
+                  <i class="bi bi-eye me-2"></i>
+                  Vista previa de la <strong>nota de venta</strong>. Revisa que el cliente, dirección, contacto y productos estén correctos antes de guardar. La <strong>copia espejo</strong> solo se genera al momento de imprimir.
                 </div>
               </div>
 
-              <div class="col-xl-9">
+              <div class="col-12">
                 <div class="border rounded-4 p-3 p-xl-4 bg-body-tertiary note-preview-wrap">
                   <div id="ticketPreview" class="sale-note-sheet"></div>
-                </div>
-              </div>
-
-              <div class="col-xl-3">
-                <div class="card border-0 shadow-sm h-100">
-                  <div class="card-body">
-                    <h6 class="fw-bold mb-2">Resumen</h6>
-                    <div class="small text-muted">Revisa que cliente y productos estén correctos antes de imprimir.</div>
-                    <hr>
-                    <div class="d-flex justify-content-between">
-                      <span>Total</span>
-                      <span class="fw-bold" id="summaryTotal">$0.00</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                      <span>Productos</span>
-                      <span class="fw-semibold" id="summaryCount">0</span>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                      <span>Kilos totales</span>
-                      <span class="fw-semibold" id="summaryKg">0</span>
-                    </div>
-                    <hr>
-                    <div class="small text-muted mb-0">
-                      El formato de impresión muestra la presentación vendida y resume también los kilos totales descontados del inventario.
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <section class="wizard-panel d-none" data-step="5">
-            <div class="alert alert-success">
-              <i class="bi bi-check2-circle me-2"></i>
-              Todo listo. Presiona <strong>Guardar venta</strong> para registrar la salida.
-            </div>
-
-            <div class="card border-0 shadow-sm">
-              <div class="card-body">
-                <h6 class="fw-bold mb-2">Checklist</h6>
-                <ul class="mb-0">
-                  <li>Datos generales capturados</li>
-                  <li>Cliente seleccionado (opcional)</li>
-                  <li>Productos agregados con su almacén de surtido (obligatorio)</li>
-                  <li>Vista previa revisada</li>
-                </ul>
+          <section class="wizard-panel d-none" data-step="4">
+            {% if nota_guardada %}
+              <div class="alert alert-success">
+                <i class="bi bi-check2-circle me-2"></i>
+                Nota guardada correctamente. Puedes visualizar el formato de impresión o continuar con otra operación.
               </div>
-            </div>
+              <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="{% url 'nota_venta_print' nota_guardada.id %}" target="_blank">
+                  <i class="bi bi-printer me-1"></i> Imprimir nota
+                </a>
+                <a class="btn btn-outline-primary" href="{% url 'ventas_list' %}">
+                  <i class="bi bi-receipt me-1"></i> Ir a notas de venta
+                </a>
+                <a class="btn btn-success" href="{% url 'salida_venta_create' %}">
+                  <i class="bi bi-plus-circle me-1"></i> Generar nueva nota
+                </a>
+              </div>
+            {% else %}
+              <div class="alert alert-success">
+                <i class="bi bi-check2-circle me-2"></i>
+                Todo listo. Presiona <strong>Guardar venta</strong>. Al guardar, el sistema mostrará aquí las opciones para visualizar la nota, ir al listado o generar una nueva.
+              </div>
+
+              <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                  <h6 class="fw-bold mb-2">Checklist</h6>
+                  <ul class="mb-0">
+                    <li>Datos de venta y cliente revisados</li>
+                    <li>Dirección y contacto confirmados</li>
+                    <li>Productos agregados con presentación y almacén de surtido</li>
+                    <li>Vista previa revisada</li>
+                  </ul>
+                </div>
+              </div>
+            {% endif %}
           </section>
 
           <hr class="my-4">
 
           <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
-            <a href="{% url 'salidas_list' %}" class="btn btn-outline-secondary">
+            <a href="{% url 'ventas_list' %}" class="btn btn-outline-secondary">
               <i class="bi bi-arrow-left me-1"></i> Cancelar
             </a>
 
@@ -358,9 +326,11 @@
                 Siguiente <i class="bi bi-chevron-right ms-1"></i>
               </button>
 
+              {% if not nota_guardada %}
               <button type="submit" class="btn btn-success d-none" id="btnSubmit">
                 <i class="bi bi-check2-circle me-1"></i> Guardar venta
               </button>
+              {% endif %}
             </div>
           </div>
 
@@ -371,6 +341,111 @@
 
   </div>
 </div>
+
+{% if nota_guardada %}
+<div id="savedPrintRoot" class="print-sale-note-root">
+  <div class="sale-note-grid">
+    {% for copia in "12" %}
+      <article class="sale-note-copy {% if not forloop.first %}is-copy{% endif %}">
+        <div class="sale-note-copy-tag">{% if forloop.first %}ORIGINAL{% else %}COPIA{% endif %}</div>
+
+        <div class="sale-note-top mt-1">
+          <div class="sale-note-header">
+            <div class="sale-note-header-row">
+              <img src="{% static 'resources/logo.png' %}" alt="Logo" class="sale-note-logo">
+              <div class="sale-note-brand">
+                <div class="brand-name">CPC Alimentos</div>
+                <div class="brand-owner">Jaime Parada Villarreal</div>
+                <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
+Mayakhan Residencial Mexicali B.C
+Teléfono: 686 162 7239
+Email: cpcalimentosbc@gmail.com</div>
+              </div>
+            </div>
+            <div class="sale-note-title">NOTA DE VENTA</div>
+          </div>
+        </div>
+
+        <div class="sale-note-message">Atendiendo a su amable solicitud enviamos la nota de venta correspondiente quedando a sus órdenes.</div>
+
+        <div class="sale-note-fields">
+          <div class="sale-note-field">
+            <div class="label">Cliente</div>
+            <div class="value">{{ nota_guardada.cliente|default:'MOSTRADOR' }}</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Folio</div>
+            <div class="value text-center">{{ nota_guardada.folio }}</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Fecha de entrega</div>
+            <div class="value text-center">{{ nota_guardada.fecha|date:'d/m/Y' }}</div>
+          </div>
+
+          <div class="sale-note-field">
+            <div class="label">Dirección</div>
+            <div class="value">{% if nota_guardada.cliente_direccion %}{{ nota_guardada.cliente_direccion }}{% else %}&nbsp;{% endif %}</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Contacto</div>
+            <div class="value">{% if nota_guardada.cliente_contacto %}{{ nota_guardada.cliente_contacto }}{% else %}&nbsp;{% endif %}</div>
+          </div>
+          <div class="sale-note-field">
+            <div class="label">Forma de pago</div>
+            <div class="value text-center">Contado</div>
+          </div>
+        </div>
+
+        <table class="sale-note-table">
+          <thead>
+            <tr>
+              <th style="width: 12%;">Cantidad KG</th>
+              <th style="width: 12%;">Cant. Cajas</th>
+              <th>Descripción</th>
+              <th style="width: 16%;">P. KG</th>
+              <th style="width: 16%;">Importe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in nota_guardada.detalles.all %}
+              <tr>
+                <td class="qty">{{ d.cantidad|floatformat:2 }}</td>
+                <td class="qty">{% if d.cantidad_presentacion and d.presentacion_nombre != 'kg' and d.presentacion_nombre != 'Kilos' %}{{ d.cantidad_presentacion|floatformat:2 }}{% endif %}</td>
+                <td class="desc">{{ d.producto }}</td>
+                <td class="price">$ {{ d.precio_unitario|floatformat:2 }}</td>
+                <td class="amount">$ {{ d.importe|default:0|floatformat:2 }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted">Sin productos capturados</td>
+              </tr>
+            {% endfor %}
+            <tr class="sale-note-total-row">
+              <td></td>
+              <td></td>
+              <td class="text-end">TOTAL</td>
+              <td></td>
+              <td class="amount">$ {{ nota_guardada.total_importe|default:0|floatformat:2 }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="mt-4">
+          <h6 class="fw-bold text-center mb-2">PAGARÉ</h6>
+          <p style="font-size: 12px; text-align: justify;">Por este pagaré me comprometo a pagar a la orden de: Jaime Parada Villarreal en la Ciudad de Mexicali, Baja California, México.</p>
+          <p style="font-size: 12px; text-align: justify;">En caso de no cumplir con el pago en la fecha acordada, se generará un interés moratorio del 5% mensual.</p>
+          <p style="font-size: 12px; text-align: justify;">Deudor: <strong>{{ nota_guardada.cliente|default:'MOSTRADOR' }}</strong></p>
+        </div>
+
+        <div class="sale-note-footer">
+          <div class="small text-muted">{{ nota_guardada.observaciones|default:'' }}</div>
+          <div class="sale-note-sign">Firma de recibido</div>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
 
 <div class="modal fade" id="modalClienteNuevo" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -414,11 +489,15 @@
               <input type="text" class="form-control" name="domicilio_fiscal_cp" maxlength="5" required>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label fw-semibold">Teléfono (opcional)</label>
               <input type="text" class="form-control" name="telefono">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Nombre de contacto (opcional)</label>
+              <input type="text" class="form-control" name="contacto" placeholder="Ej. Juan Pérez">
+            </div>
+            <div class="col-md-4">
               <label class="form-label fw-semibold">Email CFDI (opcional)</label>
               <input type="email" class="form-control" name="email_cfdi">
             </div>
@@ -485,15 +564,19 @@
   .sale-note-table td.qty, .sale-note-table td.price, .sale-note-table td.amount{ text-align:center; white-space:nowrap; }
   .sale-note-table td.desc{ min-width:0; }
   .sale-note-total-row td{ font-weight:800; }
-  .sale-note-footer{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-top:12px; }
+  .sale-note-footer{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-top:48px; }
   .sale-note-copy-tag{ font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#6c757d; }
-  .sale-note-sign{ min-width:180px; text-align:center; padding-top:26px; border-top:1px solid #212529; font-size:.85rem; }
+  .sale-note-sign{ min-width:180px; text-align:center; padding-top:58px; margin-top:28px; border-top:1px solid #212529; font-size:.85rem; }
   .sale-note-grid-preview{ grid-template-columns:1fr; max-width:760px; margin:0 auto; }
   @media (max-width: 1399px){ .sale-note-grid{ grid-template-columns:1fr; } .sale-note-sheet{ min-width:760px; } }
+  .client-results{ max-height:280px; overflow:auto; position:relative; z-index:30; }
+  .client-result-item{ cursor:pointer; }
+  .client-result-item:hover{ background:#f8f9fa; }
+  .print-sale-note-root{ display:none; }
   @media print{
     body *{ visibility:hidden !important; }
     .print-sale-note-root, .print-sale-note-root *{ visibility:visible !important; }
-    .print-sale-note-root{ position:fixed; inset:0; background:#fff; padding:8mm; }
+    .print-sale-note-root{ display:block !important; position:fixed; inset:0; background:#fff; padding:8mm; }
   }
   .product-results{ max-height:360px; overflow:auto; }
   .product-item{ cursor:pointer; transition:background-color .15s ease, border-color .15s ease; position:relative; }
@@ -533,6 +616,10 @@
     .step3-selected-metrics{ grid-template-columns:1fr; }
   }
 
+
+  .info-mini-btn{ width:28px; height:28px; display:inline-grid; place-items:center; padding:0; }
+  .product-item .fw-semibold{ line-height:1.15; }
+  .cart-item .allocation-chip button{ display:none; }
 </style>
 {% endblock %}
 
@@ -550,13 +637,19 @@
 
   const clienteInputReal = form.querySelector('input[name="cliente"]');
   const clienteSearch = document.getElementById("clienteSearch");
-  const clientesDatalist = document.getElementById("clientesDatalist");
+  const clientesResults = document.getElementById("clientesResults");
   const clienteSelectedText = document.getElementById("clienteSelectedText");
   const btnClearCliente = document.getElementById("btnClearCliente");
+  const clienteDireccionVenta = document.getElementById("clienteDireccionVenta");
+  const clienteContactoVenta = document.getElementById("clienteContactoVenta");
+  const clienteDireccionReal = form.querySelector('textarea[name="cliente_direccion"]');
+  const clienteContactoReal = form.querySelector('input[name="cliente_contacto"]');
+  const clientesData = JSON.parse((document.getElementById("clientes-data") ? document.getElementById("clientes-data").textContent : "") || "[]");
 
   const productosData = JSON.parse(document.getElementById("productos-data").textContent || "[]");
   const productoSearch = document.getElementById("productoSearch");
   const productoQty = document.getElementById("productoQty");
+  const productoPrecio = document.getElementById("productoPrecio");
   const productoAlmacenSelect = document.getElementById("productoAlmacenSelect");
   const productoAlmacenStockText = document.getElementById("productoAlmacenStockText");
   const btnAddProducto = document.getElementById("btnAddProducto");
@@ -581,14 +674,27 @@
   const hiddenTbody = document.getElementById("hiddenFormsetTbody");
   const hiddenTpl = document.getElementById("hiddenRowTemplate");
   const ticketPreview = document.getElementById("ticketPreview");
-  const btnPrintPreview = document.getElementById("btnPrintPreview");
 
   const btnSaveClienteQuick = document.getElementById("btnSaveClienteQuick");
   const clienteQuickForm = document.getElementById("clienteQuickForm");
   const clienteQuickError = document.getElementById("clienteQuickError");
 
+  const folioInput = form.querySelector('input[name="folio"]');
+  const fechaInput = form.querySelector('input[name="fecha"]');
+  if (folioInput){
+    folioInput.readOnly = true;
+    folioInput.setAttribute("readonly", "readonly");
+    folioInput.setAttribute("tabindex", "-1");
+    folioInput.classList.add("bg-body-secondary");
+  }
+  if (fechaInput){
+    fechaInput.type = "date";
+    fechaInput.setAttribute("type", "date");
+    normalizeDateInputValue(fechaInput);
+  }
+
   let step = 1;
-  const totalSteps = 5;
+  const totalSteps = 4;
   let selectedProducto = null;
   let filteredProductos = [];
   let highlightedIndex = -1;
@@ -611,13 +717,33 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  function blockInvalidNumberKeys(e){
+    if (["-", "+", "e", "E"].includes(e.key)){
+      e.preventDefault();
+    }
+  }
+
+  function normalizeDateInputValue(input){
+    if (!input) return;
+    const value = String(input.value || "").trim();
+    if (!value) return;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return;
+    const match = value.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+    if (match){
+      const dd = match[1].padStart(2, "0");
+      const mm = match[2].padStart(2, "0");
+      const yyyy = match[3];
+      input.value = `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
   function formatPlainNumber(value, maxDecimals = 2){
     const n = decimal(value);
     return n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: maxDecimals });
   }
 
   function getPresentaciones(producto){
-    return Array.isArray(producto?.conversiones) ? producto.conversiones : [];
+    return (producto && Array.isArray(producto.conversiones)) ? producto.conversiones : [];
   }
 
   function getSelectedPresentacion(){
@@ -629,12 +755,40 @@
     return `${productoId}::${presentacionId}`;
   }
 
-  function findOptionByValue(datalist, value){
-    const q = norm(value);
-    for (const opt of datalist.querySelectorAll("option")){
-      if (norm(opt.value) === q) return opt;
+  function syncClienteExtras(){
+    if (clienteDireccionReal) clienteDireccionReal.value = (clienteDireccionVenta ? clienteDireccionVenta.value : '') || "";
+    if (clienteContactoReal) clienteContactoReal.value = (clienteContactoVenta ? clienteContactoVenta.value : '') || "";
+  }
+
+  function renderClientesResults(query){
+    if (!clientesResults) return;
+    const q = norm(query);
+    clientesResults.innerHTML = "";
+    if (!q){ clientesResults.classList.add("d-none"); return; }
+    const matches = clientesData.filter(c => norm(`${c.nombre} ${c.rfc} ${c.telefono || ""} ${c.contacto || ""} ${c.email || ""}`).includes(q)).slice(0, 12);
+    if (!matches.length){
+      clientesResults.innerHTML = '<div class="list-group-item text-muted small">Sin coincidencias</div>';
+      clientesResults.classList.remove("d-none");
+      return;
     }
-    return null;
+    matches.forEach(c => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "list-group-item list-group-item-action client-result-item";
+      btn.innerHTML = `<div class="fw-semibold">${escapeHtml(c.nombre)}</div><div class="small text-muted">RFC: ${escapeHtml(c.rfc)}${c.contacto ? ' · Contacto: ' + escapeHtml(c.contacto) : ''}${c.telefono ? ' · Tel: ' + escapeHtml(c.telefono) : ''}</div>`;
+      btn.addEventListener("click", () => selectCliente(c));
+      clientesResults.appendChild(btn);
+    });
+    clientesResults.classList.remove("d-none");
+  }
+
+  function selectCliente(c){
+    clienteSearch.value = (c ? c.value : "") || "";
+    setClienteText((c ? c.value : "") || "");
+    if (clienteDireccionVenta) clienteDireccionVenta.value = (c ? c.direccion : "") || "";
+    if (clienteContactoVenta) clienteContactoVenta.value = (c ? c.contacto : "") || "";
+    syncClienteExtras();
+    clientesResults && clientesResults.classList.add("d-none");
   }
 
   function cartToArray(){
@@ -647,7 +801,7 @@
 
   function getTotal(){
     let t = 0;
-    cart.forEach(i => { t += decimal(i.qty_presentacion) * decimal(i.precio); });
+    cart.forEach(i => { t += decimal(i.qty_kg) * decimal(i.precio); });
     return t;
   }
 
@@ -682,14 +836,15 @@
   function showStep(n){
     step = Math.min(Math.max(1, n), totalSteps);
     panels.forEach(p => p.classList.add("d-none"));
-    document.querySelector(`.wizard-panel[data-step="${step}"]`)?.classList.remove("d-none");
+    const currentPanel = document.querySelector(`.wizard-panel[data-step="${step}"]`);
+    if (currentPanel){ currentPanel.classList.remove("d-none"); }
     btnPrev.disabled = (step === 1);
     btnNext.classList.toggle("d-none", step === totalSteps);
-    btnSubmit.classList.toggle("d-none", step !== totalSteps);
+    if (btnSubmit){ btnSubmit.classList.toggle("d-none", step !== totalSteps); }
     setIndicator();
-    if (step === 3) setTimeout(() => productoSearch?.focus(), 50);
-    if (step === 4) renderPreview();
-    if (step === 5) syncFormsetFromCart();
+    if (step === 2) setTimeout(() => productoSearch && productoSearch.focus(), 50);
+    if (step === 3) renderPreview();
+    if (step === 4) syncFormsetFromCart();
   }
 
   function getClienteNombre(text){
@@ -717,7 +872,7 @@
 
   function renderAlmacenesProducto(producto){
     productoAlmacenSelect.innerHTML = '<option value="">Selecciona un almacén…</option>';
-    (producto?.almacenes || []).forEach(a => {
+    ((producto && producto.almacenes) ? producto.almacenes : []).forEach(a => {
       const disponibleKg = getAllocationDisponibleKg(producto, a.id);
       const opt = document.createElement("option");
       opt.value = a.id;
@@ -733,6 +888,7 @@
     selectedProductoNombre.textContent = "Ninguno";
     selectedProductoStock.textContent = "—";
     selectedProductoPrecio.textContent = money(0);
+    if (productoPrecio){ productoPrecio.value = "0"; productoPrecio.disabled = true; }
     selectedPresentacionInfo.textContent = "—";
     productoPresentacionSelect.innerHTML = '<option value="">Selecciona una presentación…</option>';
     productoPresentacionSelect.disabled = true;
@@ -753,6 +909,7 @@
     selectedProductoNombre.textContent = producto.nombre;
     selectedProductoStock.textContent = formatPlainNumber(producto.stock, 4);
     selectedProductoPrecio.textContent = money(producto.precio || 0);
+    if (productoPrecio){ productoPrecio.value = decimal(producto.precio || 0).toFixed(2); productoPrecio.disabled = false; productoPrecio.classList.remove("is-invalid"); }
     selectedPresentacionInfo.textContent = "—";
     productoQty.value = "1";
     productoQty.classList.remove("is-invalid");
@@ -791,12 +948,16 @@
     const qPresentacion = decimal(productoQty.value || 0);
     const factor = decimal(presentacion.factor_conversion || 0);
     const requeridoKg = qPresentacion * factor;
-    const ok = qPresentacion > 0 && factor > 0 && requeridoKg <= disponibleKg;
+    const precioKg = decimal((productoPrecio ? productoPrecio.value : '') || 0);
+    const qtyOk = qPresentacion > 0 && factor > 0 && requeridoKg <= disponibleKg;
+    const precioOk = precioKg > 0;
+    const ok = qtyOk && precioOk;
 
-    productoQty.classList.toggle("is-invalid", !ok);
+    productoQty.classList.toggle("is-invalid", !qtyOk);
+    productoPrecio && productoPrecio.classList.toggle("is-invalid", !precioOk && !productoPrecio.disabled);
     btnAddProducto.disabled = !ok;
     productoQty.disabled = false;
-    productoQtyHelp.textContent = `Equivale a ${formatPlainNumber(requeridoKg, 4)} kg.`;
+    productoQtyHelp.textContent = `Equivale a ${formatPlainNumber(requeridoKg, 4)} kg. Subtotal: ${money(requeridoKg * precioKg)}.`;
     return ok;
   }
 
@@ -810,7 +971,8 @@
     if (highlightedIndex < 0) highlightedIndex = filteredProductos.length - 1;
     if (highlightedIndex >= filteredProductos.length) highlightedIndex = 0;
     document.querySelectorAll(".product-item").forEach((el, idx) => el.classList.toggle("pos-focus", idx === highlightedIndex));
-    document.querySelectorAll(".product-item")[highlightedIndex]?.scrollIntoView({ block: "nearest" });
+    const highlightedEl = document.querySelectorAll(".product-item")[highlightedIndex];
+    if (highlightedEl){ highlightedEl.scrollIntoView({ block: "nearest" }); }
   }
 
   function selectHighlightedProducto(){
@@ -846,9 +1008,8 @@
               · Almacenes disponibles: <span class="fw-semibold">${almacenesConStock}</span>
             </div>
           </div>
-          <div class="text-end">
-            <div class="small text-muted">Precio sugerido</div>
-            <div class="fw-semibold">${money(p.precio || 0)}</div>
+          <div class="text-end small text-muted">
+            ${money(p.precio || 0)}
           </div>
         </div>
       `;
@@ -872,7 +1033,9 @@
     const factor = decimal(presentacion.factor_conversion || 0);
     const qtyKg = qPresentacion * factor;
     const disponibleKg = getAllocationDisponibleKg(selectedProducto, almacenId);
+    const precioKg = decimal(productoPrecio ? productoPrecio.value : 0);
     if (!almacen || !(qPresentacion > 0) || !(qtyKg > 0) || qtyKg > disponibleKg){ productoQty.classList.add("is-invalid"); productoQty.focus(); return; }
+    if (!(precioKg > 0)){ if (productoPrecio){ productoPrecio.classList.add("is-invalid"); productoPrecio.focus(); } return; }
 
     const key = getCartKey(selectedProducto.id, presentacion.id);
     let item = cart.get(key);
@@ -882,17 +1045,20 @@
         producto_id: String(selectedProducto.id),
         nombre: selectedProducto.nombre,
         metrica_default: selectedProducto.metrica_default || "kg",
-        precio: decimal(selectedProducto.precio || 0),
+        precio: precioKg,
         qty_presentacion: 0,
         qty_kg: 0,
         factor_conversion: factor,
         presentacion_id: String(presentacion.id),
         presentacion_nombre: presentacion.unidad_origen || selectedProducto.metrica_default || "kg",
         presentacion_label: presentacion.equivalencia_texto || `${formatPlainNumber(presentacion.cantidad_origen)} ${presentacion.unidad_origen}`,
+        equivalencia_texto: presentacion.equivalencia_texto || `${formatPlainNumber(presentacion.cantidad_origen)} ${presentacion.unidad_origen} = ${formatPlainNumber(presentacion.factor_conversion, 4)} ${selectedProducto.metrica_default || 'kg'}`,
         allocations: [],
       };
       cart.set(key, item);
     }
+
+    item.precio = precioKg;
 
     const existingAllocation = item.allocations.find(a => String(a.almacen_id) === String(almacenId));
     if (existingAllocation){
@@ -920,15 +1086,16 @@
     const items = cartToArray();
     cartCount.textContent = String(items.length);
     cartTotal.textContent = money(getTotal());
-    document.getElementById("summaryTotal").textContent = money(getTotal());
-    document.getElementById("summaryCount").textContent = String(items.length);
+    const summaryTotal = document.getElementById("summaryTotal");
+    const summaryCount = document.getElementById("summaryCount");
+    if (summaryTotal){ summaryTotal.textContent = money(getTotal()); }
+    if (summaryCount){ summaryCount.textContent = String(items.length); }
   }
 
   function renderAllocationsChips(item){
     return (item.allocations || []).map((a, idx) => `
       <span class="allocation-chip">
         ${escapeHtml(a.almacen_nombre)} · ${escapeHtml(formatPlainNumber(a.qty_kg, 4))} kg
-        <button type="button" data-action="remove-allocation" data-index="${idx}" title="Quitar surtido">×</button>
       </span>
     `).join("");
   }
@@ -958,10 +1125,9 @@
           <div class="flex-grow-1">
             <div class="cart-name">${escapeHtml(item.nombre)}</div>
             <div class="cart-meta">
-              Presentación: <span class="fw-semibold">${escapeHtml(item.presentacion_nombre)}</span>
-              · Cantidad: <span class="fw-semibold item-qty-total">${escapeHtml(formatPlainNumber(item.qty_presentacion, 4))}</span>
-              · Equivale a: <span class="fw-semibold item-kg-total">${escapeHtml(formatPlainNumber(item.qty_kg, 4))} kg</span>
-              · Precio: <span class="fw-semibold">${money(item.precio)}</span>
+              ${escapeHtml(formatPlainNumber(item.qty_kg, 4))} kg
+              ${decimal(item.qty_presentacion) !== decimal(item.qty_kg) ? ' · Cajas: <span class="fw-semibold">' + escapeHtml(formatPlainNumber(item.qty_presentacion, 4)) + '</span>' : ''}
+              · ${money(item.precio)}
             </div>
             <div class="d-flex flex-wrap gap-2 mt-2 allocations-wrap">${renderAllocationsChips(item)}</div>
           </div>
@@ -969,20 +1135,9 @@
             <i class="bi bi-trash"></i>
           </button>
         </div>
-
-        <div class="d-flex align-items-center gap-2 mt-3">
-          <button type="button" class="btn btn-outline-secondary qty-btn" data-action="minus"><i class="bi bi-dash"></i></button>
-          <input type="number" class="form-control form-control-sm qty-input" data-action="qty" min="0.01" step="0.01" value="${item.qty_presentacion}">
-          <button type="button" class="btn btn-outline-secondary qty-btn" data-action="plus"><i class="bi bi-plus"></i></button>
-          <div class="ms-auto text-end">
-            <div class="small text-muted">Subtotal</div>
-            <div class="fw-bold item-subtotal">${money(decimal(item.qty_presentacion) * decimal(item.precio))}</div>
-          </div>
-        </div>
-
-        <div class="mt-2">
-          <label class="form-label small text-muted mb-1">Precio unitario</label>
-          <input type="number" class="form-control form-control-sm" data-action="precio" min="0" step="0.01" value="${item.precio}">
+        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+          <span class="small text-muted">Subtotal</span>
+          <span class="fw-bold item-subtotal">${money(decimal(item.qty_kg) * decimal(item.precio))}</span>
         </div>
       `;
       cartList.appendChild(el);
@@ -1013,8 +1168,24 @@
       row.querySelector('input[name$="-precio_unitario"]').value = String(it.precio);
       hiddenTbody.appendChild(row);
 
+      [
+        ["detalle_producto_id", it.producto_id],
+        ["detalle_presentacion_id", it.presentacion_id || "default"],
+        ["detalle_cantidad_presentacion", it.qty_presentacion],
+        ["detalle_factor_conversion", it.factor_conversion || 1],
+        ["detalle_presentacion_nombre", it.presentacion_nombre || "Kilos"],
+        ["detalle_metrica_default", it.metrica_default || "kg"],
+        ["detalle_equivalencia_texto", it.equivalencia_texto || it.presentacion_label || ""],
+      ].forEach(([name, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = String(value ?? "");
+        allocationsPayload.appendChild(input);
+      });
+
       (it.allocations || []).forEach(a => {
-        [["linea_producto_id", it.producto_id], ["linea_almacen_id", a.almacen_id], ["linea_cantidad", a.qty_kg]].forEach(([name, value]) => {
+        [["linea_item_index", idx], ["linea_producto_id", it.producto_id], ["linea_almacen_id", a.almacen_id], ["linea_cantidad", a.qty_kg]].forEach(([name, value]) => {
           const input = document.createElement("input");
           input.type = "hidden";
           input.name = name;
@@ -1048,19 +1219,19 @@
   }
 
   function buildSaleNoteCopy(label){
-    const folio = form.querySelector('input[name="folio"]')?.value || "";
-    const fecha = form.querySelector('input[name="fecha"]')?.value || "";
-    const cliente = getClienteNombre(clienteInputReal?.value || "");
+    const folio = (form.querySelector('input[name="folio"]') ? form.querySelector('input[name="folio"]').value : "") || "";
+    const fecha = (form.querySelector('input[name="fecha"]') ? form.querySelector('input[name="fecha"]').value : "") || "";
+    const cliente = getClienteNombre((clienteInputReal ? clienteInputReal.value : "") || "");
     const items = cartToArray();
-    const observaciones = form.querySelector('textarea[name="observaciones"]')?.value || "";
+    const observaciones = (form.querySelector('textarea[name="observaciones"]') ? form.querySelector('textarea[name="observaciones"]').value : "") || "";
 
     const rows = items.length
       ? items.map(it => {
-          const sub = decimal(it.qty_presentacion) * decimal(it.precio);
+          const sub = decimal(it.qty_kg) * decimal(it.precio);
           return `
             <tr>
-              <td class="qty">${escapeHtml(formatQty(it.qty_presentacion))}</td>
-              <td class="qty">${escapeHtml(it.presentacion_nombre)}</td>
+              <td class="qty">${escapeHtml(formatQty(it.qty_kg))}</td>
+              <td class="qty">${decimal(it.qty_presentacion) !== decimal(it.qty_kg) ? escapeHtml(formatQty(it.qty_presentacion)) : ''}</td>
               <td class="desc">${escapeHtml(it.nombre)}</td>
               <td class="price">${money(it.precio)}</td>
               <td class="amount">${money(sub)}</td>
@@ -1112,11 +1283,11 @@ Email: cpcalimentosbc@gmail.com</div>
 
           <div class="sale-note-field">
             <div class="label">Dirección</div>
-            <div class="value">&nbsp;</div>
+            <div class="value">${escapeHtml((clienteDireccionReal ? clienteDireccionReal.value : "") || (clienteDireccionVenta ? clienteDireccionVenta.value : '') || "") || "&nbsp;"}</div>
           </div>
           <div class="sale-note-field">
             <div class="label">Contacto</div>
-            <div class="value">&nbsp;</div>
+            <div class="value">${escapeHtml((clienteContactoReal ? clienteContactoReal.value : "") || (clienteContactoVenta ? clienteContactoVenta.value : '') || "") || "&nbsp;"}</div>
           </div>
           <div class="sale-note-field">
             <div class="label">Forma de pago</div>
@@ -1127,18 +1298,18 @@ Email: cpcalimentosbc@gmail.com</div>
         <table class="sale-note-table">
           <thead>
             <tr>
-              <th style="width: 11%;">Cantidad</th>
-              <th style="width: 10%;">Métrica</th>
+              <th style="width: 12%;">Cantidad KG</th>
+              <th style="width: 12%;">Cant. Cajas</th>
               <th>Descripción</th>
-              <th style="width: 16%;">P. Unitario</th>
+              <th style="width: 16%;">P. KG</th>
               <th style="width: 16%;">Importe</th>
             </tr>
           </thead>
           <tbody>
             ${rows}
             <tr class="sale-note-total-row">
-              <td class="qty">${escapeHtml(formatQty(getTotalKg()))}</td>
-              <td class="text-center">kg</td>
+              <td></td>
+              <td></td>
               <td class="text-end">TOTAL</td>
               <td></td>
               <td class="amount">${money(getTotal())}</td>
@@ -1177,89 +1348,6 @@ Email: cpcalimentosbc@gmail.com</div>
         ${buildSaleNoteCopy('ORIGINAL')}
       </div>
     `;
-    document.getElementById("summaryKg").textContent = formatQty(getTotalKg());
-  }
-
-  function buildPrintDocument(){
-    return `<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="utf-8">
-  <title>Nota de venta</title>
-  <style>
-    @page{ size: landscape; margin: 8mm; }
-    *{ box-sizing: border-box; }
-    body{ margin:0; font-family: Arial, Helvetica, sans-serif; color:#111; }
-    .sale-note-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
-    .sale-note-copy{ border:1px solid #222; border-radius:12px; padding:14px 14px 10px; min-height:185mm; }
-    .sale-note-copy.is-copy{ transform:scaleX(-1); }
-    .sale-note-copy.is-copy > *{ transform:scaleX(-1); }
-  .sale-note-header-row{ display:flex; align-items:flex-start; justify-content:space-between; }
-    .sale-note-top{ display:block; }
-    .sale-note-header{ margin-bottom:8px; }
-    .sale-note-logo{ width:160px; max-width:160px; max-height:100px; object-fit:contain; display:block; margin:0; }
-    .sale-note-title{ font-size:20px; font-weight:700; text-align:center; margin-top:4px; }
-    .sale-note-brand{ text-align:right; margin-left:auto; max-width:260px; display:flex; flex-direction:column; }
-    .brand-name{ font-size:15px; font-weight:700; line-height:1.1; }
-    .brand-owner{ font-size:12px; font-weight:600; line-height:1.1; }
-    .sale-note-address{ margin-top:4px; font-size:10px; line-height:1.15; white-space:pre-line; text-align:left; min-height:auto; }
-    .sale-note-message{ margin:8px 0 8px; font-size:11px; line-height:1.2; }
-    .sale-note-pagare{ margin-top:10px; border:1px solid #111; padding:8px 10px; font-size:11px; }
-    .sale-note-pagare-title{ font-weight:700; text-transform:uppercase; margin-bottom:4px; }
-    .sale-note-fields{ display:grid; grid-template-columns:3fr 1.3fr 1.7fr; border:1px solid #111; border-bottom:0; }
-    .sale-note-field{ min-height:54px; border-right:1px solid #111; border-bottom:1px solid #111; display:flex; flex-direction:column; }
-    .sale-note-field:last-child{ border-right:0; }
-    .label{ padding:4px 6px; border-bottom:1px solid #111; background:#f2f2f2; text-align:center; font-weight:700; font-size:11px; text-transform:uppercase; }
-    .value{ flex:1; padding:7px 8px; font-size:12px; }
-    .text-center{ text-align:center; }
-    .text-end{ text-align:right; }
-    .sale-note-table{ width:100%; border-collapse:collapse; margin-top:10px; }
-    .sale-note-table th,.sale-note-table td{ border:1px solid #111; padding:3px 5px; font-size:10px; vertical-align:middle; line-height:1.1; }
-    .sale-note-table th{ background:#f2f2f2; font-weight:700; text-align:center; }
-    .qty,.price,.amount{ text-align:center; white-space:nowrap; }
-    .sale-note-total-row td{ font-weight:700; }
-    .sale-note-footer{ display:flex; justify-content:space-between; gap:10px; align-items:flex-end; margin-top:10px; }
-    .sale-note-copy-tag{ font-size:11px; font-weight:700; letter-spacing:1px; color:#666; }
-    .sale-note-sign{ min-width:160px; text-align:center; padding-top:20px; border-top:1px solid #111; font-size:11px; }
-    .note-observaciones{ font-size:11px; color:#444; white-space:pre-line; }
-  
-  .step3-panel-card, .step3-search-card, .step3-results-card, .step3-selected-card, .step3-cart-card, .step3-ticket-preview-card{ background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:18px; padding:16px; box-shadow:0 8px 22px rgba(0,0,0,.04); }
-  .step3-card-title{ font-weight:700; margin-bottom:10px; }
-  .step3-selected-metrics{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-  .metric-box{ border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:10px 12px; background:rgba(248,249,250,.8); }
-  .metric-label{ font-size:.78rem; color:#6c757d; margin-bottom:2px; }
-  .metric-value{ font-weight:700; font-size:1rem; }
-  .step3-sidebar-stack{ display:flex; flex-direction:column; gap:14px; position:sticky; top:12px; align-self:start; z-index:2; }
-  .step3-sticky-card{ position:static; top:auto; }
-  .product-results-mobile{ max-height:320px; }
-  .product-results-desktop{ max-height:560px; }
-  .cart-list-compact{ max-height:420px; overflow:auto; padding-right:2px; }
-  .step3-add-btn{ min-height:48px; }
-  .step3-ticket-preview-card{ position:sticky; top:12px; background:linear-gradient(180deg,#ffffff 0%,#fbfbfc 100%); }
-  .mini-ticket-head,.mini-ticket-summary{ border:1px dashed rgba(0,0,0,.18); border-radius:14px; padding:10px 12px; background:#fcfcfd; }
-  .mini-ticket-row{ display:flex; justify-content:space-between; gap:10px; font-size:.92rem; padding:4px 0; }
-  .mini-ticket-items{ min-height:260px; max-height:520px; overflow:auto; padding-right:2px; }
-  .mini-ticket-empty{ border:1px dashed rgba(0,0,0,.16); border-radius:14px; padding:28px 14px; background:#fafbfc; }
-  .step3-panel-card-light{ background:#f8f9fa; border:1px solid rgba(0,0,0,.08); border-radius:16px; padding:14px; }
-  @media (max-width: 991.98px){
-    .step3-sidebar-stack, .step3-sticky-card, .step3-ticket-preview-card{ position:static; top:auto; }
-    .product-results-desktop{ max-height:320px; }
-    .cart-list-compact, .mini-ticket-items{ max-height:none; }
-  }
-  @media (max-width: 767.98px){
-    .step3-panel-card, .step3-search-card, .step3-results-card, .step3-selected-card, .step3-cart-card, .step3-ticket-preview-card{ padding:14px; border-radius:16px; }
-    .step3-selected-metrics{ grid-template-columns:1fr; }
-  }
-
-</style>
-</head>
-<body>
-  <div class="sale-note-grid">
-    ${buildSaleNoteCopy('ORIGINAL')}
-    ${buildSaleNoteCopy('COPIA')}
-  </div>
-</body>
-</html>`;
   }
 
   function validateStep(current){
@@ -1268,8 +1356,7 @@ Email: cpcalimentosbc@gmail.com</div>
       if (fecha && !fecha.value){ alert("Captura la fecha."); fecha.focus(); return false; }
       return true;
     }
-    if (current === 2) return true;
-    if (current === 3){
+    if (current === 2){
       if (cart.size === 0){ alert("Agrega al menos un producto."); productoSearch.focus(); return false; }
       for (const it of cart.values()){
         if (!(decimal(it.qty_presentacion) > 0) || !(decimal(it.qty_kg) > 0)){ alert(`El producto "${it.nombre}" tiene una cantidad inválida.`); return false; }
@@ -1281,7 +1368,7 @@ Email: cpcalimentosbc@gmail.com</div>
   }
 
   function getCsrfToken(){
-    return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value || "";
+    return (document.querySelector('input[name="csrfmiddlewaretoken"]') ? document.querySelector('input[name="csrfmiddlewaretoken"]').value : "") || "";
   }
 
   indicators.forEach(ind => ind.addEventListener("click", () => {
@@ -1289,14 +1376,50 @@ Email: cpcalimentosbc@gmail.com</div>
     if (target <= step) showStep(target);
   }));
 
+  function advanceFromCurrentStep(){
+    if (!validateStep(step)) return;
+    if (step === 2) syncFormsetFromCart();
+    showStep(step + 1);
+  }
+
   btnPrev.addEventListener("click", () => showStep(step - 1));
-  btnNext.addEventListener("click", () => { if (validateStep(step)){ if (step === 3) syncFormsetFromCart(); showStep(step + 1); } });
+  btnNext.addEventListener("click", advanceFromCurrentStep);
+
+  form.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+
+    const target = e.target;
+    const tag = (target && target.tagName ? target.tagName : "").toLowerCase();
+
+    if (tag === "textarea") return;
+    if (e.defaultPrevented) return;
+
+    if (step < totalSteps){
+      e.preventDefault();
+      if (step === 2 && target && (target.id === "productoQty" || target.id === "productoPrecio") && !btnAddProducto.disabled){
+        addSelectedProductoToCart();
+        return;
+      }
+      advanceFromCurrentStep();
+    }
+  });
 
   clienteSearch.addEventListener("input", () => {
-    const opt = findOptionByValue(clientesDatalist, clienteSearch.value);
-    if (opt) setClienteText(opt.value);
+    setClienteText(clienteSearch.value);
+    renderClientesResults(clienteSearch.value);
+    syncClienteExtras();
   });
-  btnClearCliente.addEventListener("click", () => { clienteSearch.value = ""; setClienteText(""); clienteSearch.focus(); });
+  clienteDireccionVenta && clienteDireccionVenta.addEventListener("input", syncClienteExtras);
+  clienteContactoVenta && clienteContactoVenta.addEventListener("input", syncClienteExtras);
+  btnClearCliente.addEventListener("click", () => {
+    clienteSearch.value = "";
+    setClienteText("");
+    if (clienteDireccionVenta) clienteDireccionVenta.value = "";
+    if (clienteContactoVenta) clienteContactoVenta.value = "";
+    syncClienteExtras();
+    clientesResults && clientesResults.classList.add("d-none");
+    clienteSearch.focus();
+  });
 
   productoSearch.addEventListener("input", renderProductos);
   productoSearch.addEventListener("keydown", (e) => {
@@ -1338,7 +1461,29 @@ Email: cpcalimentosbc@gmail.com</div>
     if (disponibleKg > 0 && getSelectedPresentacion()){ productoQty.focus(); productoQty.select(); }
   });
 
+  productoQty.addEventListener("keydown", blockInvalidNumberKeys);
+  if (productoPrecio){ productoPrecio.addEventListener("keydown", blockInvalidNumberKeys); }
   productoQty.addEventListener("input", validarCantidadSeleccionada);
+  productoQty.addEventListener("blur", () => {
+    if (!(decimal(productoQty.value || 0) > 0)){
+      productoQty.value = "1";
+      validarCantidadSeleccionada();
+    }
+  });
+  if (productoPrecio){
+    productoPrecio.addEventListener("focus", () => {
+      if (decimal(productoPrecio.value || 0) === 0){ productoPrecio.value = ""; }
+    });
+    productoPrecio.addEventListener("input", validarCantidadSeleccionada);
+    productoPrecio.addEventListener("blur", () => {
+      if (!(decimal(productoPrecio.value || 0) > 0)){
+        productoPrecio.classList.add("is-invalid");
+        btnAddProducto.disabled = true;
+      } else {
+        productoPrecio.classList.remove("is-invalid");
+      }
+    });
+  }
   productoQty.addEventListener("keydown", (e) => { if (e.key === "Enter"){ e.preventDefault(); addSelectedProductoToCart(); } });
   btnAddProducto.addEventListener("click", addSelectedProductoToCart);
 
@@ -1346,99 +1491,29 @@ Email: cpcalimentosbc@gmail.com</div>
     const wrap = e.target.closest(".cart-item");
     if (!wrap) return;
     const id = String(wrap.dataset.id);
-    const item = cart.get(id);
-    if (!item) return;
     const btn = e.target.closest("button[data-action]");
     if (!btn) return;
-    const action = btn.dataset.action;
-
-    if (action === "remove"){
+    if (btn.dataset.action === "remove"){
       cart.delete(id);
       updateCartUI();
-      return;
-    }
-    if (action === "remove-allocation"){
-      const idx = Number(btn.dataset.index);
-      item.allocations.splice(idx, 1);
-      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
-      item.qty_kg = getItemAllocationsQtyKg(item);
-      if (item.qty_kg <= 0) cart.delete(id);
-      updateCartUI();
-      return;
-    }
-    if (action === "plus"){
-      const alloc = item.allocations?.[0];
-      if (!alloc) return;
-      const producto = productosData.find(p => String(p.id) === String(item.producto_id));
-      if (!producto) return;
-      const disponible = getAllocationDisponibleKg(producto, alloc.almacen_id);
-      if (disponible < decimal(item.factor_conversion)){ alert("Ya no hay disponible suficiente en el primer almacén asignado. Agrega surtido desde otro almacén en la parte superior."); return; }
-      alloc.qty_presentacion = decimal(alloc.qty_presentacion) + 1;
-      alloc.qty_kg = decimal(alloc.qty_kg) + decimal(item.factor_conversion);
-      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
-      item.qty_kg = getItemAllocationsQtyKg(item);
-      updateCartUI();
-      return;
-    }
-    if (action === "minus"){
-      const alloc = item.allocations?.[0];
-      if (!alloc) return;
-      alloc.qty_presentacion = decimal(alloc.qty_presentacion) - 1;
-      alloc.qty_kg = decimal(alloc.qty_presentacion) * decimal(item.factor_conversion);
-      item.allocations = item.allocations.filter(a => decimal(a.qty_presentacion) > 0 && decimal(a.qty_kg) > 0);
-      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
-      item.qty_kg = getItemAllocationsQtyKg(item);
-      if (item.qty_kg <= 0) cart.delete(id);
-      updateCartUI();
-    }
-  });
-
-  cartList.addEventListener("input", (e) => {
-    const wrap = e.target.closest(".cart-item");
-    if (!wrap) return;
-    const id = String(wrap.dataset.id);
-    const item = cart.get(id);
-    if (!item) return;
-    const action = e.target.dataset.action;
-
-    if (action === "qty"){
-      const vPresentacion = decimal(e.target.value || 0);
-      if (!(vPresentacion > 0)) { e.target.classList.add("is-invalid"); return; }
-      const baseAlloc = item.allocations?.[0];
-      if (!baseAlloc){ e.target.classList.add("is-invalid"); return; }
-      const othersPresentacion = (item.allocations || []).slice(1).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
-      const producto = productosData.find(p => String(p.id) === String(item.producto_id));
-      const disponiblePrimarioKg = producto ? getAllocationDisponibleKg(producto, baseAlloc.almacen_id) + decimal(baseAlloc.qty_kg) : decimal(baseAlloc.qty_kg);
-      const requeridoPrimarioPresentacion = vPresentacion - othersPresentacion;
-      const requeridoPrimarioKg = requeridoPrimarioPresentacion * decimal(item.factor_conversion);
-      if (requeridoPrimarioPresentacion <= 0 || requeridoPrimarioKg > disponiblePrimarioKg){ e.target.classList.add("is-invalid"); return; }
-      baseAlloc.qty_presentacion = requeridoPrimarioPresentacion;
-      baseAlloc.qty_kg = requeridoPrimarioKg;
-      item.qty_presentacion = (item.allocations || []).reduce((acc, a) => acc + decimal(a.qty_presentacion), 0);
-      item.qty_kg = getItemAllocationsQtyKg(item);
-      e.target.classList.remove("is-invalid");
-      wrap.querySelector(".item-qty-total").textContent = formatPlainNumber(item.qty_presentacion, 4);
-      wrap.querySelector(".item-kg-total").textContent = `${formatPlainNumber(item.qty_kg, 4)} kg`;
-      wrap.querySelector(".allocations-wrap").innerHTML = renderAllocationsChips(item);
-      wrap.querySelector(".item-subtotal").textContent = money(decimal(item.qty_presentacion) * decimal(item.precio));
-      refreshCartSummary();
-      renderProductos();
-      return;
-    }
-
-    if (action === "precio"){
-      const v = decimal(e.target.value || 0);
-      if (v >= 0){
-        item.precio = v;
-        wrap.querySelector(".item-subtotal").textContent = money(decimal(item.qty_presentacion) * decimal(item.precio));
-        refreshCartSummary();
-      }
     }
   });
 
   form.addEventListener("submit", (e) => {
+    if (step !== totalSteps){
+      e.preventDefault();
+      advanceFromCurrentStep();
+      return;
+    }
+
+    syncClienteExtras();
     syncFormsetFromCart();
-    if (cart.size === 0){ e.preventDefault(); alert("Agrega al menos un producto."); showStep(3); }
+    if (cart.size === 0){
+      e.preventDefault();
+      alert("Agrega al menos un producto.");
+      showStep(2);
+      return;
+    }
   });
 
   btnSaveClienteQuick.addEventListener("click", async () => {
@@ -1449,36 +1524,21 @@ Email: cpcalimentosbc@gmail.com</div>
       const res = await fetch("{% url 'cliente_quick_create' %}", { method: "POST", headers: { "X-CSRFToken": getCsrfToken() }, body: data });
       const payload = await res.json();
       if (!res.ok || !payload.ok){ clienteQuickError.textContent = payload.error || "No se pudo guardar el cliente."; clienteQuickError.classList.remove("d-none"); return; }
-      const opt = document.createElement("option");
-      opt.value = `${payload.nombre_fiscal} (${payload.rfc})`;
-      opt.dataset.id = payload.id; opt.dataset.nombre = payload.nombre_fiscal; opt.dataset.rfc = payload.rfc;
-      clientesDatalist.appendChild(opt);
-      clienteSearch.value = opt.value;
-      setClienteText(opt.value);
-      bootstrap.Modal.getInstance(document.getElementById("modalClienteNuevo"))?.hide();
+      const nuevo = { id: String(payload.id), value: `${payload.nombre_fiscal} (${payload.rfc})`, nombre: payload.nombre_fiscal, rfc: payload.rfc, telefono: payload.telefono || "", contacto: payload.contacto || "", email: payload.email_cfdi || "", direccion: "" };
+      clientesData.push(nuevo);
+      selectCliente(nuevo);
+      const modalInstance = bootstrap.Modal.getInstance(document.getElementById("modalClienteNuevo"));
+      if (modalInstance){ modalInstance.hide(); }
     } catch (err){
       clienteQuickError.textContent = "Error de red al guardar el cliente.";
       clienteQuickError.classList.remove("d-none");
     }
   });
 
-  btnPrintPreview?.addEventListener("click", () => {
-    if (cart.size === 0){ alert("Agrega al menos un producto antes de imprimir."); showStep(3); return; }
-    renderPreview();
-    const printWindow = window.open("", "_blank", "width=1400,height=900");
-    if (!printWindow){ alert("No se pudo abrir la ventana de impresión."); return; }
-    printWindow.document.open();
-    printWindow.document.write(buildPrintDocument());
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.onload = () => {
-      printWindow.print();
-    };
-  });
 
   renderProductos();
   updateCartUI();
-  showStep(1);
+  showStep(Number("{{ nota_guardada|yesno:'4,1' }}"));
 })();
 </script>
 {% endblock %}

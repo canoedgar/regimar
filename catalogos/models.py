@@ -306,6 +306,7 @@ class Cliente(models.Model):
     # =========================
     nombre_comercial = models.CharField("Nombre comercial", max_length=150, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
+    contacto = models.CharField("Nombre de contacto", max_length=150, blank=True)
 
     # Dirección “operativa” (para expediente / envío / PDF)
     calle = models.CharField(max_length=120, blank=True)

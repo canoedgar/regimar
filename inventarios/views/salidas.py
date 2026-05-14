@@ -1,7 +1,7 @@
 from decimal import Decimal, InvalidOperation
 
 from catalogos.models import Almacen, Producto, Cliente
-from ..models import SalidaInventario, SalidaInventarioDetalle, InventarioStock
+from ..models import SalidaInventario, SalidaInventarioDetalle, InventarioStock, SalidaInventarioDetalleAlmacen
 from ..forms import SalidaInventarioDetalleForm, SalidaVentaForm, SalidaProyectoForm
 from django.db.models import F, Sum, ExpressionWrapper, DecimalField
 from django.db.models.functions import Round
@@ -204,19 +204,63 @@ def _to_decimal(value, default=None):
 
 
 
+def _parse_detalles_presentacion(request):
+    """
+    Lee la información comercial capturada por renglón del carrito.
+    Esta información se guarda para poder reimprimir la nota como fue capturada,
+    aunque el inventario se descuente en la métrica base.
+    """
+    producto_ids = request.POST.getlist("detalle_producto_id")
+    presentacion_ids = request.POST.getlist("detalle_presentacion_id")
+    cantidades_presentacion = request.POST.getlist("detalle_cantidad_presentacion")
+    factores = request.POST.getlist("detalle_factor_conversion")
+    presentaciones = request.POST.getlist("detalle_presentacion_nombre")
+    metricas_default = request.POST.getlist("detalle_metrica_default")
+    equivalencias = request.POST.getlist("detalle_equivalencia_texto")
+
+    detalles_meta = []
+    total = len(producto_ids)
+
+    for idx in range(total):
+        cantidad_presentacion = _to_decimal(
+            cantidades_presentacion[idx] if idx < len(cantidades_presentacion) else None,
+            default=None,
+        )
+        factor = _to_decimal(
+            factores[idx] if idx < len(factores) else None,
+            default=None,
+        )
+
+        detalles_meta.append({
+            "producto_id": (producto_ids[idx] if idx < len(producto_ids) else "").strip(),
+            "presentacion_id": (presentacion_ids[idx] if idx < len(presentacion_ids) else "").strip() or "default",
+            "cantidad_presentacion": cantidad_presentacion,
+            "factor_conversion": factor,
+            "presentacion_nombre": (presentaciones[idx] if idx < len(presentaciones) else "").strip() or "Kilos",
+            "metrica_default": (metricas_default[idx] if idx < len(metricas_default) else "").strip() or "kg",
+            "equivalencia_texto": (equivalencias[idx] if idx < len(equivalencias) else "").strip(),
+        })
+
+    return detalles_meta
+
+
 def _parse_lineas_venta(request, productos_permitidos, almacenes_permitidos):
     producto_ids = request.POST.getlist("linea_producto_id")
     almacen_ids = request.POST.getlist("linea_almacen_id")
     cantidades = request.POST.getlist("linea_cantidad")
+    item_indexes = request.POST.getlist("linea_item_index")
 
     if not (len(producto_ids) == len(almacen_ids) == len(cantidades)):
         return None, "No fue posible interpretar las asignaciones de almacén de la venta."
 
     lineas = []
-    for raw_pid, raw_aid, raw_qty in zip(producto_ids, almacen_ids, cantidades):
+
+    for idx, (raw_pid, raw_aid, raw_qty) in enumerate(zip(producto_ids, almacen_ids, cantidades)):
         pid = (raw_pid or "").strip()
         aid = (raw_aid or "").strip()
         qty = _to_decimal(raw_qty, default=None)
+        item_index_raw = (item_indexes[idx] if idx < len(item_indexes) else "").strip()
+        item_index = int(item_index_raw) if item_index_raw.isdigit() else None
 
         if not pid or not aid:
             return None, "Hay asignaciones de almacén incompletas en el detalle."
@@ -226,8 +270,10 @@ def _parse_lineas_venta(request, productos_permitidos, almacenes_permitidos):
 
         if not producto:
             return None, "Uno de los productos seleccionados ya no es válido."
+
         if not almacen:
             return None, "Uno de los almacenes seleccionados ya no es válido."
+
         if qty is None or qty <= 0:
             return None, f"La cantidad asignada para {producto} debe ser mayor a 0."
 
@@ -235,13 +281,13 @@ def _parse_lineas_venta(request, productos_permitidos, almacenes_permitidos):
             "producto": producto,
             "almacen": almacen,
             "cantidad": qty,
+            "item_index": item_index,
         })
 
     if not lineas:
         return None, "Agrega al menos un producto a la venta."
 
     return lineas, None
-
 
 @transaction.atomic
 def salida_venta_create(request):
@@ -268,6 +314,7 @@ def salida_venta_create(request):
 
         if form.is_valid() and formset.is_valid():
             detalles = formset.save(commit=False)
+            detalles_meta = _parse_detalles_presentacion(request)
 
             detalles_validos = []
             for d in detalles:
@@ -291,6 +338,18 @@ def salida_venta_create(request):
 
             if not detalles_validos:
                 messages.error(request, "Agrega al menos un producto a la venta.")
+                return render(request, "inventarios/salida_venta_form.html", {
+                    "form": form,
+                    "formset": formset,
+                    "productos_ui": productos_ui,
+                    "clientes": clientes,
+                    "almacenes": almacenes_qs,
+                    "almacen": almacen_default,
+                    "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
+                })
+
+            if len(detalles_meta) != len(detalles_validos):
+                messages.error(request, "No fue posible interpretar las presentaciones de los productos capturados.")
                 return render(request, "inventarios/salida_venta_form.html", {
                     "form": form,
                     "formset": formset,
@@ -382,15 +441,51 @@ def salida_venta_create(request):
             for obj in getattr(formset, "deleted_objects", []):
                 obj.delete()
 
-            for d in detalles_validos:
+            detalles_por_index = {}
+            for idx, d in enumerate(detalles_validos):
+                meta = detalles_meta[idx] if idx < len(detalles_meta) else {}
                 d.salida = salida
+                d.almacen = salida.almacen
+
+                d.presentacion_nombre = meta.get("presentacion_nombre") or getattr(d, "presentacion_nombre", "") or "Kilos"
+                d.presentacion_conversion_id = meta.get("presentacion_id") or "default"
+                d.cantidad_presentacion = meta.get("cantidad_presentacion") or d.cantidad
+                d.presentacion_factor_conversion = meta.get("factor_conversion") or Decimal("1")
+                d.presentacion_metrica_default = meta.get("metrica_default") or "kg"
+                d.presentacion_equivalencia_texto = meta.get("equivalencia_texto") or f"1 {d.presentacion_nombre} = {d.presentacion_factor_conversion} {d.presentacion_metrica_default}"
+
                 d.save()
+                detalles_por_index[idx] = d
+
+            for linea in lineas_stock:
+                detalle = detalles_por_index.get(linea.get("item_index"))
+                if not detalle:
+                    continue
+
+                SalidaInventarioDetalleAlmacen.objects.create(
+                    detalle=detalle,
+                    almacen=linea["almacen"],
+                    cantidad=linea["cantidad"],
+                )
 
             for aid, requeridos in requeridos_por_almacen.items():
                 aplicar_movimientos_salida(almacen_id=aid, requeridos=requeridos)
 
-            messages.success(request, "Salida por venta creada correctamente.")
-            return redirect("salidas_list")
+            messages.success(request, "Venta guardada correctamente. Ya puedes imprimir la nota generada.")
+
+            return render(request, "inventarios/salida_venta_form.html", {
+                "form": SalidaVentaForm(initial={
+                    "folio": next_folio_movimiento(tipo="VTA", width=6),
+                    "fecha": timezone.localdate(),
+                }),
+                "formset": DetalleFormSet(queryset=SalidaInventarioDetalle.objects.none()),
+                "productos_ui": build_productos_ui(),
+                "clientes": clientes,
+                "almacenes": almacenes_qs,
+                "almacen": almacen_default,
+                "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
+                "nota_guardada": salida,
+            })
 
         messages.error(request, "Revisa los datos. Hay campos inválidos.")
 

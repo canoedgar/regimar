@@ -119,7 +119,52 @@ class EntradaInventarioDetalle(models.Model):
         blank=True,
     )
 
-    cantidad = models.DecimalField("Cantidad", max_digits=12, decimal_places=2)
+    presentacion_nombre = models.CharField(
+        "Presentación",
+        max_length=120,
+        blank=True,
+        help_text="Ej: Kilos, Caja 20 kg, Caja 10 kg.",
+    )
+    presentacion_conversion_id = models.CharField(
+        "ID de conversión usada",
+        max_length=50,
+        blank=True,
+        help_text="Identificador de la presentación/conversión usada al capturar la entrada.",
+    )
+    cantidad_presentacion = models.DecimalField(
+        "Cantidad capturada en presentación",
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Cantidad original capturada por el usuario. Ej: 2 cajas.",
+    )
+    presentacion_factor_conversion = models.DecimalField(
+        "Factor de conversión a métrica base",
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Cantidad de métrica base que entra por cada unidad de presentación. Ej: 20 kg por caja.",
+    )
+    presentacion_metrica_default = models.CharField(
+        "Métrica base",
+        max_length=50,
+        blank=True,
+        help_text="Métrica en la que se incrementa inventario. Ej: kg.",
+    )
+    presentacion_equivalencia_texto = models.CharField(
+        "Equivalencia usada",
+        max_length=160,
+        blank=True,
+        help_text="Texto histórico de la equivalencia aplicada. Ej: 1 Caja 20 kg = 20 kg.",
+    )
+    cantidad = models.DecimalField(
+        "Cantidad agregada al inventario",
+        max_digits=12,
+        decimal_places=2,
+        help_text="Cantidad ya convertida a la métrica base del inventario.",
+    )
     costo_unitario = models.DecimalField("Costo unitario", max_digits=12, decimal_places=2)
 
     class Meta:
@@ -155,6 +200,8 @@ class SalidaInventario(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.PROTECT, null=True, blank=True, related_name="salidas_inventario",)    
 
     cliente = models.CharField("Cliente", max_length=200, blank=True)
+    cliente_direccion = models.TextField("Dirección del cliente para esta venta", blank=True)
+    cliente_contacto = models.CharField("Contacto del cliente para esta venta", max_length=200, blank=True)
     proveedor = models.CharField("Proveedor", max_length=200, blank=True) 
 
     almacen = models.ForeignKey(
@@ -170,6 +217,23 @@ class SalidaInventario(models.Model):
     motivo = models.TextField("Motivo", blank=True)
     observaciones = models.TextField("Observaciones", blank=True)
     creado_en = models.DateTimeField(auto_now_add=True)
+
+    ESTADO_ACTIVA = "ACT"
+    ESTADO_CANCELADA = "CAN"
+    ESTADO_CHOICES = [
+        (ESTADO_ACTIVA, "Activa"),
+        (ESTADO_CANCELADA, "Cancelada"),
+    ]
+
+    estado = models.CharField(
+        "Estado",
+        max_length=3,
+        choices=ESTADO_CHOICES,
+        default=ESTADO_ACTIVA,
+        db_index=True,
+    )
+    cancelada_en = models.DateTimeField("Cancelada en", null=True, blank=True)
+    motivo_cancelacion = models.TextField("Motivo de cancelación", blank=True)
 
     class Meta:
         verbose_name = "Salida de inventario"
@@ -195,7 +259,60 @@ class SalidaInventarioDetalle(models.Model):
         related_name="detalles",
     )
     producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
-    cantidad = models.DecimalField("Cantidad", max_digits=12, decimal_places=2)
+    almacen = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.PROTECT,
+        related_name="salidas_detalle",
+        null=True,
+        blank=True,
+        help_text="Almacén principal del renglón. Para ventas surtidas de varios almacenes usar asignaciones.",
+    )
+    presentacion_nombre = models.CharField(
+        "Presentación",
+        max_length=120,
+        blank=True,
+        help_text="Ej: Kilos, Caja 20 kg, Caja 10 kg.",
+    )
+    presentacion_conversion_id = models.CharField(
+        "ID de conversión usada",
+        max_length=50,
+        blank=True,
+        help_text="Identificador de la presentación/conversión usada al capturar la venta.",
+    )
+    cantidad_presentacion = models.DecimalField(
+        "Cantidad vendida en presentación",
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Cantidad original capturada por el usuario. Ej: 2 cajas.",
+    )
+    presentacion_factor_conversion = models.DecimalField(
+        "Factor de conversión a métrica base",
+        max_digits=12,
+        decimal_places=4,
+        null=True,
+        blank=True,
+        help_text="Cantidad de métrica base que descuenta cada unidad de presentación. Ej: 20 kg por caja.",
+    )
+    presentacion_metrica_default = models.CharField(
+        "Métrica base",
+        max_length=50,
+        blank=True,
+        help_text="Métrica en la que se descuenta inventario. Ej: kg.",
+    )
+    presentacion_equivalencia_texto = models.CharField(
+        "Equivalencia usada",
+        max_length=160,
+        blank=True,
+        help_text="Texto histórico de la equivalencia aplicada. Ej: 1 Caja 20 kg = 20 kg.",
+    )
+    cantidad = models.DecimalField(
+        "Cantidad descontada de inventario",
+        max_digits=12,
+        decimal_places=2,
+        help_text="Cantidad ya convertida a la métrica base del inventario.",
+    )
     precio_unitario = models.DecimalField("Precio unitario", max_digits=12, decimal_places=2, default=0)
 
     class Meta:
@@ -204,6 +321,31 @@ class SalidaInventarioDetalle(models.Model):
 
     def __str__(self):
         return f"{self.producto} x {self.cantidad}"
+
+
+class SalidaInventarioDetalleAlmacen(models.Model):
+    """
+    Trazabilidad de surtido por almacén para una línea de venta.
+    Permite cancelar notas y regresar inventario exactamente al almacén de origen.
+    """
+    detalle = models.ForeignKey(
+        SalidaInventarioDetalle,
+        on_delete=models.CASCADE,
+        related_name="asignaciones",
+    )
+    almacen = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.PROTECT,
+        related_name="salidas_asignadas",
+    )
+    cantidad = models.DecimalField("Cantidad", max_digits=12, decimal_places=2)
+
+    class Meta:
+        verbose_name = "Asignación de salida por almacén"
+        verbose_name_plural = "Asignaciones de salida por almacén"
+
+    def __str__(self):
+        return f"{self.detalle.producto} | {self.almacen} x {self.cantidad}"
 
 class InventarioStock(models.Model):
     producto = models.ForeignKey(
@@ -230,4 +372,3 @@ class InventarioStock(models.Model):
 
     def __str__(self):
         return f"{self.producto} | {self.almacen} = {self.cantidad}"
-

@@ -381,6 +381,7 @@ def cliente_quick_create(request):
         domicilio_fiscal_cp = (request.POST.get("domicilio_fiscal_cp") or "").strip()
 
         telefono = (request.POST.get("telefono") or "").strip()
+        contacto = (request.POST.get("contacto") or "").strip()
         email_cfdi = (request.POST.get("email_cfdi") or "").strip()
 
         if not (rfc and nombre_fiscal and regimen_fiscal and domicilio_fiscal_cp):
@@ -392,6 +393,7 @@ def cliente_quick_create(request):
             regimen_fiscal=regimen_fiscal,
             domicilio_fiscal_cp=domicilio_fiscal_cp,
             telefono=telefono,
+            contacto=contacto,
             email_cfdi=email_cfdi,
         )
 
@@ -403,6 +405,9 @@ def cliente_quick_create(request):
             "id": c.id,
             "rfc": c.rfc,
             "nombre_fiscal": c.nombre_fiscal,
+            "telefono": c.telefono,
+            "contacto": c.contacto,
+            "email_cfdi": c.email_cfdi,
         })
 
     except ValidationError as e:

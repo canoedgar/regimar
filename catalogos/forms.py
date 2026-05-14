@@ -273,6 +273,7 @@ class ClienteForm(forms.ModelForm):
             # Comerciales
             "nombre_comercial",
             "telefono",
+            "contacto",
 
             # Dirección operativa
             "calle",
@@ -321,6 +322,7 @@ class ClienteForm(forms.ModelForm):
 
             "nombre_comercial": forms.TextInput(attrs={"class": "form-control"}),
             "telefono": forms.TextInput(attrs={"class": "form-control"}),
+            "contacto": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre de la persona de contacto"}),
 
             "calle": forms.TextInput(attrs={"class": "form-control"}),
             "num_ext": forms.TextInput(attrs={"class": "form-control"}),

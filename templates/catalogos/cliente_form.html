@@ -88,7 +88,7 @@
           </h5>
 
           <div class="row g-3">
-            <div class="col-md-8">
+            <div class="col-md-4">
               <label class="form-label fw-semibold">Nombre comercial</label>
               {{ form.nombre_comercial }}
               <div class="text-danger small">{{ form.nombre_comercial.errors }}</div>
@@ -97,6 +97,11 @@
               <label class="form-label fw-semibold">Teléfono</label>
               {{ form.telefono }}
               <div class="text-danger small">{{ form.telefono.errors }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Nombre de contacto</label>
+              {{ form.contacto }}
+              <div class="text-danger small">{{ form.contacto.errors }}</div>
             </div>
           </div>
         </div>

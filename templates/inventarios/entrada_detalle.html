@@ -130,7 +130,9 @@
               <tr>
                 <th>Producto</th>
                 <th>Almacén</th>
-                <th class="text-end">Cantidad</th>
+                <th>Presentación</th>
+                <th class="text-end">Capturada</th>
+                <th class="text-end">Inventario</th>
                 <th class="text-end">Costo unitario</th>
                 <th class="text-end">Importe</th>
               </tr>
@@ -150,13 +152,18 @@
                     <span class="text-muted">—</span>
                   {% endif %}
                 </td>
-                <td class="text-end">{{ d.cantidad|floatformat:2 }}</td>
+                <td>
+                  {{ d.presentacion_nombre|default:d.producto.metrica|default:'Base' }}
+                  {% if d.presentacion_equivalencia_texto %}<div class="small text-muted">{{ d.presentacion_equivalencia_texto }}</div>{% endif %}
+                </td>
+                <td class="text-end">{{ d.cantidad_presentacion|default:d.cantidad|floatformat:2 }}</td>
+                <td class="text-end">{{ d.cantidad|floatformat:2 }} {{ d.presentacion_metrica_default|default:d.producto.metrica }}</td>
                 <td class="text-end">$ {{ d.costo_unitario|floatformat:2 }}</td>
                 <td class="text-end">$ {{ d.importe|floatformat:2 }}</td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="4" class="text-center text-muted py-4">
+                <td colspan="7" class="text-center text-muted py-4">
                   Esta entrada no tiene productos registrados.
                 </td>
               </tr>
@@ -164,7 +171,7 @@
             </tbody>
             <tfoot>
               <tr class="table-light">
-                <th class="text-end">Totales:</th>
+                <th colspan="4" class="text-end">Totales:</th>
                 <th class="text-end">{{ total_productos|floatformat:2 }}</th>
                 <th></th>
                 <th class="text-end">$ {{ total_importe|floatformat:2 }}</th>

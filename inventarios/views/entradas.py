@@ -155,6 +155,17 @@ def entrada_manual_create(request):
                 messages.error(request, f"Línea {i}: la presentación seleccionada ya no es válida para ese producto.")
                 return _render_entrada_manual(request, form, proveedores, almacenes, productos, detalle_json)
 
+        producto = Producto.objects.filter(id=producto_id).first()
+        metrica_base = (getattr(producto, "metrica", None) or "kg") if producto else "kg"
+        presentacion_nombre = metrica_base
+        equivalencia_texto = f"Base ({metrica_base})"
+        factor_conversion = Decimal("1")
+
+        if conversion:
+            presentacion_nombre = conversion.unidad_origen or conversion.nombre
+            equivalencia_texto = conversion.equivalencia_texto
+            factor_conversion = conversion.factor_conversion
+
         detalle_norm.append({
             "producto_id": producto_id,
             "almacen_id": almacen_id,
@@ -163,6 +174,12 @@ def entrada_manual_create(request):
             "conversion_id": conversion_id,
             "costo_unitario": costo_unitario,
             "conversion": conversion,
+            "presentacion_nombre": presentacion_nombre,
+            "presentacion_conversion_id": str(conversion_id or "default"),
+            "cantidad_presentacion": cantidad_input,
+            "presentacion_factor_conversion": factor_conversion,
+            "presentacion_metrica_default": metrica_base,
+            "presentacion_equivalencia_texto": equivalencia_texto,
         })
 
     entrada = form.save(commit=False)
@@ -176,6 +193,12 @@ def entrada_manual_create(request):
             entrada=entrada,
             producto_id=d["producto_id"],
             almacen_id=d["almacen_id"],
+            presentacion_nombre=d["presentacion_nombre"],
+            presentacion_conversion_id=d["presentacion_conversion_id"],
+            cantidad_presentacion=d["cantidad_presentacion"],
+            presentacion_factor_conversion=d["presentacion_factor_conversion"],
+            presentacion_metrica_default=d["presentacion_metrica_default"],
+            presentacion_equivalencia_texto=d["presentacion_equivalencia_texto"],
             cantidad=d["cantidad"],
             costo_unitario=d["costo_unitario"],
         )

@@ -349,11 +349,13 @@ class SalidaInventarioDetalleForm(forms.ModelForm):
 class SalidaVentaForm(forms.ModelForm):
     class Meta:
         model = SalidaInventario
-        fields = ["folio", "fecha", "cliente", "documento_referencia", "motivo", "observaciones"]
+        fields = ["folio", "fecha", "cliente", "cliente_direccion", "cliente_contacto", "documento_referencia", "motivo", "observaciones"]
         widgets = {
             "folio": forms.TextInput(attrs={"class": "form-control"}),
             "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
             "cliente": forms.TextInput(attrs={"class": "form-control"}),
+            "cliente_direccion": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "cliente_contacto": forms.TextInput(attrs={"class": "form-control"}),
             "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
             "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 2}),

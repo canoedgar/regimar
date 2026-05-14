@@ -1,0 +1,293 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Nota de venta</title>
+  <style>
+    @page{ size: letter landscape; margin: 6mm; }
+    *{ box-sizing:border-box; }
+    body{ margin:0; font-family:Arial, Helvetica, sans-serif; color:#111; background:#f4f5f7; }
+    .toolbar{ position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center; gap:12px; padding:10px 12px; background:#fff; border-bottom:1px solid #ddd; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+    .toolbar-title{ font-weight:700; }
+    .toolbar-actions{ display:flex; gap:8px; }
+    .btn{ border:1px solid #222; border-radius:8px; padding:7px 12px; background:#fff; cursor:pointer; font-size:13px; text-decoration:none; color:#111; }
+    .btn-primary{ background:#111; color:#fff; }
+    .page{ padding:8px; page-break-after:always; overflow:hidden; }
+    .page:last-child{ page-break-after:auto; }
+
+    /* Misma base visual que la preview de salida_venta_form, manteniendo original + copia espejo */
+    .sale-note-grid{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+    .sale-note-copy{ background:#fff; border:1px solid rgba(0,0,0,.14); border-radius:18px; padding:14px 14px 10px; box-shadow:0 8px 24px rgba(0,0,0,.05); min-height:185mm; position:relative; }
+    .sale-note-copy.is-copy{ transform:scaleX(-1); }
+    .sale-note-copy.is-copy > *{ transform:scaleX(-1); }
+    .sale-note-copy.is-cancelled::after{ content:"CANCELADA"; position:absolute; left:50%; top:48%; transform:translate(-50%,-50%) rotate(-22deg); font-size:54px; font-weight:800; letter-spacing:4px; color:rgba(220,53,69,.16); border:4px solid rgba(220,53,69,.18); padding:8px 18px; pointer-events:none; }
+
+    .sale-note-header-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .sale-note-top{ display:block; }
+    .sale-note-header{ margin-bottom:10px; }
+    .sale-note-logo{ width:180px; max-width:180px; max-height:120px; object-fit:contain; display:block; margin:0; }
+    .sale-note-title{ font-size:1.3rem; font-weight:700; text-align:center; letter-spacing:.02em; margin-top:6px; }
+    .sale-note-brand{ text-align:right; margin-left:auto; max-width:260px; display:flex; flex-direction:column; }
+    .brand-name{ font-size:.98rem; font-weight:800; line-height:1.15; }
+    .brand-owner{ font-weight:600; font-size:.84rem; line-height:1.15; }
+    .sale-note-address{ margin-top:4px; text-align:left; white-space:pre-line; font-size:.76rem; line-height:1.2; min-height:auto; }
+    .sale-note-message{ margin:10px 0 10px; font-size:.84rem; line-height:1.25; }
+
+    .sale-note-fields{ display:grid; grid-template-columns:3fr 1.3fr 1.7fr; gap:0; border:1px solid #212529; border-bottom:0; }
+    .sale-note-field{ border-bottom:1px solid #212529; border-right:1px solid #212529; min-height:65px; display:flex; flex-direction:column; }
+    .sale-note-field:nth-child(3n){ border-right:0; }
+    .label{ font-size:.78rem; font-weight:700; text-transform:uppercase; text-align:center; padding:6px 8px; border-bottom:1px solid #212529; background:#f6f7f8; }
+    .value{ flex:1; padding:10px 12px; font-size:.95rem; white-space:pre-line; }
+    .value br{ display:block; content:""; }
+    .text-center{ text-align:center; }
+    .text-end{ text-align:right; }
+
+    .sale-note-table{ width:100%; border-collapse:collapse; margin-top:14px; }
+    .sale-note-table th,.sale-note-table td{ border:1px solid #212529; padding:4px 6px; font-size:.78rem; vertical-align:middle; line-height:1.15; }
+    .sale-note-table th{ background:#f6f7f8; text-align:center; font-weight:800; }
+    .qty,.price,.amount{ text-align:center; white-space:nowrap; }
+    .desc{ min-width:0; }
+    .sale-note-total-row td{ font-weight:800; }
+
+    .pagare{ margin-top:1.5rem; }
+    .pagare h6{ margin:0 0 .5rem; text-align:center; font-size:.9rem; font-weight:800; }
+    .pagare p{ margin:0 0 .5rem; font-size:12px; text-align:justify; line-height:1.25; }
+    .sale-note-footer{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-top:16px; }
+    .sale-note-copy-tag{ font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#6c757d; }
+    .sale-note-sign{ min-width:180px; text-align:center; padding-top:22px; margin-top:6px; border-top:1px solid #212529; font-size:.85rem; }
+    .note-observaciones{ font-size:.85rem; color:#6c757d; white-space:pre-line; max-width:55%; }
+    .cancel-note{ margin-top:8px; border:1px solid #dc3545; color:#842029; background:#fff5f5; padding:6px 8px; font-size:11px; }
+
+    @media print{
+      body{ background:#fff; }
+      .toolbar{ display:none !important; }
+      .page{
+        width:calc(279.4mm - 12mm);
+        height:calc(215.9mm - 12mm);
+        padding:0;
+        page-break-after:always;
+        overflow:hidden;
+      }
+      .page:last-child{ page-break-after:auto; }
+      .sale-note-grid{
+        transform-origin:top left;
+        will-change:transform;
+      }
+      .sale-note-copy{
+        box-shadow:none;
+        min-height:0;
+        height:calc(215.9mm - 12mm);
+        overflow:hidden;
+        padding:10px 10px 8px;
+        border-radius:12px;
+      }
+      .sale-note-logo{ width:145px; max-width:145px; max-height:90px; }
+      .sale-note-header{ margin-bottom:6px; }
+      .sale-note-title{ font-size:18px; margin-top:3px; }
+      .sale-note-message{ margin:6px 0; font-size:10.5px; line-height:1.15; }
+      .sale-note-field{ min-height:48px; }
+      .label{ padding:3px 5px; font-size:10px; }
+      .value{ padding:5px 7px; font-size:11px; }
+      .sale-note-table{ margin-top:7px; }
+      .sale-note-table th,.sale-note-table td{ padding:2px 4px; font-size:9px; line-height:1.05; }
+      .pagare{ margin-top:8px; }
+      .pagare h6{ margin-bottom:4px; font-size:11px; }
+      .pagare p{ margin-bottom:4px; font-size:9.5px; line-height:1.14; }
+      .sale-note-footer{ margin-top:10px; }
+      .sale-note-sign{ padding-top:18px; margin-top:4px; font-size:10px; }
+      .note-observaciones{ font-size:10px; }
+      .cancel-note{ margin-top:5px; padding:4px 6px; font-size:9.5px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="toolbar-title">Notas de venta</div>
+    <div class="toolbar-actions">
+      <button class="btn btn-primary" onclick="window.print()">Imprimir / guardar PDF</button>
+      <a class="btn" href="{% url 'ventas_list' %}">Notas de venta</a>
+      <button class="btn" onclick="window.close()">Cerrar</button>
+    </div>
+  </div>
+
+  {% for nota in notas %}
+    <div class="page">
+      <div class="sale-note-grid">
+        {% for copia in "12" %}
+          <article class="sale-note-copy {% if not forloop.first %}is-copy{% endif %} {% if nota.estado == 'CAN' %}is-cancelled{% endif %}">
+            <div class="sale-note-copy-tag">{% if forloop.first %}ORIGINAL{% else %}COPIA{% endif %}</div>
+
+            <div class="sale-note-top mt-1">
+              <div class="sale-note-header">
+                <div class="sale-note-header-row">
+                  <img src="{% static 'resources/logo.png' %}" alt="Logo" class="sale-note-logo">
+                  <div class="sale-note-brand">
+                    <div class="brand-name">CPC Alimentos</div>
+                    <div class="brand-owner">Jaime Parada Villarreal</div>
+                    <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
+Mayakhan Residencial Mexicali B.C
+Teléfono: 686 162 7239
+Email: cpcalimentosbc@gmail.com</div>
+                  </div>
+                </div>
+                <div class="sale-note-title">NOTA DE VENTA</div>
+              </div>
+            </div>
+
+            <div class="sale-note-message">Atendiendo a su amable solicitud enviamos la nota de venta correspondiente quedando a sus órdenes.</div>
+
+            <div class="sale-note-fields">
+              <div class="sale-note-field">
+                <div class="label">Cliente</div>
+                <div class="value">{{ nota.cliente|default:'MOSTRADOR' }}</div>
+              </div>
+              <div class="sale-note-field">
+                <div class="label">Folio</div>
+                <div class="value text-center">{{ nota.folio }}</div>
+              </div>
+              <div class="sale-note-field">
+                <div class="label">Fecha de entrega</div>
+                <div class="value text-center">{{ nota.fecha|date:'d/m/Y' }}</div>
+              </div>
+
+              <div class="sale-note-field">
+                <div class="label">Dirección</div>
+                <div class="value">
+                  {% if nota.cliente_direccion %}
+                    {{ nota.cliente_direccion|linebreaksbr }}
+                  {% elif nota.direccion %}
+                    {{ nota.direccion|linebreaksbr }}
+                  {% elif nota.cliente.direccion_completa %}
+                    {{ nota.cliente.direccion_completa|linebreaksbr }}
+                  {% elif nota.cliente.direccion %}
+                    {{ nota.cliente.direccion|linebreaksbr }}
+                  {% else %}
+                    &nbsp;
+                  {% endif %}
+                </div>
+              </div>
+              <div class="sale-note-field">
+                <div class="label">Contacto</div>
+                <div class="value">
+                  {% if nota.cliente_contacto %}
+                    {{ nota.cliente_contacto|linebreaksbr }}
+                  {% elif nota.contacto %}
+                    {{ nota.contacto|linebreaksbr }}
+                  {% elif nota.nombre_contacto %}
+                    {{ nota.nombre_contacto|linebreaksbr }}
+                  {% elif nota.cliente.contacto %}
+                    {{ nota.cliente.contacto|linebreaksbr }}
+                  {% else %}
+                    &nbsp;
+                  {% endif %}
+                </div>
+              </div>
+              <div class="sale-note-field">
+                <div class="label">Forma de pago</div>
+                <div class="value text-center">Contado</div>
+              </div>
+            </div>
+
+            <table class="sale-note-table">
+              <thead>
+                <tr>
+                  <th style="width:12%;">Cantidad KG</th>
+                  <th style="width:12%;">Cant. Cajas</th>
+                  <th>Descripción</th>
+                  <th style="width:16%;">P. KG</th>
+                  <th style="width:16%;">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in nota.detalles.all %}
+                  <tr>
+                    <td class="qty">{{ d.cantidad|floatformat:2 }}</td>
+                    <td class="qty">{% if d.presentacion_nombre and d.presentacion_nombre != 'kg' and d.presentacion_nombre != 'KG' and d.presentacion_nombre != 'Kilos' and d.presentacion_nombre != 'Kilogramos' %}{{ d.cantidad_presentacion|floatformat:2 }}{% endif %}</td>
+                    <td class="desc">{{ d.producto }}</td>
+                    <td class="price">$ {{ d.precio_unitario|floatformat:2 }}</td>
+                    <td class="amount">$ {{ d.importe|default:0|floatformat:2 }}</td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="5" class="text-center">Sin productos capturados</td>
+                  </tr>
+                {% endfor %}
+                <tr class="sale-note-total-row">
+                  <td></td>
+                  <td></td>
+                  <td class="text-end">TOTAL</td>
+                  <td></td>
+                  <td class="amount">$ {{ nota.total_importe|default:0|floatformat:2 }}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="pagare">
+              <h6>PAGARÉ</h6>
+              <p>Por este pagaré me comprometo a pagar a la orden de: Jaime Parada Villarreal en la Ciudad de Mexicali, Baja California, México.</p>
+              <p>En caso de no cumplir con el pago en la fecha acordada, se generará un interés moratorio del 5% mensual.</p>
+              <p>Deudor: <strong>{{ nota.cliente|default:'MOSTRADOR' }}</strong></p>
+            </div>
+
+            {% if nota.estado == 'CAN' %}
+              <div class="cancel-note">
+                <strong>Nota cancelada.</strong>
+                {% if nota.cancelada_en %}Fecha: {{ nota.cancelada_en|date:'d/m/Y H:i' }}.{% endif %}
+                {% if nota.motivo_cancelacion %} Motivo: {{ nota.motivo_cancelacion }}{% endif %}
+              </div>
+            {% endif %}
+
+            <div class="sale-note-footer">
+              <div class="note-observaciones">{{ nota.observaciones|default:'' }}</div>
+              <div class="sale-note-sign">Firma de recibido</div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="page">
+      <p>No se encontraron notas para imprimir.</p>
+    </div>
+  {% endfor %}
+
+  <script>
+    (function(){
+      function fitPagesToOneSheet(){
+        document.querySelectorAll('.page').forEach(function(page){
+          var grid = page.querySelector('.sale-note-grid');
+          if (!grid) return;
+
+          grid.style.transform = 'scale(1)';
+          grid.style.width = '100%';
+
+          var maxH = page.clientHeight || page.getBoundingClientRect().height;
+          var maxW = page.clientWidth || page.getBoundingClientRect().width;
+          var gridH = grid.scrollHeight;
+          var gridW = grid.scrollWidth;
+
+          if (!maxH || !maxW || !gridH || !gridW) return;
+
+          var scale = Math.min(1, maxH / gridH, maxW / gridW);
+          if (scale < 1){
+            scale = Math.max(scale, 0.72);
+            grid.style.transform = 'scale(' + scale + ')';
+            grid.style.width = (100 / scale) + '%';
+          }
+        });
+      }
+
+      window.addEventListener('load', fitPagesToOneSheet);
+      window.addEventListener('resize', fitPagesToOneSheet);
+      if (window.matchMedia){
+        var mediaQueryList = window.matchMedia('print');
+        if (mediaQueryList.addEventListener){
+          mediaQueryList.addEventListener('change', function(){ fitPagesToOneSheet(); });
+        }
+      }
+      window.addEventListener('beforeprint', fitPagesToOneSheet);
+    })();
+  </script>
+</body>
+</html>

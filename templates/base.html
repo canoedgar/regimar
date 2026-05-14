@@ -157,14 +157,14 @@
               class="nav-link {% block active_salidas_list %}{% endblock %}">
               <i class="bi bi-arrow-up-circle me-1"></i>
               Listado de salidas
-            </a>
+            </a>                              
 
-            {# Salida típica por venta (instalaciones/proyectos) #}
-            <a href="{% url 'salida_proyecto_create' %}"
-              class="nav-link {% block active_salidas_venta %}{% endblock %}">
+            <a href="{% url 'ventas_list' %}"
+              class="nav-link {% block active_ventas_list %}{% endblock %}">
               <i class="bi bi-cart-check me-1"></i>
-              Salida por proyecto
-            </a>          
+              Notas de venta
+            </a>   
+                        
 
             {# Merma, daño, robo, etc. #}
             <a href="#"
