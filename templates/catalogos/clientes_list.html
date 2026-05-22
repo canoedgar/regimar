@@ -4,35 +4,46 @@
 {% block page_title %}Catálogo de clientes{% endblock %}
 
 {% block content %}
-<div class="row g-3 align-items-end mb-3">
-  <div class="col-md-7">
-    <form method="get" class="d-flex gap-2">
-      <input type="text" name="q" value="{{ q }}" class="form-control"
-             placeholder="Buscar por RFC, nombre fiscal o comercial...">
-      <button class="btn btn-outline-secondary">
-        <i class="bi bi-search"></i>
-      </button>
-      {% if q %}
-        <a class="btn btn-outline-danger" href="{% url 'clientes_list' %}">
-          <i class="bi bi-x-lg"></i>
-        </a>
-      {% endif %}
-    </form>
-    <div class="text-muted small mt-2">
-      Total: <span class="fw-semibold">{{ total }}</span>
-    </div>
+<div class="sg-page-header sg-table-card">
+  <div>
+    <h5 class="sg-page-header-title">
+      <i class="bi bi-people me-1"></i>
+      Catálogo de clientes
+    </h5>
+    <p class="sg-page-header-subtitle">
+      Consulta y administra los clientes registrados.
+    </p>
   </div>
 
-  <div class="col-md-5 text-md-end">
-    <a href="{% url 'cliente_create' %}" class="btn btn-primary">
+  <div class="sg-page-actions">
+    <a href="{% url 'cliente_create' %}" class="sg-btn-primary sg-btn-md">
       <i class="bi bi-plus-circle me-1"></i> Nuevo cliente
     </a>
   </div>
 </div>
 
-<div class="card shadow-sm border-0">
+<div class="sg-toolbar sg-table-card">
+  <form method="get" class="sg-filter-bar sg-filter-bar-inline">
+    <input type="text" name="q" value="{{ q }}" class="form-control sg-form-control"
+           placeholder="Buscar por RFC, nombre fiscal o comercial...">
+    <button class="sg-btn-outline sg-btn-icon sg-btn-md" type="submit" title="Buscar">
+      <i class="bi bi-search"></i>
+    </button>
+    {% if q %}
+      <a class="sg-btn-danger sg-btn-icon sg-btn-md" href="{% url 'clientes_list' %}" title="Limpiar búsqueda">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    {% endif %}
+  </form>
+
+  <div class="sg-form-help mb-0">
+    Total: <span class="fw-semibold">{{ total }}</span>
+  </div>
+</div>
+
+<div class="sg-table-card">
   <div class="table-responsive">
-    <table class="table table-hover mb-0 align-middle">
+    <table class="table table-hover mb-0 align-middle sg-table">
       <thead class="table-light">
         <tr>
           <th>RFC</th>
@@ -51,7 +62,7 @@
           <td>
             <div class="fw-semibold">{{ c.nombre_fiscal }}</div>
             {% if c.nombre_comercial %}
-              <div class="text-muted small">{{ c.nombre_comercial }}</div>
+              <div class="sg-form-help">{{ c.nombre_comercial }}</div>
             {% endif %}
           </td>
           <td>{{ c.regimen_fiscal|default:"—" }}</td>
@@ -64,15 +75,15 @@
               <span class="badge bg-secondary">Inactivo</span>
             {% endif %}
           </td>
-          <td class="text-end">
-            <a href="{% url 'cliente_edit' c.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+          <td class="text-end sg-table-actions">
+            <a href="{% url 'cliente_edit' c.id %}" class="sg-btn-table sg-btn-sm" title="Editar">
               <i class="bi bi-pencil"></i>
             </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="7" class="text-center text-muted py-4">
+          <td colspan="7" class="sg-empty-state">
             No hay clientes registrados.
           </td>
         </tr>

@@ -7,14 +7,14 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body d-flex justify-content-between align-items-center">
+    <div class="card border-0 shadow-sm sg-table-card">
+      <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="bi bi-tags me-2"></i>
           Categorías de productos
         </h5>
 
-        <a href="{% url 'categorias_form' %}" class="btn btn-sm btn-primary">
+        <a href="{% url 'categorias_form' %}" class="sg-btn-primary sg-btn-sm">
           <i class="bi bi-plus-circle me-1"></i>
           Nueva categoría
         </a>
@@ -23,9 +23,9 @@
   </div>
 
   <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-table-card">
       <div class="card-body">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle sg-table">
           <thead class="table-light">
             <tr>
               <th>Nombre</th>
@@ -48,16 +48,16 @@
                     {% endif %}
                   {% endwith %}
                 </td>
-                <td class="text-end">
-                  <a href="{% url 'categorias_edit' categoria.pk %}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-pencil"></i> Editar
+                <td class="text-end sg-table-actions">
+                  <a href="{% url 'categorias_edit' categoria.pk %}" class="sg-btn-table sg-btn-sm">
+                    <i class="bi bi-pencil"></i>
                   </a>
                   {# Futuro: botón para eliminar o desactivar #}
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="3" class="text-center text-muted">
+                <td colspan="3" class="text-center text-muted sg-empty-state">
                   No hay categorías registradas aún.
                 </td>
               </tr>

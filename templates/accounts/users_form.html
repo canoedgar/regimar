@@ -11,53 +11,53 @@
 <div class="row justify-content-center">
   <div class="col-lg-8">
 
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card">
       <div class="card-body">
         <form method="post" novalidate>
           {% csrf_token %}
 
-          <div class="row g-3">
+          <div class="row g-3 sg-form-grid">
             <div class="col-md-6">
-              <label class="form-label">Usuario</label>
+              <label class="sg-form-label">Usuario</label>
               {{ form.username }}
-              {% if form.username.errors %}<div class="text-danger small">{{ form.username.errors }}</div>{% endif %}
+              {% if form.username.errors %}<div class="sg-form-error">{{ form.username.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Email</label>
+              <label class="sg-form-label">Email</label>
               {{ form.email }}
-              {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors }}</div>{% endif %}
+              {% if form.email.errors %}<div class="sg-form-error">{{ form.email.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Nombre</label>
+              <label class="sg-form-label">Nombre</label>
               {{ form.first_name }}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Apellidos</label>
+              <label class="sg-form-label">Apellidos</label>
               {{ form.last_name }}
             </div>
 
             <div class="col-md-12">
               <div class="d-flex justify-content-between align-items-center">
-                <label class="form-label mb-0">Roles (Grupos)</label>
+                <label class="sg-form-label mb-0">Roles (Grupos)</label>
             
                 <div class="d-flex gap-2">
-                  <button type="button" class="btn btn-sm btn-outline-secondary" id="roles_select_all">
+                  <button type="button" class="sg-btn-secondary sg-btn-sm" id="roles_select_all">
                     Seleccionar todo
                   </button>
-                  <button type="button" class="btn btn-sm btn-outline-secondary" id="roles_clear_all">
+                  <button type="button" class="sg-btn-secondary sg-btn-sm" id="roles_clear_all">
                     Ninguno
                   </button>
                 </div>
               </div>
             
-              <input type="text" class="form-control form-control-sm mt-2" id="roles_search"
+              <input type="text" class="form-control form-control-sm mt-2 sg-form-control" id="roles_search"
                      placeholder="Buscar rol…">
             
               <div class="border rounded p-2 mt-2" style="max-height: 220px; overflow:auto;">
-                <div class="row g-2" id="roles_container">
+                <div class="row g-2 sg-form-grid" id="roles_container">
                   {% for checkbox in form.groups %}
                     <div class="col-md-4 role-item">
                       <div class="form-check">
@@ -68,13 +68,13 @@
                       </div>
                     </div>
                   {% empty %}
-                    <div class="text-muted small">No hay roles (grupos) creados.</div>
+                    <div class="sg-form-help">No hay roles (grupos) creados.</div>
                   {% endfor %}
                 </div>
               </div>
             
               {% if form.groups.errors %}
-                <div class="text-danger small mt-1">{{ form.groups.errors }}</div>
+                <div class="sg-form-error mt-1">{{ form.groups.errors }}</div>
               {% endif %}
             </div>                        
             
@@ -94,17 +94,17 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">
+              <label class="sg-form-label">
                 {% if modo == "create" %}Contraseña{% else %}Nueva contraseña (opcional){% endif %}
               </label>
               {{ form.password1 }}
-              {% if form.password1.errors %}<div class="text-danger small">{{ form.password1.errors }}</div>{% endif %}
+              {% if form.password1.errors %}<div class="sg-form-error">{{ form.password1.errors }}</div>{% endif %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Confirmar</label>
+              <label class="sg-form-label">Confirmar</label>
               {{ form.password2 }}
-              {% if form.password2.errors %}<div class="text-danger small">{{ form.password2.errors }}</div>{% endif %}
+              {% if form.password2.errors %}<div class="sg-form-error">{{ form.password2.errors }}</div>{% endif %}
             </div>
           </div>
 
@@ -112,9 +112,9 @@
             <div class="alert alert-danger mt-3">{{ form.non_field_errors }}</div>
           {% endif %}
 
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <a href="{% url 'users_list' %}" class="btn btn-outline-secondary">Cancelar</a>
-            <button class="btn btn-primary" type="submit">Guardar</button>
+          <div class="sg-form-actions">
+            <a href="{% url 'users_list' %}" class="sg-btn-secondary sg-btn-md">Cancelar</a>
+            <button class="sg-btn-primary sg-btn-md" type="submit">Guardar</button>
           </div>
         </form>
       </div>

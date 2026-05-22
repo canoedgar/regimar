@@ -9,7 +9,7 @@
 <div class="row justify-content-center">
   <div class="col-lg-8">
 
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card">
       <div class="card-body">
 
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -18,11 +18,11 @@
               <i class="bi bi-building me-2"></i>
               {% if modo_edicion %}Editar almacén{% else %}Nuevo almacén{% endif %}
             </h5>
-            <p class="text-muted mb-0">
+            <p class="mb-0 sg-form-help">
               Define almacenes físicos y virtuales.
             </p>
           </div>
-          <a href="{% url 'almacenes_list' %}" class="btn btn-outline-secondary btn-sm">
+          <a href="{% url 'almacenes_list' %}" class="sg-btn-secondary sg-btn-sm">
             <i class="bi bi-arrow-left"></i> Volver
           </a>
         </div>
@@ -36,35 +36,35 @@
             </div>
           {% endif %}
 
-          <div class="row g-3">
+          <div class="row g-3 sg-form-grid">
             <div class="col-md-4">
-              <label class="form-label fw-semibold">Código</label>
+              <label class="sg-form-label">Código</label>
               {{ form.codigo }}
-              {% for e in form.codigo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.codigo.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-8">
-              <label class="form-label fw-semibold">Nombre</label>
+              <label class="sg-form-label">Nombre</label>
               {{ form.nombre }}
-              {% for e in form.nombre.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.nombre.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-4">
-              <label class="form-label fw-semibold">Tipo</label>
+              <label class="sg-form-label">Tipo</label>
               {{ form.tipo }}
-              {% for e in form.tipo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.tipo.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-8">
-              <label class="form-label fw-semibold">Ubicación</label>
+              <label class="sg-form-label">Ubicación</label>
               {{ form.ubicacion }}
-              <div class="form-text">Para almacenes virtuales puede ir vacío.</div>
-              {% for e in form.ubicacion.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              <div class="sg-form-help">Para almacenes virtuales puede ir vacío.</div>
+              {% for e in form.ubicacion.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-12">
               <hr>
-              <div class="row g-3">
+              <div class="row g-3 sg-form-grid">
                 <div class="col-md-3">
                   <div class="form-check">
                     {{ form.es_activo }}
@@ -101,34 +101,34 @@
                     {{ form.es_arrendado }}
                     <label class="form-check-label">Almacén arrendado</label>
                   </div>
-                  {% for e in form.es_arrendado.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                  {% for e in form.es_arrendado.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
                 </div>
 
                 <div class="col-12" id="arrendado_fields">
                   <div class="border rounded p-3 bg-light">
-                    <div class="row g-3">
+                    <div class="row g-3 sg-form-grid">
                       <div class="col-md-4">
-                        <label class="form-label fw-semibold">Tipo de costo</label>
+                        <label class="sg-form-label">Tipo de costo</label>
                         {{ form.tipo_costo }}
-                        {% for e in form.tipo_costo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        {% for e in form.tipo_costo.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
                       </div>
 
                       <div class="col-md-4">
-                        <label class="form-label fw-semibold">Costo del almacén</label>
+                        <label class="sg-form-label">Costo del almacén</label>
                         {{ form.costo_almacen }}
-                        <div class="form-text">Monto por el tipo de costo seleccionado.</div>
-                        {% for e in form.costo_almacen.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        <div class="sg-form-help">Monto por el tipo de costo seleccionado.</div>
+                        {% for e in form.costo_almacen.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
                       </div>
 
                       <div class="col-md-4">
-                        <label class="form-label fw-semibold">Vencimiento (días)</label>
+                        <label class="sg-form-label">Vencimiento (días)</label>
                         {{ form.vencimiento_dias }}
-                        <div class="form-text">Cada cuántos días vence el pago.</div>
-                        {% for e in form.vencimiento_dias.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                        <div class="sg-form-help">Cada cuántos días vence el pago.</div>
+                        {% for e in form.vencimiento_dias.errors %}<div class="sg-form-error">{{ e }}</div>{% endfor %}
                       </div>
                     </div>
 
-                    <div class="text-muted small mt-2">
+                    <div class="small mt-2 sg-form-help">
                       Estos campos aplican únicamente si el almacén es <strong>arrendado</strong>.
                     </div>
                   </div>
@@ -139,9 +139,9 @@
 
           </div>
 
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <a href="{% url 'almacenes_list' %}" class="btn btn-outline-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary">
+          <div class="sg-form-actions">
+            <a href="{% url 'almacenes_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md">Cancelar</a>
+            <button type="submit" class="sg-btn-success sg-btn-form sg-btn-md">
               <i class="bi bi-save me-1"></i> Guardar
             </button>
           </div>

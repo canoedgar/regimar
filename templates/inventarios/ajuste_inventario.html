@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% block title %}Ajuste de inventario | Sistema de Gestión{% endblock %}
 {% block active_inventario %}active{% endblock %}
@@ -6,93 +7,96 @@
 {% block active_ajustes_inventario %}active{% endblock %}
 {% block page_title %}Ajuste de inventario{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventarios.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center sg-inventory-page">
   <div class="col-lg-7">
 
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-inventory-section">
       <div class="card-body">
 
-        <h5 class="fw-bold mb-1">
-          <i class="bi bi-sliders me-2"></i>
-          Nuevo ajuste
-        </h5>
-        <p class="text-muted mb-4">
+        <div class="sg-section-header"><div>
+          <h5 class="sg-section-title"><i class="bi bi-sliders"></i> Nuevo ajuste</h5>
+          <p class="sg-section-help">
           Usa ajuste positivo para incrementar stock y ajuste negativo para disminuirlo.
-        </p>
+          </p>
+        </div></div>
 
-        <form method="post" novalidate>
+        <form method="post" class="sg-inventory-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas aplicar este ajuste al inventario?" novalidate>
           {% csrf_token %}
 
           {# Hidden: almacén seleccionado (sin tocar el form) #}
           <input type="hidden" name="almacen_id" id="almacenId" value="{{ almacen.id }}">
 
-          <div class="row g-3">
+          <div class="row g-3 sg-form-grid">
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Folio</label>
+              <label class="sg-form-label">Folio</label>
               {{ form.folio }}
-              {% for e in form.folio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.folio.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Fecha</label>
+              <label class="sg-form-label">Fecha</label>
               {{ form.fecha }}
-              {% for e in form.fecha.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.fecha.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Almacén</label>
-              <select class="form-select" id="almacenSelect">
+              <label class="sg-form-label">Almacén</label>
+              <select class="form-select sg-form-control" id="almacenSelect">
                 {% for a in almacenes %}
                   <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
                     {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
                   </option>
                 {% endfor %}
               </select>
-              <div class="form-text">El ajuste se aplicará al stock del almacén seleccionado.</div>
+              <div class="sg-form-help">El ajuste se aplicará al stock del almacén seleccionado.</div>
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Producto</label>
+              <label class="sg-form-label">Producto</label>
               {{ form.producto }}
-              {% for e in form.producto.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.producto.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Tipo de ajuste</label>
+              <label class="sg-form-label">Tipo de ajuste</label>
               {{ form.tipo_ajuste }}
-              {% for e in form.tipo_ajuste.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.tipo_ajuste.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Cantidad</label>
+              <label class="sg-form-label">Cantidad</label>
               {{ form.cantidad }}
-              {% for e in form.cantidad.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.cantidad.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold" id="precioUnitarioLabel">Precio / costo unitario</label>
+              <label class="sg-form-label" id="precioUnitarioLabel">Precio / costo unitario</label>
               {{ form.precio_unitario }}
-              <div class="form-text" id="precioUnitarioHelp">Para ajuste positivo será costo de entrada; para ajuste negativo será precio de salida/referencia.</div>
-              {% for e in form.precio_unitario.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              <div class="sg-form-help" id="precioUnitarioHelp">Para ajuste positivo será costo de entrada; para ajuste negativo será precio de salida/referencia.</div>
+              {% for e in form.precio_unitario.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Motivo (opcional)</label>
+              <label class="sg-form-label">Motivo (opcional)</label>
               {{ form.motivo }}
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Observaciones (opcional)</label>
+              <label class="sg-form-label">Observaciones (opcional)</label>
               {{ form.observaciones }}
             </div>
           </div>
 
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <a href="{% url 'inventario_actual' %}" class="btn btn-outline-secondary">
+          <div class="sg-form-actions sg-inventory-actions">
+            <a href="{% url 'inventario_actual' %}" class="sg-btn-secondary sg-btn-md">
               Cancelar
             </a>
-            <button class="btn btn-primary" type="submit">
+            <button class="sg-btn-primary sg-btn-md" type="submit">
               <i class="bi bi-check2-circle me-1"></i>
               Aplicar ajuste
             </button>
@@ -150,4 +154,8 @@
     }
   });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventarios_forms.js' %}"></script>
 {% endblock %}

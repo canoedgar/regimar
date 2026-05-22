@@ -1,46 +1,51 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Entrada Manual{% endblock %}
 {% block page_title %}Entrada manual{% endblock %}
 {% block active_inventario %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventarios.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid sg-inventory-page">
   <div class="row justify-content-center">
     <div class="col-xl-11 col-xxl-10">
-      <form method="post" novalidate>
+      <form method="post" class="sg-inventory-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas guardar esta entrada y actualizar el inventario?" novalidate>
         {% csrf_token %}
         <input type="hidden" name="detalle_json" id="detalle_json" value='{{ detalle_json_initial|default:"[]"|escape }}'>
 
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4 sg-form-card sg-table-card sg-inventory-section">
           <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+            <div class="sg-section-header">
               <div>
-                <h4 class="mb-1">Entrada manual</h4>
-                <p class="text-muted mb-0">
+                <h4 class="sg-section-title"><i class="bi bi-box-arrow-in-down"></i> Entrada manual</h4>
+                <p class="sg-section-help">
                   Registra productos por métrica base o por presentación con conversión automática al inventario.
                 </p>
               </div>
-              <a href="{% url 'proveedores_form' %}?next={{ request.path|urlencode }}" class="btn btn-outline-primary">
+              <a href="{% url 'proveedores_form' %}?next={{ request.path|urlencode }}" class="sg-btn-outline sg-btn-md">
                 <i class="bi bi-plus-circle me-1"></i> Nuevo proveedor
               </a>
             </div>
 
             {% if form.non_field_errors %}
-              <div class="alert alert-danger py-2">
+              <div class="alert alert-danger sg-validation-summary py-2">
                 {{ form.non_field_errors }}
               </div>
             {% endif %}
 
-            <div class="row g-3">
+            <div class="row g-3 sg-form-grid">
               {% for field in form %}
                 <div class="col-md-6 col-lg-4">
-                  <label class="form-label fw-semibold">{{ field.label }}</label>
+                  <label class="sg-form-label">{{ field.label }}</label>
                   {{ field }}
                   {% if field.help_text %}
-                    <div class="form-text">{{ field.help_text }}</div>
+                    <div class="sg-form-help">{{ field.help_text }}</div>
                   {% endif %}
                   {% if field.errors %}
-                    <div class="text-danger small">{{ field.errors }}</div>
+                    <div class="sg-form-error sg-validation-message">{{ field.errors }}</div>
                   {% endif %}
                 </div>
               {% endfor %}
@@ -48,19 +53,19 @@
           </div>
         </div>
 
-        <div class="card shadow-sm border-0 mb-4">
+        <div class="card shadow-sm border-0 mb-4 sg-form-card sg-table-card sg-inventory-section">
           <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="sg-section-header">
               <div>
-                <h5 class="mb-1">Agregar producto</h5>
-                <p class="text-muted small mb-0">Puedes capturar en kilos o en una presentación como caja, bolsa o cubeta.</p>
+                <h5 class="sg-section-title"><i class="bi bi-plus-square"></i> Agregar producto</h5>
+                <p class="sg-section-help">Puedes capturar en kilos o en una presentación como caja, bolsa o cubeta.</p>
               </div>
             </div>
 
-            <div class="row g-3 align-items-end">
+            <div class="row g-3 align-items-end sg-form-grid">
               <div class="col-lg-3 col-md-6">
-                <label class="form-label">Producto</label>
-                <select id="mpProducto" class="form-select">
+                <label class="sg-form-label">Producto</label>
+                <select id="mpProducto" class="form-select sg-form-control">
                   <option value="">Selecciona</option>
                   {% for p in productos %}
                     <option value="{{ p.id }}">{{ p.nombre }}</option>
@@ -69,25 +74,25 @@
               </div>
 
               <div class="col-lg-3 col-md-6">
-                <label class="form-label">Presentación</label>
-                <select id="mpConversion" class="form-select">
+                <label class="sg-form-label">Presentación</label>
+                <select id="mpConversion" class="form-select sg-form-control">
                   <option value="">Base</option>
                 </select>
               </div>
 
               <div class="col-lg-2 col-md-4">
-                <label class="form-label">Cantidad</label>
-                <input type="number" id="mpCantidad" class="form-control" step="0" min="0">
+                <label class="sg-form-label">Cantidad</label>
+                <input type="number" id="mpCantidad" class="form-control sg-form-control" step="0" min="0">
               </div>
 
               <div class="col-lg-2 col-md-4">
-                <label class="form-label">Costo unitario</label>
-                <input type="number" id="mpCosto" class="form-control" step="0.01" min="0">
+                <label class="sg-form-label">Costo unitario</label>
+                <input type="number" id="mpCosto" class="form-control sg-form-control" step="0.01" min="0">
               </div>
 
               <div class="col-lg-2 col-md-4">
-                <label class="form-label">Almacén</label>
-                <select id="mpAlmacen" class="form-select">
+                <label class="sg-form-label">Almacén</label>
+                <select id="mpAlmacen" class="form-select sg-form-control">
                   <option value="">Selecciona</option>
                   {% for a in almacenes %}
                     <option value="{{ a.id }}">{{ a.nombre }}</option>
@@ -98,13 +103,13 @@
 
             <div class="row g-3 mt-1">
               <div class="col-lg-8">
-                <div class="border rounded-3 bg-light p-3 h-100">
-                  <div class="small text-muted mb-1">Conversión al inventario</div>
-                  <div id="previewConversion" class="fw-semibold">Selecciona un producto para ver sus presentaciones.</div>
+                <div class="sg-inventory-preview">
+                  <div class="sg-inventory-preview-title">Conversión al inventario</div>
+                  <div id="previewConversion" class="sg-inventory-preview-value">Selecciona un producto para ver sus presentaciones.</div>
                 </div>
               </div>
               <div class="col-lg-4 d-grid">
-                <button type="button" class="btn btn-primary" id="btnAgregarLinea">
+                <button type="button" class="sg-btn-primary sg-btn-md" id="btnAgregarLinea">
                   <i class="bi bi-plus-circle me-1"></i> Agregar al detalle
                 </button>
               </div>
@@ -112,21 +117,21 @@
           </div>
         </div>
 
-        <div class="card shadow-sm border-0">
+        <div class="card shadow-sm border-0 sg-form-card sg-table-card sg-inventory-section">
           <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <div class="sg-inventory-detail-header">
               <div>
-                <h5 class="mb-1">Detalle de entrada</h5>
-                <p class="text-muted small mb-0">El stock se incrementará con la cantidad convertida a la métrica base del producto.</p>
+                <h5 class="sg-section-title"><i class="bi bi-list-check"></i> Detalle de entrada</h5>
+                <p class="small mb-0 sg-form-help">El stock se incrementará con la cantidad convertida a la métrica base del producto.</p>
               </div>
-              <div class="text-end">
-                <div class="small text-muted">Total de líneas</div>
-                <div class="fw-bold" id="totalLineas">0</div>
+              <div class="sg-inventory-total-box">
+                <div class="sg-inventory-total-label">Total de líneas</div>
+                <div class="sg-inventory-total-value" id="totalLineas">0</div>
               </div>
             </div>
 
             <div class="table-responsive">
-              <table class="table align-middle table-hover">
+              <table class="table align-middle table-hover sg-table">
                 <thead class="table-light">
                   <tr>
                     <th>Producto</th>
@@ -141,7 +146,7 @@
                 </thead>
                 <tbody id="tabla">
                   <tr id="filaVacia">
-                    <td colspan="8" class="text-center text-muted py-4">Aún no has agregado productos.</td>
+                    <td colspan="8" class="text-center py-4 sg-form-help sg-empty-state">Aún no has agregado productos.</td>
                   </tr>
                 </tbody>
                 <tfoot>
@@ -154,11 +159,11 @@
               </table>
             </div>
 
-            <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
-              <a href="{% url 'entradas_list' %}" class="btn btn-outline-secondary">
+            <div class="sg-form-actions sg-form-actions-between sg-inventory-actions">
+              <a href="{% url 'entradas_list' %}" class="sg-btn-secondary sg-btn-md">
                 <i class="bi bi-arrow-left me-1"></i> Cancelar
               </a>
-              <button type="submit" class="btn btn-success">
+              <button type="submit" class="sg-btn-success sg-btn-md">
                 <i class="bi bi-check2-circle me-1"></i> Guardar entrada
               </button>
             </div>
@@ -297,7 +302,7 @@
     tabla.innerHTML = "";
 
     if (!lineas.length) {
-      tabla.innerHTML = '<tr id="filaVacia"><td colspan="8" class="text-center text-muted py-4">Aún no has agregado productos.</td></tr>';
+      tabla.innerHTML = '<tr id="filaVacia"><td colspan="8" class="text-center py-4 sg-form-help sg-empty-state">Aún no has agregado productos.</td></tr>';
       totalLineas.textContent = "0";
       granTotal.textContent = "0";
       return;
@@ -313,7 +318,7 @@
       tr.innerHTML = `
         <td>
           <div class="fw-semibold">${l.producto_nombre}</div>
-          <div class="small text-muted">Métrica base: ${l.metrica_base}</div>
+          <div class="small sg-form-help">Métrica base: ${l.metrica_base}</div>
         </td>
         <td>${l.conversion_texto || ('Base (' + l.metrica_base + ')')}</td>
         <td class="text-end">${decimal(l.cantidad_original || l.cantidad, 0)}</td>
@@ -321,8 +326,8 @@
         <td>${l.almacen_nombre}</td>
         <td class="text-end">${decimal(l.costo_unitario, 0)}</td>
         <td class="text-end">${decimal(importe, 0)}</td>
-        <td class="text-end">
-          <button type="button" class="btn btn-sm btn-outline-danger" data-index="${idx}">
+        <td class="text-end sg-table-actions">
+          <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" data-index="${idx}">
             <i class="bi bi-trash"></i>
           </button>
         </td>
@@ -443,4 +448,8 @@
   updatePreview();
 })();
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventarios_forms.js' %}"></script>
 {% endblock %}

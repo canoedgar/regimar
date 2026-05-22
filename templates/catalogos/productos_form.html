@@ -21,7 +21,7 @@
 <div class="row justify-content-center">
   <div class="col-md-8 col-lg-7">
 
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 sg-form-card sg-table-card">
       <div class="card-body">
 
         <h4 class="fw-bold mb-3">
@@ -34,7 +34,7 @@
           {% endif %}
         </h4>
 
-        <p class="text-muted mb-4">
+        <p class="sg-form-help mb-4">
           Captura la información del producto para CPC Alimentos. La métrica principal se controla en KG.
         </p>
 
@@ -48,82 +48,82 @@
           {% csrf_token %}
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Categoría</label>
+            <label class="sg-form-label">Categoría</label>
             {{ form.categoria }}
             {% if form.categoria.errors %}
-              <div class="text-danger small">{{ form.categoria.errors }}</div>
+              <div class="sg-form-error">{{ form.categoria.errors }}</div>
             {% endif %}
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Nombre</label>
+            <label class="sg-form-label">Nombre</label>
             {{ form.nombre }}
             {% if form.nombre.errors %}
-              <div class="text-danger small">{{ form.nombre.errors }}</div>
+              <div class="sg-form-error">{{ form.nombre.errors }}</div>
             {% endif %}
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Métrica principal</label>
+            <label class="sg-form-label">Métrica principal</label>
             {{ form.metrica }}
-            <div class="form-text">La métrica principal del inventario queda fija en KG. Puedes agregar presentaciones/conversiones adicionales abajo.</div>
-            {% if form.metrica.errors %}<div class="text-danger small">{{ form.metrica.errors }}</div>{% endif %}
+            <div class="sg-form-help">La métrica principal del inventario queda fija en KG. Puedes agregar presentaciones/conversiones adicionales abajo.</div>
+            {% if form.metrica.errors %}<div class="sg-form-error">{{ form.metrica.errors }}</div>{% endif %}
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Precio venta actual</label>
+              <label class="sg-form-label">Precio venta actual</label>
               {{ form.precio }}
-              <div class="form-text">Precio manual usado en ventas.</div>
+              <div class="sg-form-help">Precio manual usado en ventas.</div>
               {% if form.precio.errors %}
-                <div class="text-danger small">{{ form.precio.errors }}</div>
+                <div class="sg-form-error">{{ form.precio.errors }}</div>
               {% endif %}
             </div>
 
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Precio mínimo autorizado</label>
+              <label class="sg-form-label">Precio mínimo autorizado</label>
               {{ form.precio_minimo }}
-              <div class="form-text">Límite para evitar ventas por debajo del margen definido.</div>
+              <div class="sg-form-help">Límite para evitar ventas por debajo del margen definido.</div>
               {% if form.precio_minimo.errors %}
-                <div class="text-danger small">{{ form.precio_minimo.errors }}</div>
+                <div class="sg-form-error">{{ form.precio_minimo.errors }}</div>
               {% endif %}
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-4 mb-3">
-              <label class="form-label fw-semibold">Stock actual</label>
+              <label class="sg-form-label">Stock actual</label>
               {{ form.stock }}
               {% if form.stock.errors %}
-                <div class="text-danger small">{{ form.stock.errors }}</div>
+                <div class="sg-form-error">{{ form.stock.errors }}</div>
               {% endif %}
             </div>
 
             <div class="col-md-4 mb-3">
-              <label class="form-label fw-semibold">Último costo compra</label>
+              <label class="sg-form-label">Último costo compra</label>
               {{ form.ultimo_costo_compra }}
             </div>
 
             <div class="col-md-4 mb-3">
-              <label class="form-label fw-semibold">Costo promedio</label>
+              <label class="sg-form-label">Costo promedio</label>
               {{ form.costo_promedio }}
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Stock mínimo</label>
+              <label class="sg-form-label">Stock mínimo</label>
               {{ form.stock_minimo }}
               {% if form.stock_minimo.errors %}
-                <div class="text-danger small">{{ form.stock_minimo.errors }}</div>
+                <div class="sg-form-error">{{ form.stock_minimo.errors }}</div>
               {% endif %}
             </div>
 
             <div class="col-md-6 mb-3">
-              <label class="form-label fw-semibold">Stock máximo</label>
+              <label class="sg-form-label">Stock máximo</label>
               {{ form.stock_maximo }}
               {% if form.stock_maximo.errors %}
-                <div class="text-danger small">{{ form.stock_maximo.errors }}</div>
+                <div class="sg-form-error">{{ form.stock_maximo.errors }}</div>
               {% endif %}
             </div>
           </div>
@@ -134,11 +134,11 @@
               <label class="form-check-label fw-semibold">
                 Maneja peso variable por caja
               </label>
-              <div class="form-text">
+              <div class="sg-form-help">
                 Actívalo para productos que entran por cajas, pero cuyo inventario se controla por kilos reales capturados.
               </div>
               {% if form.maneja_peso_variable.errors %}
-                <div class="text-danger small">{{ form.maneja_peso_variable.errors }}</div>
+                <div class="sg-form-error">{{ form.maneja_peso_variable.errors }}</div>
               {% endif %}
             </div>
 
@@ -146,15 +146,15 @@
 
           <hr class="my-4">
 
-          <div class="d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
+          <div class="sg-page-header d-flex justify-content-between align-items-center mb-3 gap-3 flex-wrap">
             <div>
               <h5 class="fw-bold mb-1">Presentaciones / conversiones</h5>
-              <p class="text-muted mb-0 small">
+              <p class="mb-0 small sg-form-help">
                 Define las presentaciones no default del producto y su equivalencia hacia la métrica principal.
                 Ejemplo: 1 Caja = 10 KG.
               </p>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="btn-agregar-conversion">
+            <button type="button" class="sg-btn-outline sg-btn-sm" id="btn-agregar-conversion">
               <i class="bi bi-plus-circle me-1"></i> Agregar presentación
             </button>
           </div>
@@ -168,7 +168,7 @@
           {% endif %}
 
           <div class="table-responsive">
-            <table class="table table-sm align-middle" id="tabla-conversiones">
+            <table class="table table-sm align-middle sg-table" id="tabla-conversiones">
               <thead class="table-light">
                 <tr>
                   <th>Presentación</th>
@@ -187,22 +187,22 @@
                     {% endfor %}
                     <td>
                       {{ conversion_form.nombre }}
-                      {% if conversion_form.nombre.errors %}<div class="text-danger small">{{ conversion_form.nombre.errors }}</div>{% endif %}
+                      {% if conversion_form.nombre.errors %}<div class="sg-form-error">{{ conversion_form.nombre.errors }}</div>{% endif %}
                     </td>
                     <td>
                       {{ conversion_form.unidad_origen }}
-                      {% if conversion_form.unidad_origen.errors %}<div class="text-danger small">{{ conversion_form.unidad_origen.errors }}</div>{% endif %}
+                      {% if conversion_form.unidad_origen.errors %}<div class="sg-form-error">{{ conversion_form.unidad_origen.errors }}</div>{% endif %}
                     </td>
                     <td>
                       {{ conversion_form.cantidad_origen }}
-                      {% if conversion_form.cantidad_origen.errors %}<div class="text-danger small">{{ conversion_form.cantidad_origen.errors }}</div>{% endif %}
+                      {% if conversion_form.cantidad_origen.errors %}<div class="sg-form-error">{{ conversion_form.cantidad_origen.errors }}</div>{% endif %}
                     </td>
                     <td>
                       <div class="input-group input-group-sm">
                         {{ conversion_form.factor_conversion }}
                         <span class="input-group-text">KG</span>
                       </div>
-                      {% if conversion_form.factor_conversion.errors %}<div class="text-danger small">{{ conversion_form.factor_conversion.errors }}</div>{% endif %}
+                      {% if conversion_form.factor_conversion.errors %}<div class="sg-form-error">{{ conversion_form.factor_conversion.errors }}</div>{% endif %}
                     </td>
                     <td class="text-center">
                       {{ conversion_form.activo }}
@@ -211,7 +211,7 @@
                       {% if conversion_form.instance.pk %}
                         {{ conversion_form.DELETE }}
                       {% else %}
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-conversion" title="Quitar fila">
+                        <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm btn-eliminar-conversion" title="Quitar fila">
                           <i class="bi bi-trash"></i>
                         </button>
                       {% endif %}
@@ -246,18 +246,18 @@
                 {{ formset_conversiones.empty_form.activo }}
               </td>
               <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-conversion" title="Quitar fila">
+                <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm btn-eliminar-conversion" title="Quitar fila">
                   <i class="bi bi-trash"></i>
                 </button>
               </td>
             </tr>
           </template>
 
-          <div class="d-flex justify-content-between mt-4">
-            <a href="{% url 'productos_list' %}" class="btn btn-outline-secondary px-4">
+          <div class="sg-form-actions sg-form-actions-between">
+            <a href="{% url 'productos_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md">
               <i class="bi bi-arrow-left me-1"></i> Cancelar
             </a>
-            <button type="submit" class="btn btn-primary px-4">
+            <button type="submit" class="sg-btn-success sg-btn-form sg-btn-md">
               {% if form.instance.pk %}
                 <i class="bi bi-check2-circle me-1"></i> Actualizar
               {% else %}

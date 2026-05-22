@@ -14,27 +14,27 @@
 <div class="row">
   <!-- Header -->
   <div class="col-12">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
         <div>
           <h5 class="mb-0">
             <i class="bi bi-journal-text me-2"></i>
             Kardex por producto
           </h5>
-          <div class="text-muted small">
+          <div class="sg-form-help">
             Movimientos de entradas y salidas (con saldo).
           </div>
         </div>
 
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 sg-page-actions">
           <a href="?{% if producto_id %}producto={{ producto_id }}&{% endif %}{% if almacen_id %}almacen={{ almacen_id }}&{% endif %}{% if fecha_ini %}fecha_ini={{ fecha_ini }}&{% endif %}{% if fecha_fin %}fecha_fin={{ fecha_fin }}&{% endif %}"
-             class="btn btn-sm btn-outline-secondary">
+             class="sg-btn-secondary sg-btn-sm">
             <i class="bi bi-arrow-clockwise me-1"></i>
             Refrescar
           </a>
           
           <a href="{% url 'kardex_export' %}?producto={{ producto_id }}&almacen={{ almacen_id }}&fecha_ini={{ fecha_ini }}&fecha_fin={{ fecha_fin }}"
-             class="btn btn-sm btn-outline-success">
+             class="sg-btn-success sg-btn-sm">
             <i class="bi bi-file-earmark-excel me-1"></i>
             Exportar
           </a>
@@ -45,12 +45,12 @@
 
   <!-- Filtros -->
   <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
+        <form method="get" class="row g-2 align-items-end sg-form-grid">
           <div class="col-12 col-md-6">
-            <label class="form-label fw-semibold">Producto</label>
-            <select name="producto" class="form-select" required>
+            <label class="sg-form-label">Producto</label>
+            <select name="producto" class="form-select sg-form-control" required>
               <option value="">— Selecciona un producto —</option>
               {% for p in productos %}
                 <option value="{{ p.id }}"
@@ -62,8 +62,8 @@
           </div>
 
           <div class="col-12 col-md-6">
-            <label class="form-label fw-semibold">Almacén</label>
-            <select name="almacen" class="form-select">
+            <label class="sg-form-label">Almacén</label>
+            <select name="almacen" class="form-select sg-form-control">
               <option value="">(Default)</option>
               {% for a in almacenes %}
                 <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
@@ -74,19 +74,19 @@
           </div>
 
           <div class="col-12 col-md-3">
-            <label class="form-label fw-semibold">Fecha inicial</label>
-            <input type="date" name="fecha_ini" class="form-control"
+            <label class="sg-form-label">Fecha inicial</label>
+            <input type="date" name="fecha_ini" class="form-control sg-form-control"
                    value="{{ fecha_ini|default:'' }}">
           </div>
 
           <div class="col-12 col-md-3">
-            <label class="form-label fw-semibold">Fecha final</label>
-            <input type="date" name="fecha_fin" class="form-control"
+            <label class="sg-form-label">Fecha final</label>
+            <input type="date" name="fecha_fin" class="form-control sg-form-control"
                    value="{{ fecha_fin|default:'' }}">
           </div>
 
-          <div class="col-12 d-flex gap-2 mt-2">
-            <button class="btn btn-primary ms-auto" type="submit">
+          <div class="col-12 sg-form-actions sg-form-actions-compact">
+            <button class="sg-btn-primary sg-btn-md ms-auto" type="submit">
               <i class="bi bi-search me-1"></i>
               Consultar
             </button>
@@ -120,7 +120,7 @@
             {% endif %}
           </div>
         {% else %}
-          <div class="mt-3 text-muted small">
+          <div class="mt-3 small sg-form-help">
             Selecciona un producto para visualizar su Kardex.
           </div>
         {% endif %}
@@ -131,9 +131,9 @@
   <!-- Resumen -->
   {% if producto %}
   <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body d-flex flex-wrap gap-2 justify-content-between align-items-center">
-        <div class="text-muted small">
+        <div class="sg-form-help">
           {% if movimientos %}
             Mostrando <strong>{{ movimientos|length }}</strong> movimiento(s).
           {% else %}
@@ -160,18 +160,17 @@
 
   <!-- Tabla Kardex -->
   <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
+          <table class="table table-hover align-middle mb-0 sg-table">
             <thead class="table-light">
               <tr>
                 <th class="ps-3">Fecha</th>
                 <th>Movimiento</th>
                 <th>Folio</th>
                 <th>Almacén</th>
-                <th>Tercero</th>
-                <th>Referencia</th>
+                <th>Proveedor/Cliente</th>                
 
                 <th class="text-end">Entrada</th>
                 <th class="text-end">Salida</th>
@@ -184,7 +183,7 @@
             <tbody>
               {% if not producto %}
                 <tr>
-                  <td colspan="10" class="text-center py-4 text-muted">
+                  <td colspan="10" class="text-center py-4 sg-form-help sg-empty-state">
                     Selecciona un producto para consultar el Kardex.
                   </td>
                 </tr>
@@ -193,7 +192,7 @@
                   <tr>
                     <td class="ps-3">
                       <div class="fw-semibold">{{ m.fecha|date:"d/m/Y" }}</div>
-                      <div class="text-muted small">
+                      <div class="sg-form-help">
                         {{ m.creado_en|date:"H:i" }}
                       </div>
                     </td>
@@ -204,13 +203,13 @@
                           <i class="bi bi-box-arrow-in-down me-1"></i>
                           Entrada
                         </span>
-                        <div class="text-muted small">{{ m.tipo_display }}</div>
+                        <div class="sg-form-help">{{ m.tipo_display }}</div>
                       {% else %}
                         <span class="badge text-bg-danger">
                           <i class="bi bi-box-arrow-up me-1"></i>
                           Salida
                         </span>
-                        <div class="text-muted small">{{ m.tipo_display }}</div>
+                        <div class="sg-form-help">{{ m.tipo_display }}</div>
                       {% endif %}
                     </td>
 
@@ -223,7 +222,7 @@
                         <span class="badge text-bg-light border">
                           {{ m.almacen.codigo }}
                         </span>
-                        <span class="text-muted">{{ m.almacen.nombre }}</span>
+                        <span class="sg-form-help">{{ m.almacen.nombre }}</span>
                       {% endif %}
                     </td>                    
 
@@ -231,23 +230,15 @@
                       {% if m.tercero %}
                         {{ m.tercero }}
                       {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="sg-form-help">—</span>
                       {% endif %}
-                    </td>
-
-                    <td>
-                      {% if m.documento_referencia %}
-                        {{ m.documento_referencia }}
-                      {% else %}
-                        <span class="text-muted">—</span>
-                      {% endif %}
-                    </td>
+                    </td>                    
 
                     <td class="text-end fw-semibold">
                       {% if m.cantidad_entrada %}
                         {{ m.cantidad_entrada|floatformat:"-4" }}
                       {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="sg-form-help">—</span>
                       {% endif %}
                     </td>
 
@@ -255,7 +246,7 @@
                       {% if m.cantidad_salida %}
                         {{ m.cantidad_salida|floatformat:"-4" }}
                       {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="sg-form-help">—</span>
                       {% endif %}
                     </td>
 
@@ -263,7 +254,7 @@
                       {% if m.unitario is not None %}
                         $ {{ m.unitario|precio_entero }}
                       {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="sg-form-help">—</span>
                       {% endif %}
                     </td>
 
@@ -271,7 +262,7 @@
                       {% if m.importe is not None %}
                         $ {{ m.importe|dinero_decimal }}
                       {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="sg-form-help">—</span>
                       {% endif %}
                     </td>
 
@@ -279,13 +270,13 @@
                       {% if m.saldo is not None %}
                         {{ m.saldo|floatformat:"-4" }}
                       {% else %}
-                        <span class="text-muted">—</span>
+                        <span class="sg-form-help">—</span>
                       {% endif %}
                     </td>
                   </tr>
                 {% empty %}
                   <tr>
-                    <td colspan="10" class="text-center py-4 text-muted">
+                    <td colspan="10" class="text-center py-4 sg-form-help sg-empty-state">
                       No hay movimientos para este producto en el rango indicado.
                     </td>
                   </tr>
@@ -296,11 +287,11 @@
         </div>
       </div>
 
-      <div class="card-footer bg-white border-0 d-flex justify-content-between align-items-center">
-        <div class="text-muted small">
-          Tip: si el saldo no cuadra, revisa ajustes (AJP/AJN) y traspasos (TRE/TRS).
+      <div class="card-footer border-0 d-flex justify-content-between align-items-center">
+        <div class="sg-form-help">
+          Tip: Utiliza filtro de fecha para ver los movimientos del rago de fecha necesitado.
         </div>
-        <a href="{% url 'inventario_actual' %}" class="btn btn-sm btn-outline-primary">
+        <a href="{% url 'inventario_actual' %}" class="sg-btn-outline sg-btn-sm">
           <i class="bi bi-clipboard-data me-1"></i>
           Ver inventario actual
         </a>

@@ -8,7 +8,7 @@
 <div class="row justify-content-center">
   <div class="col-12 col-xl-10">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="sg-page-header d-flex justify-content-between align-items-center mb-3">
       <div>
         <h5 class="mb-1">
           <i class="bi bi-eye me-2"></i>
@@ -20,15 +20,15 @@
         </div>
       </div>
 
-      <div class="d-flex gap-2">
-        <a href="{% url 'entradas_list' %}" class="btn btn-sm btn-outline-secondary">
+      <div class="d-flex gap-2 sg-page-actions">
+        <a href="{% url 'entradas_list' %}" class="sg-btn-secondary sg-btn-sm">
           <i class="bi bi-arrow-left me-1"></i> Regresar
         </a>
       </div>
     </div>
 
     <!-- Resumen -->
-    <div class="card border-0 shadow-sm mb-3">
+    <div class="card border-0 shadow-sm mb-3 sg-table-card">
       <div class="card-body">
 
         <div class="row g-3">
@@ -125,7 +125,7 @@
     </div>
 
     <!-- Detalle -->
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-table-card">
       <div class="card-body">
         <h6 class="fw-bold mb-3">
           <i class="bi bi-list-check me-2"></i>
@@ -133,7 +133,7 @@
         </h6>
 
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle sg-table">
             <thead class="table-light">
               <tr>
                 <th>Producto</th>
@@ -171,7 +171,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="7" class="text-center text-muted py-4">
+                <td colspan="7" class="text-center text-muted py-4 sg-empty-state">
                   Esta entrada no tiene productos registrados.
                 </td>
               </tr>

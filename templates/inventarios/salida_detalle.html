@@ -9,7 +9,7 @@
   <div class="col-12 col-xl-10">
 
     <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="sg-page-header d-flex justify-content-between align-items-center mb-3">
       <div>
         <h5 class="mb-1">
           <i class="bi bi-box-arrow-up-right me-2"></i>
@@ -21,13 +21,13 @@
         </div>
       </div>
 
-      <a href="{% url 'salidas_list' %}" class="btn btn-sm btn-outline-secondary">
+      <a href="{% url 'salidas_list' %}" class="sg-btn-secondary sg-btn-sm">
         <i class="bi bi-arrow-left me-1"></i> Regresar
       </a>
     </div>
 
     <!-- RESUMEN -->
-    <div class="card border-0 shadow-sm mb-3">
+    <div class="card border-0 shadow-sm mb-3 sg-table-card">
       <div class="card-body">
 
         <div class="row g-3">
@@ -150,7 +150,7 @@
     </div>
 
     <!-- DETALLE -->
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-table-card">
       <div class="card-body">
 
         <h6 class="fw-bold mb-3">
@@ -159,7 +159,7 @@
         </h6>
 
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle sg-table">
             <thead class="table-light">
               <tr>
                 <th>Producto</th>
@@ -178,7 +178,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="4" class="text-center text-muted py-4">
+                <td colspan="4" class="text-center text-muted py-4 sg-empty-state">
                   Esta salida no tiene productos registrados.
                 </td>
               </tr>

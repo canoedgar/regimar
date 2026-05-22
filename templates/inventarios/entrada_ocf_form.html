@@ -4,48 +4,50 @@
 {% block title %}Nueva entrada OC con factura | Sistema de Gestión{% endblock %}
 {% block page_title %}Nueva entrada - OC con factura XML{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventarios.css' %}">
+{% endblock %}
+
 {% block content %}
 
 
 {% if step == "upload" %}
-<div class="row justify-content-center">
+<div class="row justify-content-center sg-inventory-page">
   <div class="col-lg-6">
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 sg-form-card sg-table-card sg-inventory-section">
       <div class="card-body">
-        <h5 class="fw-bold mb-3">
-          <i class="bi bi-file-earmark-text me-2"></i>
-          Cargar factura XML
-        </h5>
-
-        <p class="text-muted">
+        <div class="sg-section-header"><div>
+          <h5 class="sg-section-title"><i class="bi bi-file-earmark-text"></i> Cargar factura XML</h5>
+          <p class="sg-section-help">
           Selecciona el archivo XML de la factura para leer automáticamente el folio,
           fecha, proveedor y productos.
-        </p>
+          </p>
+        </div></div>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" class="sg-inventory-form" data-sg-prevent-enter-submit>
           {% csrf_token %}
           <input type="hidden" name="step" value="upload">
 
           {% if form_upload.non_field_errors %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger sg-validation-summary">
               {{ form_upload.non_field_errors }}
             </div>
           {% endif %}
 
           <div class="mb-3">
-            <label class="form-label fw-semibold">Factura XML</label>
+            <label class="sg-form-label">Factura XML</label>
             {{ form_upload.xml_archivo }}
             {% if form_upload.xml_archivo.errors %}
-              <div class="text-danger small">{{ form_upload.xml_archivo.errors }}</div>
+              <div class="sg-form-error sg-validation-message">{{ form_upload.xml_archivo.errors }}</div>
             {% endif %}
           </div>
 
-          <div class="d-flex justify-content-end">
-            <a href="{% url 'entradas_list' %}" class="btn btn-outline-secondary me-2">
+          <div class="sg-form-actions sg-inventory-actions">
+            <a href="{% url 'entradas_list' %}" class="sg-btn-secondary sg-btn-md me-2">
               <i class="bi bi-arrow-left me-1"></i>
               Cancelar
             </a>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="sg-btn-primary sg-btn-md">
               <i class="bi bi-arrow-right-circle me-1"></i>
               Continuar
             </button>
@@ -58,7 +60,7 @@
 
 {% elif step == "conciliacion" %}
 
-<form method="post">
+<form method="post" class="sg-inventory-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas guardar esta entrada y actualizar el inventario?">
   {% csrf_token %}
   <input type="hidden" name="step" value="conciliacion">
   
@@ -75,33 +77,33 @@
 
   <div class="row">
     <div class="col-12">
-      <div class="card shadow-sm border-0 mb-3">
+      <div class="card shadow-sm border-0 mb-3 sg-form-card sg-table-card sg-inventory-section">
         <div class="card-body">
-          <h5 class="fw-bold mb-3">
-            <i class="bi bi-box-arrow-in-down me-2"></i>
-            Encabezado (obtenido del XML)
-          </h5>
+          <div class="sg-section-header"><div>
+            <h5 class="sg-section-title"><i class="bi bi-box-arrow-in-down"></i> Encabezado obtenido del XML</h5>
+            <p class="sg-section-help">Valida los datos leídos antes de confirmar la entrada.</p>
+          </div></div>
 
           <div class="col-md-6">
-            <label class="form-label">FOLIO FISCAL: {{ header.uuid }}</label>              
+            <label class="sg-form-label">FOLIO FISCAL: {{ header.uuid }}</label>              
           </div>
-          <div class="row g-3">            
+          <div class="row g-3 sg-form-grid">            
             <div class="col-md-3">
-              <label class="form-label fw-semibold" readonly>Folio</label>
-              <input type="text" class="form-control" value="{{ header.folio_sistema }}" readonly>
+              <label class="sg-form-label" readonly>Folio</label>
+              <input type="text" class="form-control sg-form-control" value="{{ header.folio_sistema }}" readonly>
             </div>            
             <div class="col-md-3">
-              <label class="form-label fw-semibold">Factura</label>
-              <input type="text" class="form-control" value="{{ header.factura_folio }}" readonly>
+              <label class="sg-form-label">Factura</label>
+              <input type="text" class="form-control sg-form-control" value="{{ header.factura_folio }}" readonly>
             </div>
             <div class="col-md-3">
-              <label class="form-label fw-semibold">Fecha CFDI</label>
-              <input type="text" class="form-control" value="{{ header.fecha_display }}" readonly>
+              <label class="sg-form-label">Fecha CFDI</label>
+              <input type="text" class="form-control sg-form-control" value="{{ header.fecha_display }}" readonly>
             </div>            
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Almacén</label>
-              <select class="form-select" id="almacenSelect">
+              <label class="sg-form-label">Almacén</label>
+              <select class="form-select sg-form-control" id="almacenSelect">
                 <option value="">(Default)</option>
                 {% for a in almacenes %}
                   <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
@@ -109,7 +111,7 @@
                   </option>
                 {% endfor %}
               </select>
-              <div class="form-text">Los productos del XML se cargarán a este almacén.</div>
+              <div class="sg-form-help">Los productos del XML se cargarán a este almacén.</div>
             </div>
           </div>
 
@@ -119,7 +121,7 @@
 
           <div class="row g-3 align-items-start">
             <div class="col-md-6">
-              <label class="form-label small text-muted">Proveedor sugerido desde XML</label>
+              <label class="sg-form-label small sg-form-help">Proveedor sugerido desde XML</label>
               <div class="border rounded p-2 bg-light">
                 <div><strong>Nombre:</strong> {{ header.proveedor_nombre|default:"(sin nombre)" }}</div>
                 <div><strong>RFC:</strong> {{ header.proveedor_rfc|default:"(sin RFC)" }}</div>
@@ -127,9 +129,9 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label small text-muted">Proveedor en sistema</label>
+              <label class="sg-form-label small sg-form-help">Proveedor en sistema</label>
 
-              <select name="proveedor_id" class="form-select mb-2">
+              <select name="proveedor_id" class="form-select mb-2 sg-form-control">
                 <option value="">-- Selecciona proveedor --</option>
                 {% if coinciden_rfc %}
                   {% for p in coinciden_rfc %}
@@ -162,13 +164,13 @@
               </div>
               
 
-              <div class="row g-2">
+              <div class="row g-2 sg-form-grid">
                 <div class="col-12">
-                  <input type="text" name="proveedor_nombre_nuevo" class="form-control"
+                  <input type="text" name="proveedor_nombre_nuevo" class="form-control sg-form-control"
                   {% if proveedor_bd %}disabled{% endif %}>
                 </div>
                 <div class="col-12">
-                  <input type="text" name="proveedor_rfc_nuevo" class="form-control"
+                  <input type="text" name="proveedor_rfc_nuevo" class="form-control sg-form-control"
                   {% if proveedor_bd %}disabled{% endif %}>
                 </div>
               </div>
@@ -176,8 +178,8 @@
           </div>
 
           <div class="mt-3">
-            <label class="form-label fw-semibold">Observaciones</label>
-            <textarea name="observaciones" class="form-control" rows="2"></textarea>
+            <label class="sg-form-label">Observaciones</label>
+            <textarea name="observaciones" class="form-control sg-form-control" rows="2"></textarea>
           </div>
         </div>
       </div>
@@ -185,13 +187,13 @@
 
     
     <div class="col-12">
-      <div class="card shadow-sm border-0">
+      <div class="card shadow-sm border-0 sg-form-card sg-table-card">
         <div class="card-body">
-          <h5 class="fw-bold mb-3">
+          <h5 class="sg-section-title mb-3">
             <i class="bi bi-list-check me-2"></i>
             Conciliación de productos del XML
           </h5>
-          <p class="text-muted">
+          <p class="sg-form-help">
             Revisa cada renglón. Si el producto no existe en el sistema,
             marca <strong>"Crear como nuevo"</strong> y captura los datos mínimos.
           </p>
@@ -199,7 +201,7 @@
           {{ formset.management_form }}
 
           <div class="table-responsive">
-            <table class="table table-sm align-middle">
+            <table class="table table-sm align-middle sg-table">
               <thead class="table-light">
                 <tr>
                   <th style="width: 28%;">Clave SAT / Descripción CFDI</th>
@@ -220,18 +222,18 @@
                       {{ f.descripcion_xml }}
 
                       <div class="small">
-                        <div class="text-muted">
+                        <div class="sg-form-help">
                           <strong>Clave SAT:</strong>
                           {{ f.initial.clave_sat_xml }}
                         </div>
-                        <div class="text-muted">
+                        <div class="sg-form-help">
                           <strong>Descripción:</strong>
                           {{ f.initial.descripcion_xml }}
                         </div>
                       </div>
 
                       {% if f.non_field_errors %}
-                        <div class="text-danger small mt-1">
+                        <div class="sg-form-error mt-1">
                           {{ f.non_field_errors }}
                         </div>
                       {% endif %}
@@ -240,21 +242,21 @@
                     <td class="text-end">
                       {{ f.cantidad_xml }}
                       {% if f.cantidad_xml.errors %}
-                        <div class="text-danger small">{{ f.cantidad_xml.errors }}</div>
+                        <div class="sg-form-error sg-validation-message">{{ f.cantidad_xml.errors }}</div>
                       {% endif %}
                     </td>
 
                     <td class="text-end">
                       {{ f.valor_unitario_xml }}
                       {% if f.valor_unitario_xml.errors %}
-                        <div class="text-danger small">{{ f.valor_unitario_xml.errors }}</div>
+                        <div class="sg-form-error sg-validation-message">{{ f.valor_unitario_xml.errors }}</div>
                       {% endif %}
                     </td>
 
                     <td>
                       {{ f.producto }}
                       {% if f.producto.errors %}
-                        <div class="text-danger small">{{ f.producto.errors }}</div>
+                        <div class="sg-form-error sg-validation-message">{{ f.producto.errors }}</div>
                       {% endif %}
                     </td>
 
@@ -268,7 +270,7 @@
                       {% else %}
                         <span class="badge bg-warning text-dark">Pendiente</span>
                     
-                        <a class="btn btn-sm btn-outline-primary mt-1"
+                        <a class="sg-btn-outline sg-btn-sm mt-1"
                            href="{% url 'productos_create_from_xml' %}?i={{ forloop.counter0 }}">
                           <i class="bi bi-plus-circle"></i>
                           Crear producto
@@ -293,12 +295,12 @@
             </table>
           </div>
 
-          <div class="d-flex justify-content-between mt-3">
-            <a href="{% url 'entrada_ocf_create' %}?reset=1" class="btn btn-outline-secondary">
+          <div class="sg-form-actions sg-form-actions-between sg-inventory-actions">
+            <a href="{% url 'entrada_ocf_create' %}?reset=1" class="sg-btn-secondary sg-btn-md">
               <i class="bi bi-arrow-left me-1"></i>
               Volver a cargar XML
             </a>
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="sg-btn-primary sg-btn-md">
               <i class="bi bi-save me-1"></i>
               Guardar entrada y actualizar inventario
             </button>
@@ -326,4 +328,8 @@
   });
 </script>
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventarios_forms.js' %}"></script>
 {% endblock %}

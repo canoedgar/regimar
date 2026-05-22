@@ -7,20 +7,20 @@
 {% block page_title %}Lista maestra de precios{% endblock %}
 
 {% block content %}
-<div class="row g-3">
+<div class="row g-3 sg-form-grid">
   <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
+      <div class="card-body sg-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <div>
           <h5 class="mb-1 fw-bold">
             <i class="bi bi-currency-dollar me-2"></i>
             Lista maestra de precios
           </h5>
-          <p class="text-muted mb-0 small">
+          <p class="mb-0 small sg-form-help">
             Edita únicamente el precio de venta y el precio mínimo. Los costos se calculan desde inventario.
           </p>
         </div>
-        <a href="{% url 'productos_list' %}" class="btn btn-sm btn-outline-secondary">
+        <a href="{% url 'productos_list' %}" class="sg-btn-secondary sg-btn-sm">
           <i class="bi bi-box2-heart me-1"></i>
           Ver productos
         </a>
@@ -29,10 +29,10 @@
   </div>
 
   <div class="col-12">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body">
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle sg-table">
             <thead class="table-light">
               <tr>
                 <th>Producto</th>
@@ -57,13 +57,13 @@
                   <td class="text-end">${{ producto.ultimo_costo_compra|precio_entero }}</td>
                   <td class="text-end">${{ producto.costo_promedio|precio_entero }}</td>
                   <td class="text-end" style="min-width: 130px;">
-                    <form method="post" class="d-flex gap-2 justify-content-end align-items-center">
+                    <form method="post" class="d-flex gap-2 justify-content-end align-items-center sg-form-actions sg-form-actions-compact">
                       {% csrf_token %}
                       <input type="hidden" name="producto_id" value="{{ producto.id }}">
-                      <input type="number" name="precio" value="{{ producto.precio|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end" style="max-width: 110px;">
+                      <input type="number" name="precio" value="{{ producto.precio|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end sg-form-control" style="max-width: 110px;">
                   </td>
                   <td class="text-end" style="min-width: 130px;">
-                      <input type="number" name="precio_minimo" value="{{ producto.precio_minimo|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end" style="max-width: 110px;">
+                      <input type="number" name="precio_minimo" value="{{ producto.precio_minimo|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end sg-form-control" style="max-width: 110px;">
                   </td>
                   <td class="text-end">
                     {% if producto.margen_estimado < 0 %}
@@ -76,19 +76,19 @@
                   </td>
                   <td class="text-end">{{ producto.margen_porcentaje|floatformat:2 }}%</td>
                   <td>{{ producto.fecha_ultima_compra|default:"—" }}</td>
-                  <td class="text-end text-nowrap">
-                      <button type="submit" class="btn btn-sm btn-primary" title="Guardar precio">
+                  <td class="text-end sg-table-actions text-nowrap">
+                      <button type="submit" class="sg-btn-primary sg-btn-sm" title="Guardar precio">
                         <i class="bi bi-check2"></i>
                       </button>
                     </form>
-                    <a href="{% url 'producto_precio_bitacora' producto.id %}" class="btn btn-sm btn-outline-secondary mt-1" title="Ver bitácora">
+                    <a href="{% url 'producto_precio_bitacora' producto.id %}" class="sg-btn-secondary sg-btn-sm mt-1" title="Ver bitácora">
                       <i class="bi bi-clock-history"></i>
                     </a>
                   </td>
                 </tr>
               {% empty %}
                 <tr>
-                  <td colspan="11" class="text-center text-muted">No hay productos registrados.</td>
+                  <td colspan="11" class="text-center sg-form-help sg-empty-state">No hay productos registrados.</td>
                 </tr>
               {% endfor %}
             </tbody>

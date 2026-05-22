@@ -24,7 +24,7 @@
   <!-- SIDEBAR -->
   <aside class="solar-sidebar" id="solarSidebar">
 
-    <div class="brand d-flex justify-content-between align-items-center px-2 pt-2 pb-1">
+    <div class="brand solar-sidebar-brand d-flex justify-content-between align-items-center px-2 pt-2 pb-1">
 
       <!-- LOGO -->
       <a href="{% url 'home' %}" class="d-flex align-items-center text-decoration-none text-white">
@@ -33,13 +33,13 @@
       </a>
 
       <!-- Cerrar en móvil -->
-      <button class="btn btn-sm btn-outline-light d-md-none ms-2" type="button" onclick="closeSidebar()">
+      <button class="sidebar-close-btn d-lg-none ms-2" type="button" onclick="closeSidebar()" aria-label="Cerrar menú">
         <i class="bi bi-x-lg"></i>
       </button>
     </div>
 
     <!-- Filtrar menús -->
-    <div class="px-2 mt-3">
+    <div class="solar-menu-search px-2 mt-3">
       <div class="input-group input-group-sm">
         <span class="input-group-text">
           <i class="bi bi-search"></i>
@@ -48,12 +48,17 @@
                type="text"
                class="form-control"
                placeholder="Buscar en menús…"
-               autocomplete="off">
+               autocomplete="off"
+               aria-label="Buscar en menús">
+      </div>
+      <div id="menuSearchEmpty" class="solar-menu-empty d-none" role="status">
+        <i class="bi bi-search me-1"></i>
+        Sin resultados en el menú
       </div>
     </div>
-    
 
-    <nav class="nav flex-column mt-3">
+
+    <nav class="nav flex-column mt-3 solar-sidebar-nav">
 
       <!-- GENERAL -->
       <div class="nav-section-title">General</div>
@@ -113,11 +118,11 @@
             </a>
 
             {# Retorno de inventario de cliente (devoluciones) #}
-            <a href="#"
+            <!--<a href="#"
               class="nav-link {% block active_entradas_retorno %}{% endblock %}">
               <i class="bi bi-arrow-repeat me-1"></i>
               Retorno de inventario
-            </a>
+            </a>-->
 
             <!-- AJUSTES -->
             <span class="nav-subtitle">Ajustes</span>
@@ -146,7 +151,7 @@
                         
 
             {# Merma, daño, robo, etc. #}
-            <a href="#"
+            <!--<a href="#"
               class="nav-link {% block active_salidas_merma %}{% endblock %}">
               <i class="bi bi-exclamation-triangle me-1"></i>
               Salida por merma / daño
@@ -157,7 +162,7 @@
               class="nav-link {% block active_salidas_traslado %}{% endblock %}">
               <i class="bi bi-arrow-left-right me-1"></i>
               Traspaso entre almacenes
-            </a>
+            </a>-->
 
             <!-- CONSULTAS -->
             <span class="nav-subtitle">Consultas</span>
@@ -226,10 +231,10 @@
               Almacenes
             </a>
 
-            <a href="{% url 'proyectos_list' %}" class="nav-link {% block active_proyectos %}{% endblock %}">
+            <!--<a href="{% url 'proyectos_list' %}" class="nav-link {% block active_proyectos %}{% endblock %}">
               <i class="bi bi-kanban me-1"></i>
               Proyectos
-            </a>
+            </a>-->
 
             <span class="nav-subtitle">Importaciones</span>
 
@@ -288,13 +293,13 @@
     </nav>
   </aside>
 
-  <div id="sidebarOverlay" class="sidebar-overlay d-md-none" onclick="closeSidebar()"></div>
+  <div id="sidebarOverlay" class="sidebar-overlay d-lg-none" onclick="closeSidebar()"></div>
 
   <!-- CONTENIDO PRINCIPAL -->
   <div class="solar-main">
     <header class="solar-main-header">
 
-      <button class="btn btn-sm btn-outline-secondary sidebar-toggle-btn d-md-none" onclick="toggleSidebar()">
+      <button type="button" class="sidebar-toggle-btn d-lg-none" onclick="toggleSidebar()" aria-label="Abrir menú">
         ☰
       </button>
 

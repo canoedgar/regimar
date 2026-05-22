@@ -8,22 +8,22 @@
 {% block content %}
 <div class="row">
   <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="card border-0 shadow-sm sg-table-card">
+      <div class="card-body sg-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0"><i class="bi bi-box2-heart me-2"></i>Productos</h5>
         <div>
-          <a href="{% url 'precios_productos_list' %}" class="btn btn-sm btn-outline-primary me-2"><i class="bi bi-currency-dollar me-1"></i>Lista de precios</a>
-          <a href="{% url 'productos_form' %}" class="btn btn-sm btn-primary"><i class="bi bi-plus-circle me-1"></i>Nuevo producto</a>
+          <a href="{% url 'precios_productos_list' %}" class="sg-btn-outline sg-btn-sm me-2"><i class="bi bi-currency-dollar me-1"></i>Lista de precios</a>
+          <a href="{% url 'productos_form' %}" class="sg-btn-primary sg-btn-sm"><i class="bi bi-plus-circle me-1"></i>Nuevo producto</a>
         </div>
       </div>
     </div>
   </div>
 
   <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-table-card">
       <div class="card-body">
         <div class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-hover align-middle sg-table">
             <thead class="table-light">
               <tr>
                 <th>Nombre</th>
@@ -36,8 +36,8 @@
                 <th>Stock</th>
                 <th>Mín.</th>
                 <th>Máx.</th>
-                <th>Conversiones</th>
-                <th></th>
+                <th>Conversiones</th>                
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -60,17 +60,17 @@
                       {% else %}<span class="text-muted">—</span>{% endif %}
                     {% endwith %}
                   </td>
-                  <td class="text-end">
-                    <a href="{% url 'productos_edit' producto.pk %}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                  <td class="text-end sg-table-actions">
+                    <a href="{% url 'productos_edit' producto.pk %}" class="sg-btn-table sg-btn-sm"><i class="bi bi-pencil"></i></a>
                     {% if producto.stock == 0 %}
-                      <a href="{% url 'productos_delete' producto.pk %}" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></a>
+                      <a href="{% url 'productos_delete' producto.pk %}" class="sg-btn-table sg-btn-danger sg-btn-sm"><i class="bi bi-trash"></i></a>
                     {% else %}
-                      <button type="button" class="btn btn-sm btn-outline-danger" disabled title="Solo puedes eliminar productos con stock 0"><i class="bi bi-trash"></i></button>
+                      <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" disabled title="Solo puedes eliminar productos con stock 0"><i class="bi bi-trash"></i></button>
                     {% endif %}
                   </td>
                 </tr>
               {% empty %}
-                <tr><td colspan="12" class="text-center text-muted">No hay productos registrados aún.</td></tr>
+                <tr><td colspan="12" class="text-center text-muted sg-empty-state">No hay productos registrados aún.</td></tr>
               {% endfor %}
             </tbody>
           </table>

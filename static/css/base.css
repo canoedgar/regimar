@@ -4,21 +4,34 @@
 :root,
 html[data-theme="light"],
 body[data-theme="light"] {
+  /* Variables base obligatorias */
   --color-bg: #f4f7fb;
-  --color-bg-alt: #eaf1fb;
   --color-surface: #ffffff;
   --color-surface-soft: #f8fbff;
-  --color-primary: #0f3d91;
-  --color-primary-strong: #082a66;
-  --color-primary-soft: #3b82f6;
-  --color-secondary: #f97316;
-  --color-secondary-soft: #fb923c;
-  --color-accent: #ffb703;
   --color-text: #1f2937;
   --color-text-soft: #5b6472;
+  --color-border: rgba(15, 61, 145, 0.14);
+  --color-primary: #0f3d91;
+  --color-secondary: #f97316;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+
+  /* Variantes y aliases globales */
+  --color-bg-alt: #eaf1fb;
+  --color-primary-strong: #082a66;
+  --color-primary-soft: #3b82f6;
+  --color-secondary-soft: #fb923c;
+  --color-danger-soft: #fee2e2;
+  --color-success-soft: #dcfce7;
+  --color-warning-soft: #fef3c7;
+  --color-accent: #ffb703;
   --color-text-inverse: #ffffff;
-  --color-border: rgba(15, 61, 145, 0.12);
-  --color-border-strong: rgba(15, 61, 145, 0.22);
+  --color-border-strong: rgba(15, 61, 145, 0.24);
+  --color-input-bg: var(--color-surface);
+  --color-input-text: var(--color-text);
+  --color-table-head-bg: #eef4ff;
+  --color-table-row-hover: rgba(15, 61, 145, 0.055);
   --color-sidebar-text: rgba(255, 255, 255, 0.88);
   --color-sidebar-muted: rgba(255, 255, 255, 0.58);
   --color-sidebar-hover: rgba(255, 183, 3, 0.18);
@@ -35,21 +48,34 @@ body[data-theme="light"] {
 
 html[data-theme="dark"],
 body[data-theme="dark"] {
+  /* Variables base obligatorias */
   --color-bg: #0b1220;
-  --color-bg-alt: #111b2e;
   --color-surface: #162033;
   --color-surface-soft: #1b2940;
-  --color-primary: #60a5fa;
-  --color-primary-strong: #1d4ed8;
-  --color-primary-soft: #93c5fd;
-  --color-secondary: #fb923c;
-  --color-secondary-soft: #fdba74;
-  --color-accent: #ffd166;
   --color-text: #e5edf8;
   --color-text-soft: #aebcd0;
+  --color-border: rgba(147, 197, 253, 0.16);
+  --color-primary: #60a5fa;
+  --color-secondary: #fb923c;
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  --color-warning: #fbbf24;
+
+  /* Variantes y aliases globales */
+  --color-bg-alt: #111b2e;
+  --color-primary-strong: #1d4ed8;
+  --color-primary-soft: #93c5fd;
+  --color-secondary-soft: #fdba74;
+  --color-danger-soft: rgba(248, 113, 113, 0.14);
+  --color-success-soft: rgba(74, 222, 128, 0.14);
+  --color-warning-soft: rgba(251, 191, 36, 0.16);
+  --color-accent: #ffd166;
   --color-text-inverse: #ffffff;
-  --color-border: rgba(147, 197, 253, 0.14);
-  --color-border-strong: rgba(251, 146, 60, 0.24);
+  --color-border-strong: rgba(251, 146, 60, 0.26);
+  --color-input-bg: #101a2b;
+  --color-input-text: var(--color-text);
+  --color-table-head-bg: #111b2e;
+  --color-table-row-hover: rgba(147, 197, 253, 0.075);
   --color-sidebar-text: rgba(229, 237, 248, 0.9);
   --color-sidebar-muted: rgba(229, 237, 248, 0.62);
   --color-sidebar-hover: rgba(251, 146, 60, 0.16);
@@ -76,6 +102,147 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* ============================
+   NORMALIZACIÓN GLOBAL BOOTSTRAP
+   ============================ */
+a {
+  color: var(--color-primary);
+}
+
+a:hover {
+  color: var(--color-primary-strong);
+}
+
+.card,
+.modal-content,
+.dropdown-menu,
+.list-group-item {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.card-header,
+.card-footer {
+  background-color: var(--color-surface-soft);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.bg-light,
+.bg-body-tertiary {
+  background-color: var(--color-surface-soft) !important;
+  color: var(--color-text) !important;
+}
+
+.text-muted,
+.text-body-secondary {
+  color: var(--color-text-soft) !important;
+}
+
+.table {
+  --bs-table-bg: var(--color-surface);
+  --bs-table-color: var(--color-text);
+  --bs-table-border-color: var(--color-border);
+  --bs-table-hover-bg: var(--color-table-row-hover);
+  --bs-table-hover-color: var(--color-text);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.table-light {
+  --bs-table-bg: var(--color-table-head-bg);
+  --bs-table-color: var(--color-text);
+  --bs-table-border-color: var(--color-border);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+  background-color: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+.form-control::placeholder {
+  color: var(--color-text-soft);
+  opacity: 0.8;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+  background-color: var(--color-surface-soft);
+  color: var(--color-text-soft);
+}
+
+.btn-primary {
+  --bs-btn-bg: var(--color-primary);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-bg: var(--color-primary-strong);
+  --bs-btn-hover-border-color: var(--color-primary-strong);
+  --bs-btn-color: var(--color-text-inverse);
+  --bs-btn-hover-color: var(--color-text-inverse);
+}
+
+.btn-secondary {
+  --bs-btn-bg: var(--color-secondary);
+  --bs-btn-border-color: var(--color-secondary);
+  --bs-btn-hover-bg: var(--color-secondary-soft);
+  --bs-btn-hover-border-color: var(--color-secondary-soft);
+  --bs-btn-color: #1a1a1a;
+  --bs-btn-hover-color: #1a1a1a;
+}
+
+.btn-danger {
+  --bs-btn-bg: var(--color-danger);
+  --bs-btn-border-color: var(--color-danger);
+}
+
+.btn-success {
+  --bs-btn-bg: var(--color-success);
+  --bs-btn-border-color: var(--color-success);
+}
+
+.btn-warning {
+  --bs-btn-bg: var(--color-warning);
+  --bs-btn-border-color: var(--color-warning);
+  --bs-btn-color: #1a1a1a;
+  --bs-btn-hover-color: #1a1a1a;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--color-primary);
+  --bs-btn-border-color: var(--color-primary);
+  --bs-btn-hover-bg: var(--color-primary);
+  --bs-btn-hover-border-color: var(--color-primary);
+  --bs-btn-hover-color: var(--color-text-inverse);
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--color-text-soft);
+  --bs-btn-border-color: var(--color-border-strong);
+  --bs-btn-hover-bg: var(--color-surface-soft);
+  --bs-btn-hover-border-color: var(--color-secondary);
+  --bs-btn-hover-color: var(--color-text);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--color-danger);
+  --bs-btn-border-color: var(--color-danger);
+  --bs-btn-hover-bg: var(--color-danger);
+  --bs-btn-hover-border-color: var(--color-danger);
+  --bs-btn-hover-color: var(--color-text-inverse);
+}
+
+.btn-outline-warning {
+  --bs-btn-color: var(--color-warning);
+  --bs-btn-border-color: var(--color-warning);
+  --bs-btn-hover-bg: var(--color-warning);
+  --bs-btn-hover-border-color: var(--color-warning);
+  --bs-btn-hover-color: #1a1a1a;
 }
 
 .solar-sidebar,
@@ -262,7 +429,7 @@ body {
   width: auto;
   object-fit: contain;
   padding: 0.35rem;
-  border-radius: 0.85rem;
+  /*border-radius: 0.85rem;*/
   background: rgba(255, 255, 255, 0.08);
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.35));
 }
@@ -390,12 +557,12 @@ html[data-theme="dark"] .solar-main-header {
   para evitar que el fondo oscuro quede encima del modal cuando algún layout
   genera un stacking context.
 
-  Además, los modales fuerzan fondo claro y texto oscuro para evitar problemas
-  de contraste cuando el tema global o el navegador aplican colores claros/oscuros.
+  Los colores se toman de las variables globales para mantener contraste
+  consistente en tema claro y oscuro.
 */
 .modal {
   z-index: 2000 !important;
-  color: #1f2937;
+  color: var(--color-text);
 }
 
 .modal-backdrop {
@@ -403,17 +570,18 @@ html[data-theme="dark"] .solar-main-header {
 }
 
 .modal .modal-content {
-  background-color: #ffffff;
-  color: #1f2937;
-  border: 1px solid rgba(15, 61, 145, 0.12);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
   box-shadow: var(--shadow-strong);
 }
 
 .modal .modal-header,
 .modal .modal-body,
 .modal .modal-footer {
-  background-color: #ffffff;
-  color: #1f2937;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
 }
 
 .modal .modal-title,
@@ -422,20 +590,24 @@ html[data-theme="dark"] .solar-main-header {
 .modal .modal-body span,
 .modal .modal-body strong,
 .modal .modal-footer {
-  color: #1f2937;
+  color: var(--color-text);
 }
 
 .modal .text-muted {
-  color: #5b6472 !important;
+  color: var(--color-text-soft) !important;
 }
 
 .modal .bg-body-tertiary {
-  background-color: #f8fbff !important;
-  color: #1f2937;
+  background-color: var(--color-surface-soft) !important;
+  color: var(--color-text) !important;
 }
 
 .modal .btn-close {
   filter: none;
+}
+
+html[data-theme="dark"] .modal .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
 }
 
 /* Compactación adicional sidebar */
@@ -551,3 +723,1095 @@ html[data-theme="dark"] .theme-switcher-moon {
     display: none;
   }
 }
+
+/* ============================
+   SISTEMA GLOBAL DE BOTONES SG
+   ============================ */
+.sg-btn-primary,
+.sg-btn-secondary,
+.sg-btn-success,
+.sg-btn-danger,
+.sg-btn-warning,
+.sg-btn-outline,
+.sg-btn-icon,
+.sg-btn-table,
+.sg-btn-form {
+  --sg-btn-bg: transparent;
+  --sg-btn-color: var(--color-text);
+  --sg-btn-border: var(--color-border-strong);
+  --sg-btn-hover-bg: var(--color-surface-soft);
+  --sg-btn-hover-color: var(--color-text);
+  --sg-btn-hover-border: var(--color-border-strong);
+  --sg-btn-shadow: none;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.25rem;
+  padding: 0.48rem 0.9rem;
+  border: 1px solid var(--sg-btn-border);
+  border-radius: 0.65rem;
+  background: var(--sg-btn-bg);
+  color: var(--sg-btn-color) !important;
+  font-size: 0.92rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: var(--sg-btn-shadow);
+  cursor: pointer;
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.sg-btn-primary:hover,
+.sg-btn-secondary:hover,
+.sg-btn-success:hover,
+.sg-btn-danger:hover,
+.sg-btn-warning:hover,
+.sg-btn-outline:hover,
+.sg-btn-icon:hover,
+.sg-btn-table:hover,
+.sg-btn-form:hover {
+  background: var(--sg-btn-hover-bg);
+  border-color: var(--sg-btn-hover-border);
+  color: var(--sg-btn-hover-color) !important;
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.sg-btn-primary:focus-visible,
+.sg-btn-secondary:focus-visible,
+.sg-btn-success:focus-visible,
+.sg-btn-danger:focus-visible,
+.sg-btn-warning:focus-visible,
+.sg-btn-outline:focus-visible,
+.sg-btn-icon:focus-visible,
+.sg-btn-table:focus-visible,
+.sg-btn-form:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.sg-btn-primary:disabled,
+.sg-btn-secondary:disabled,
+.sg-btn-success:disabled,
+.sg-btn-danger:disabled,
+.sg-btn-warning:disabled,
+.sg-btn-outline:disabled,
+.sg-btn-icon:disabled,
+.sg-btn-table:disabled,
+.sg-btn-form:disabled,
+.sg-btn-primary.disabled,
+.sg-btn-secondary.disabled,
+.sg-btn-success.disabled,
+.sg-btn-danger.disabled,
+.sg-btn-warning.disabled,
+.sg-btn-outline.disabled,
+.sg-btn-icon.disabled,
+.sg-btn-table.disabled,
+.sg-btn-form.disabled {
+  opacity: 0.58;
+  pointer-events: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.sg-btn-primary {
+  --sg-btn-bg: var(--color-primary);
+  --sg-btn-color: var(--color-text-inverse);
+  --sg-btn-border: var(--color-primary);
+  --sg-btn-hover-bg: var(--color-primary-strong);
+  --sg-btn-hover-color: var(--color-text-inverse);
+  --sg-btn-hover-border: var(--color-primary-strong);
+  --sg-btn-shadow: 0 0.5rem 1.15rem rgba(15, 61, 145, 0.18);
+}
+
+.sg-btn-secondary {
+  --sg-btn-bg: var(--color-surface-soft);
+  --sg-btn-color: var(--color-text);
+  --sg-btn-border: var(--color-border-strong);
+  --sg-btn-hover-bg: var(--color-bg-alt);
+  --sg-btn-hover-color: var(--color-primary);
+  --sg-btn-hover-border: var(--color-primary);
+}
+
+.sg-btn-success {
+  --sg-btn-bg: var(--color-success);
+  --sg-btn-color: var(--color-text-inverse);
+  --sg-btn-border: var(--color-success);
+  --sg-btn-hover-bg: color-mix(in srgb, var(--color-success) 84%, #000000 16%);
+  --sg-btn-hover-color: var(--color-text-inverse);
+  --sg-btn-hover-border: color-mix(in srgb, var(--color-success) 84%, #000000 16%);
+}
+
+.sg-btn-danger {
+  --sg-btn-bg: var(--color-danger);
+  --sg-btn-color: var(--color-text-inverse);
+  --sg-btn-border: var(--color-danger);
+  --sg-btn-hover-bg: color-mix(in srgb, var(--color-danger) 84%, #000000 16%);
+  --sg-btn-hover-color: var(--color-text-inverse);
+  --sg-btn-hover-border: color-mix(in srgb, var(--color-danger) 84%, #000000 16%);
+}
+
+.sg-btn-warning {
+  --sg-btn-bg: var(--color-warning);
+  --sg-btn-color: #1f2937;
+  --sg-btn-border: var(--color-warning);
+  --sg-btn-hover-bg: color-mix(in srgb, var(--color-warning) 86%, #ffffff 14%);
+  --sg-btn-hover-color: #1f2937;
+  --sg-btn-hover-border: var(--color-warning);
+}
+
+.sg-btn-outline {
+  --sg-btn-bg: transparent;
+  --sg-btn-color: var(--color-primary);
+  --sg-btn-border: var(--color-border-strong);
+  --sg-btn-hover-bg: var(--color-primary);
+  --sg-btn-hover-color: var(--color-text-inverse);
+  --sg-btn-hover-border: var(--color-primary);
+}
+
+.sg-btn-icon,
+.sg-btn-table {
+  width: 2.15rem;
+  min-width: 2.15rem;
+  min-height: 2.15rem;
+  padding: 0.4rem;
+  border-radius: 0.6rem;
+}
+
+.sg-btn-icon {
+  --sg-btn-color: var(--color-primary);
+  --sg-btn-border: var(--color-border-strong);
+  --sg-btn-hover-bg: var(--color-primary);
+  --sg-btn-hover-color: var(--color-text-inverse);
+  --sg-btn-hover-border: var(--color-primary);
+}
+
+.sg-btn-table {
+  --sg-btn-color: var(--color-text-soft);
+  --sg-btn-border: var(--color-border);
+  --sg-btn-hover-bg: var(--color-surface-soft);
+  --sg-btn-hover-color: var(--color-primary);
+  --sg-btn-hover-border: var(--color-primary);
+}
+
+.sg-btn-table.sg-btn-danger,
+.sg-btn-icon.sg-btn-danger {
+  --sg-btn-bg: transparent;
+  --sg-btn-color: var(--color-danger);
+  --sg-btn-border: var(--color-border);
+  --sg-btn-hover-bg: var(--color-danger);
+  --sg-btn-hover-color: var(--color-text-inverse);
+  --sg-btn-hover-border: var(--color-danger);
+}
+
+.sg-btn-form {
+  min-width: 8.5rem;
+}
+
+.sg-btn-sm {
+  min-height: 2rem;
+  padding: 0.36rem 0.7rem;
+  border-radius: 0.55rem;
+  font-size: 0.82rem;
+}
+
+.sg-btn-md {
+  min-height: 2.35rem;
+  padding: 0.52rem 0.95rem;
+  border-radius: 0.65rem;
+  font-size: 0.92rem;
+}
+
+.sg-btn-lg {
+  min-height: 2.75rem;
+  padding: 0.68rem 1.2rem;
+  border-radius: 0.78rem;
+  font-size: 1rem;
+}
+
+.sg-btn-icon.sg-btn-sm,
+.sg-btn-table.sg-btn-sm {
+  width: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.32rem;
+}
+
+.sg-btn-icon.sg-btn-lg,
+.sg-btn-table.sg-btn-lg {
+  width: 2.65rem;
+  min-width: 2.65rem;
+  min-height: 2.65rem;
+  padding: 0.56rem;
+}
+
+.sg-btn-primary i,
+.sg-btn-secondary i,
+.sg-btn-success i,
+.sg-btn-danger i,
+.sg-btn-warning i,
+.sg-btn-outline i,
+.sg-btn-icon i,
+.sg-btn-table i,
+.sg-btn-form i {
+  line-height: 1;
+}
+
+
+/* ===============================
+   SISTEMA GLOBAL DE FORMULARIOS SG
+   =============================== */
+.sg-form-card {
+  border: 1px solid var(--color-border) !important;
+  border-radius: 1rem;
+  background: var(--color-surface) !important;
+  color: var(--color-text);
+  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.08);
+}
+
+.sg-form-card .card-header,
+.sg-form-section {
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 1rem;
+}
+
+.sg-form-card .card-header {
+  border-width: 0 0 1px 0;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.sg-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.sg-form-grid > .col-1, .sg-form-grid > .col-sm-1, .sg-form-grid > .col-md-1, .sg-form-grid > .col-lg-1 { grid-column: span 1; }
+.sg-form-grid > .col-2, .sg-form-grid > .col-sm-2, .sg-form-grid > .col-md-2, .sg-form-grid > .col-lg-2 { grid-column: span 2; }
+.sg-form-grid > .col-3, .sg-form-grid > .col-sm-3, .sg-form-grid > .col-md-3, .sg-form-grid > .col-lg-3 { grid-column: span 3; }
+.sg-form-grid > .col-4, .sg-form-grid > .col-sm-4, .sg-form-grid > .col-md-4, .sg-form-grid > .col-lg-4 { grid-column: span 4; }
+.sg-form-grid > .col-5, .sg-form-grid > .col-sm-5, .sg-form-grid > .col-md-5, .sg-form-grid > .col-lg-5 { grid-column: span 5; }
+.sg-form-grid > .col-6, .sg-form-grid > .col-sm-6, .sg-form-grid > .col-md-6, .sg-form-grid > .col-lg-6 { grid-column: span 6; }
+.sg-form-grid > .col-7, .sg-form-grid > .col-sm-7, .sg-form-grid > .col-md-7, .sg-form-grid > .col-lg-7 { grid-column: span 7; }
+.sg-form-grid > .col-8, .sg-form-grid > .col-sm-8, .sg-form-grid > .col-md-8, .sg-form-grid > .col-lg-8 { grid-column: span 8; }
+.sg-form-grid > .col-9, .sg-form-grid > .col-sm-9, .sg-form-grid > .col-md-9, .sg-form-grid > .col-lg-9 { grid-column: span 9; }
+.sg-form-grid > .col-10, .sg-form-grid > .col-sm-10, .sg-form-grid > .col-md-10, .sg-form-grid > .col-lg-10 { grid-column: span 10; }
+.sg-form-grid > .col-11, .sg-form-grid > .col-sm-11, .sg-form-grid > .col-md-11, .sg-form-grid > .col-lg-11 { grid-column: span 11; }
+.sg-form-grid > .col-12, .sg-form-grid > .col-sm-12, .sg-form-grid > .col-md-12, .sg-form-grid > .col-lg-12 { grid-column: span 12; }
+
+.sg-form-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+  color: var(--color-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.sg-form-control,
+.sg-form-card .form-control,
+.sg-form-card .form-select,
+.sg-form-card textarea,
+.sg-form-card input[type="text"],
+.sg-form-card input[type="email"],
+.sg-form-card input[type="number"],
+.sg-form-card input[type="date"],
+.sg-form-card input[type="password"],
+.sg-form-card input[type="file"],
+.sg-form-card select {
+  border-color: var(--color-border);
+  border-radius: 0.7rem;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.sg-form-card .form-control:focus,
+.sg-form-card .form-select:focus,
+.sg-form-control:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.sg-form-card .form-check-input {
+  border-color: var(--color-border-strong);
+  background-color: var(--color-surface);
+}
+
+.sg-form-card .form-check-input:checked {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary);
+}
+
+.sg-form-help {
+  margin-top: 0.3rem;
+  color: var(--color-text-soft) !important;
+  font-size: 0.82rem;
+}
+
+.sg-form-error {
+  margin-top: 0.3rem;
+  color: var(--color-danger) !important;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.sg-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.sg-form-actions.sg-form-actions-start {
+  justify-content: flex-start;
+}
+
+.sg-form-actions.sg-form-actions-between {
+  justify-content: space-between;
+}
+
+.sg-form-actions.sg-form-actions-compact {
+  padding-top: 0;
+  margin-top: 0;
+  border-top: 0;
+}
+
+@media (max-width: 767.98px) {
+  .sg-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-form-grid > [class*="col-"] {
+    grid-column: 1 / -1;
+  }
+
+  .sg-form-actions {
+    justify-content: stretch;
+  }
+
+  .sg-form-actions > .sg-btn-primary,
+  .sg-form-actions > .sg-btn-secondary,
+  .sg-form-actions > .sg-btn-success,
+  .sg-form-actions > .sg-btn-danger,
+  .sg-form-actions > .sg-btn-warning,
+  .sg-form-actions > .sg-btn-outline,
+  .sg-form-actions > .sg-btn-form {
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   FIX UI/UX — cliente_form + compatibilidad Bootstrap grid
+   ========================================================== */
+
+/*
+  sg-form-grid puede usarse como grid propio o combinado con .row de Bootstrap.
+  Cuando se combina con .row, se respeta el comportamiento flex de Bootstrap
+  para que col-md-6, col-md-4, col-md-3, etc. vuelvan a distribuirse correctamente.
+*/
+.row.sg-form-grid {
+  display: flex;
+  flex-wrap: wrap;
+  grid-template-columns: none;
+  gap: 0;
+}
+
+.row.sg-form-grid > [class*="col-"] {
+  grid-column: auto;
+}
+
+/* Asegura que los widgets renderizados por Django llenen su columna */
+.sg-form-grid .form-control,
+.sg-form-grid .form-select,
+.sg-form-grid textarea,
+.sg-form-grid input[type="text"],
+.sg-form-grid input[type="email"],
+.sg-form-grid input[type="number"],
+.sg-form-grid input[type="date"],
+.sg-form-grid input[type="password"],
+.sg-form-grid input[type="file"],
+.sg-form-grid select {
+  width: 100%;
+  max-width: 100%;
+  min-height: 2.35rem;
+}
+
+/* El acordeón debe heredar el tema global, no los blancos por default de Bootstrap */
+.sg-form-accordion,
+.sg-form-accordion .accordion-item,
+.sg-form-accordion .accordion-collapse {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.sg-form-accordion .accordion-item {
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-surface) !important;
+  overflow: hidden;
+}
+
+.sg-form-accordion .accordion-button {
+  background-color: color-mix(in srgb, var(--color-primary-soft) 18%, var(--color-surface) 82%);
+  color: var(--color-primary-strong);
+  border-color: var(--color-border);
+  box-shadow: none;
+}
+
+.sg-form-accordion .accordion-button:not(.collapsed) {
+  background-color: color-mix(in srgb, var(--color-primary-soft) 26%, var(--color-surface) 74%);
+  color: var(--color-primary-strong);
+  box-shadow: none;
+}
+
+.sg-form-accordion .accordion-button::after {
+  filter: none;
+}
+
+.sg-form-accordion .accordion-body,
+.sg-form-accordion .accordion-body.sg-form-section {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Contraste específico de textos dentro de formularios */
+.sg-form-accordion .sg-form-label,
+.sg-form-card .sg-form-label,
+.sg-form-card .form-label,
+.sg-form-card .form-check-label {
+  color: var(--color-text) !important;
+}
+
+.sg-form-accordion .sg-form-help,
+.sg-form-card .sg-form-help,
+.sg-form-card .text-muted {
+  color: var(--color-text-soft) !important;
+}
+
+.sg-form-accordion .form-control::placeholder,
+.sg-form-card .form-control::placeholder,
+.sg-form-accordion textarea::placeholder,
+.sg-form-card textarea::placeholder {
+  color: var(--color-text-soft) !important;
+  opacity: 0.78;
+}
+
+/* Tema oscuro: evita encabezados claros con texto poco visible */
+html[data-theme="dark"] .sg-form-accordion .accordion-button {
+  background-color: color-mix(in srgb, var(--color-primary-soft) 18%, var(--color-surface-soft) 82%);
+  color: var(--color-text) !important;
+}
+
+html[data-theme="dark"] .sg-form-accordion .accordion-button:not(.collapsed) {
+  background-color: color-mix(in srgb, var(--color-primary-soft) 26%, var(--color-surface-soft) 74%);
+  color: var(--color-text) !important;
+}
+
+html[data-theme="dark"] .sg-form-accordion .accordion-button::after {
+  filter: invert(1) grayscale(100%) brightness(180%);
+}
+
+html[data-theme="dark"] .sg-form-accordion .accordion-body,
+html[data-theme="dark"] .sg-form-accordion .accordion-body.sg-form-section {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+html[data-theme="dark"] .sg-form-grid .form-control,
+html[data-theme="dark"] .sg-form-grid .form-select,
+html[data-theme="dark"] .sg-form-grid textarea,
+html[data-theme="dark"] .sg-form-grid input[type="text"],
+html[data-theme="dark"] .sg-form-grid input[type="email"],
+html[data-theme="dark"] .sg-form-grid input[type="number"],
+html[data-theme="dark"] .sg-form-grid input[type="date"],
+html[data-theme="dark"] .sg-form-grid input[type="password"],
+html[data-theme="dark"] .sg-form-grid input[type="file"],
+html[data-theme="dark"] .sg-form-grid select {
+  background-color: var(--color-input-bg) !important;
+  color: var(--color-input-text) !important;
+  border-color: var(--color-border);
+}
+
+
+/* ===============================
+   SISTEMA GLOBAL DE LISTADOS Y TABLAS SG
+   =============================== */
+.sg-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.sg-page-header h1,
+.sg-page-header h2,
+.sg-page-header h3,
+.sg-page-header h4,
+.sg-page-header h5,
+.sg-page-header h6 {
+  color: var(--color-text);
+}
+
+.sg-page-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sg-toolbar,
+.sg-filter-bar {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+}
+
+.sg-filter-bar form,
+form.sg-filter-bar {
+  display: flex;
+  align-items: end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.sg-table-card {
+  border: 1px solid var(--color-border) !important;
+  border-radius: 1rem;
+  background: var(--color-surface) !important;
+  color: var(--color-text);
+  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.sg-table-card > .card-header,
+.sg-table-card > .card-footer {
+  background: var(--color-surface-soft);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.sg-table {
+  margin-bottom: 0;
+  color: var(--color-text);
+  border-color: var(--color-border);
+  vertical-align: middle;
+}
+
+.sg-table thead,
+.sg-table thead.table-light,
+.sg-table .table-light,
+.sg-table th {
+  background: var(--color-table-head-bg) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+.sg-table tbody td {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.sg-table tbody tr:hover > * {
+  background: var(--color-table-row-hover) !important;
+  color: var(--color-text) !important;
+}
+
+.sg-table .text-muted,
+.sg-table small,
+.sg-table .small {
+  color: var(--color-text-soft) !important;
+}
+
+/* Acciones de tabla:
+   No se debe convertir el <td> en flex porque rompe el layout nativo
+   de la tabla y puede provocar botones desalineados o apilados. */
+.sg-table-actions {
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.sg-table td.sg-table-actions,
+.sg-table th.sg-table-actions,
+td.sg-table-actions,
+th.sg-table-actions {
+  display: table-cell;
+  text-align: right;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.sg-table td.sg-table-actions > a,
+.sg-table td.sg-table-actions > button,
+.sg-table td.sg-table-actions > form,
+td.sg-table-actions > a,
+td.sg-table-actions > button,
+td.sg-table-actions > form {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 0.35rem;
+}
+
+.sg-table td.sg-table-actions > a:first-child,
+.sg-table td.sg-table-actions > button:first-child,
+.sg-table td.sg-table-actions > form:first-child,
+td.sg-table-actions > a:first-child,
+td.sg-table-actions > button:first-child,
+td.sg-table-actions > form:first-child {
+  margin-left: 0;
+}
+
+.sg-table td.sg-table-actions form,
+td.sg-table-actions form {
+  margin-bottom: 0;
+}
+
+.sg-empty-state {
+  padding: 2rem 1rem;
+  color: var(--color-text-soft) !important;
+  text-align: center;
+  background: color-mix(in srgb, var(--color-surface-soft) 82%, transparent);
+}
+
+@media (max-width: 767.98px) {
+  .sg-page-header,
+  .sg-toolbar,
+  .sg-filter-bar {
+    align-items: stretch;
+  }
+
+  .sg-page-actions,
+  .sg-filter-bar form,
+  form.sg-filter-bar {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .sg-page-actions > a,
+  .sg-page-actions > button,
+  .sg-filter-bar a,
+  .sg-filter-bar button {
+    flex: 1 1 auto;
+  }
+
+  .sg-table {
+    min-width: 720px;
+  }
+}
+
+
+/* ==========================================================
+   FIX UI/UX — estandarización real de listados Fase 4
+   ========================================================== */
+
+/* Permite usar sg-page-header como tarjeta de encabezado completa */
+.sg-page-header.sg-table-card,
+.sg-toolbar.sg-table-card {
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sg-page-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin: 0;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.sg-page-header-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.88rem;
+}
+
+/* Evita que los formularios de búsqueda parezcan tarjetas independientes cuando van dentro de sg-toolbar */
+.sg-filter-bar.sg-filter-bar-inline,
+form.sg-filter-bar.sg-filter-bar-inline {
+  flex: 1 1 420px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.sg-filter-bar.sg-filter-bar-inline .form-control,
+.sg-filter-bar.sg-filter-bar-inline .form-select {
+  min-width: 260px;
+}
+
+/* Toolbar: filtros a la izquierda, acciones/botones a la derecha */
+.sg-toolbar {
+  align-items: center;
+}
+
+.sg-toolbar .sg-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Cards de tabla consistentes: contenido con respiración y sin duplicar bordes */
+.sg-table-card .card-body {
+  padding: 1rem;
+}
+
+.sg-table-card .table-responsive {
+  border-radius: 0.85rem;
+  overflow: auto;
+}
+
+.sg-table-card .sg-table {
+  background: var(--color-surface);
+}
+
+/* Evita líneas visuales extrañas al final de acciones en tablas */
+.sg-table td.sg-table-actions,
+.sg-table th.sg-table-actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Badges Bootstrap claros deben verse bien en ambos temas */
+.badge.text-bg-light,
+.sg-table .badge.text-bg-light {
+  background-color: var(--color-surface-soft) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+/* Botones de dropdown dentro del sistema SG */
+.btn-group > .sg-btn-primary.dropdown-toggle,
+.btn-group > .sg-btn-secondary.dropdown-toggle,
+.btn-group > .sg-btn-outline.dropdown-toggle {
+  border-radius: 0.65rem;
+}
+
+/* Corrección para icon buttons dentro de barras de filtro */
+.sg-filter-bar .sg-btn-icon {
+  flex: 0 0 auto;
+}
+
+/* Tema oscuro: refuerzo de contraste en toolbars y tablas */
+html[data-theme="dark"] .sg-page-header.sg-table-card,
+html[data-theme="dark"] .sg-toolbar.sg-table-card,
+html[data-theme="dark"] .sg-table-card {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+}
+
+html[data-theme="dark"] .sg-toolbar {
+  background-color: var(--color-surface) !important;
+}
+
+html[data-theme="dark"] .sg-table thead,
+html[data-theme="dark"] .sg-table thead.table-light,
+html[data-theme="dark"] .sg-table th {
+  background-color: var(--color-table-head-bg) !important;
+  color: var(--color-text) !important;
+}
+
+@media (max-width: 767.98px) {
+  .sg-page-header.sg-table-card,
+  .sg-toolbar.sg-table-card {
+    padding: 0.85rem;
+  }
+
+  .sg-filter-bar.sg-filter-bar-inline,
+  form.sg-filter-bar.sg-filter-bar-inline {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .sg-filter-bar.sg-filter-bar-inline .form-control,
+  .sg-filter-bar.sg-filter-bar-inline .form-select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .sg-toolbar .sg-toolbar-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .sg-toolbar .sg-toolbar-actions > a,
+  .sg-toolbar .sg-toolbar-actions > button {
+    flex: 1 1 auto;
+  }
+}
+
+/* ===============================
+   FASE 5 — SIDEBAR Y NAVEGACIÓN
+   =============================== */
+
+/* Estructura del menú lateral */
+.solar-sidebar {
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.solar-sidebar-brand {
+  flex: 0 0 auto;
+}
+
+.solar-sidebar .brand {
+  padding: 1rem 0.85rem 0.85rem;
+}
+
+.solar-sidebar .brand-title {
+  color: var(--color-text-inverse);
+  line-height: 1.15;
+}
+
+.logo-sidebar {
+  height: 72px;
+  max-width: 82px;
+  flex: 0 0 auto;
+}
+
+/* Búsqueda del menú */
+.solar-menu-search {
+  flex: 0 0 auto;
+}
+
+.solar-menu-search .input-group {
+  border-radius: 0.65rem;
+  overflow: hidden;
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.10);
+}
+
+.solar-menu-search .input-group-text,
+.solar-menu-search .form-control {
+  background-color: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  color: var(--color-sidebar-text);
+}
+
+.solar-menu-search .form-control::placeholder {
+  color: var(--color-sidebar-muted);
+}
+
+.solar-menu-search .form-control:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: var(--color-text-inverse);
+  border-color: rgba(255, 209, 102, 0.55);
+  box-shadow: 0 0 0 0.18rem rgba(255, 209, 102, 0.18);
+}
+
+.solar-menu-empty {
+  margin-top: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 0.6rem;
+  color: var(--color-sidebar-muted);
+  font-size: 0.78rem;
+}
+
+/* Scroll interno del menú */
+.solar-sidebar-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0.45rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+
+.solar-sidebar-nav::-webkit-scrollbar {
+  width: 7px;
+}
+
+.solar-sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.solar-sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+
+/* Títulos, submenús y estados */
+.solar-sidebar .nav-section-title {
+  padding: 0.95rem 0.7rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.solar-sidebar .nav-link {
+  min-height: 2.25rem;
+  margin: 0.08rem 0;
+  padding: 0.58rem 0.7rem;
+  border-radius: 0.65rem;
+  line-height: 1.2;
+}
+
+.solar-sidebar .nav-link > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.solar-sidebar .nav-link i {
+  flex: 0 0 auto;
+}
+
+.solar-sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--color-text-inverse);
+}
+
+.solar-sidebar .nav-link.active,
+.solar-sidebar .nav-link.is-active {
+  background: rgba(255, 209, 102, 0.18);
+  color: var(--color-sidebar-active);
+  box-shadow: inset 3px 0 0 var(--color-sidebar-active);
+}
+
+.solar-sidebar .nav-link[data-bs-toggle="collapse"] .bi-chevron-down {
+  transition: transform 0.2s ease;
+}
+
+.solar-sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .bi-chevron-down {
+  transform: rotate(180deg);
+}
+
+.nav-submenu {
+  padding-left: 0.65rem;
+  margin: 0.15rem 0 0.35rem 0.35rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.nav-subtitle {
+  display: block;
+  padding: 0.65rem 0.7rem 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--color-sidebar-muted);
+}
+
+/* Botones móviles del sidebar */
+.sidebar-toggle-btn,
+.sidebar-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 0.65rem;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 700;
+  box-shadow: 0 0.35rem 0.85rem rgba(15, 23, 42, 0.12);
+}
+
+.sidebar-close-btn {
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--color-text-inverse);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: none;
+}
+
+.sidebar-toggle-btn:hover,
+.sidebar-close-btn:hover {
+  filter: brightness(1.04);
+}
+
+/* Navegación móvil / tablet */
+@media (max-width: 991.98px) {
+  .solar-sidebar {
+    position: fixed;
+    height: 100dvh;
+    max-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .solar-sidebar .brand {
+    padding: 0.85rem;
+  }
+
+  .logo-sidebar {
+    height: 58px;
+    max-width: 68px;
+  }
+
+  .solar-sidebar .brand-title {
+    font-size: 1rem;
+  }
+
+  .solar-sidebar .nav-link {
+    min-height: 2.55rem;
+    font-size: 0.93rem;
+  }
+
+  .solar-sidebar-nav {
+    padding-bottom: 1.25rem;
+  }
+
+  .sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+    backdrop-filter: blur(2px);
+  }
+
+  body.sidebar-open {
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .solar-sidebar {
+    width: min(86vw, 300px);
+  }
+
+  .solar-main-header {
+    padding: 0.65rem 0.85rem;
+  }
+
+  .solar-main-header-title {
+    font-size: 1rem;
+  }
+}
+

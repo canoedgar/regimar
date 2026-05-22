@@ -6,23 +6,23 @@
 {% block page_title %}Configuración / Usuarios{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <form class="d-flex gap-2" method="get">
-    <input class="form-control form-control-sm" name="q" value="{{ q }}" placeholder="Buscar usuario/email/nombre…">
-    <button class="btn btn-sm btn-outline-secondary" type="submit">
+<div class="sg-page-header d-flex justify-content-between align-items-center mb-3">
+  <form class="d-flex gap-2 sg-form-actions sg-form-actions-compact sg-filter-bar" method="get">
+    <input class="form-control form-control-sm sg-form-control" name="q" value="{{ q }}" placeholder="Buscar usuario/email/nombre…">
+    <button class="sg-btn-secondary sg-btn-sm" type="submit">
       <i class="bi bi-search"></i>
     </button>
   </form>
 
-  <a href="{% url 'users_create' %}" class="btn btn-sm btn-primary">
+  <a href="{% url 'users_create' %}" class="sg-btn-primary sg-btn-sm">
     <i class="bi bi-person-plus"></i> Nuevo usuario
   </a>
 </div>
 
-<div class="card border-0 shadow-sm">
+<div class="card border-0 shadow-sm sg-form-card sg-table-card">
   <div class="card-body">
     <div class="table-responsive">
-      <table class="table table-sm align-middle">
+      <table class="table table-sm align-middle sg-table">
         <thead>
           <tr>
             <th>Usuario</th>
@@ -38,12 +38,12 @@
           <tr>
             <td class="fw-semibold">{{ u.username }}</td>
             <td>{{ u.first_name }} {{ u.last_name }}</td>
-            <td class="text-muted">{{ u.email }}</td>
+            <td class="sg-form-help">{{ u.email }}</td>
             <td>
               {% for g in u.groups.all %}
                 <span class="badge text-bg-secondary">{{ g.name }}</span>
               {% empty %}
-                <span class="text-muted">—</span>
+                <span class="sg-form-help">—</span>
               {% endfor %}
             </td>
             <td>
@@ -53,17 +53,17 @@
                 <span class="badge text-bg-danger">No</span>
               {% endif %}
             </td>
-            <td class="text-end">
-              <a href="{% url 'users_update' u.pk %}" class="btn btn-sm btn-outline-primary">
+            <td class="text-end sg-table-actions">
+              <a href="{% url 'users_update' u.pk %}" class="sg-btn-table sg-btn-sm">
                 <i class="bi bi-pencil"></i>
               </a>
-              <a href="{% url 'users_toggle_active' u.pk %}" class="btn btn-sm btn-outline-warning">
+              <a href="{% url 'users_toggle_active' u.pk %}" class="sg-btn-table sg-btn-warning sg-btn-sm">
                 <i class="bi bi-person-x"></i>
               </a>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" class="text-muted">No hay usuarios.</td></tr>
+          <tr><td colspan="6" class="sg-form-help">No hay usuarios.</td></tr>
           {% endfor %}
         </tbody>
       </table>

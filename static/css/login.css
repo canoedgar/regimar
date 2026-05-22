@@ -1,0 +1,321 @@
+/* ============================
+   LOGIN — CPC Alimentos
+   ============================ */
+.bg-solar-auth {
+  min-height: 100vh;
+  min-height: 100svh;
+  width: 100%;
+  margin: 0;
+  display: block;
+  background:
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.12), transparent 26%),
+    radial-gradient(circle at 80% 20%, rgba(255, 183, 3, 0.18), transparent 28%),
+    var(--gradient-auth);
+  color: var(--color-text);
+}
+
+.login-page {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  box-sizing: border-box;
+}
+
+.login-shell {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, rgba(255, 255, 255, 0.32));
+  border-radius: 1.5rem;
+  overflow: hidden;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-strong);
+}
+
+.login-brand-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(2rem, 4vw, 3rem);
+  color: var(--color-text-inverse);
+  background:
+    linear-gradient(160deg, rgba(8, 42, 102, 0.96), rgba(15, 61, 145, 0.9) 54%, rgba(249, 115, 22, 0.88)),
+    var(--gradient-hero);
+}
+
+.login-brand-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 48% 28%, rgba(255, 255, 255, 0.12), transparent 26%),
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.12));
+  pointer-events: none;
+}
+
+.login-brand-content,
+.login-tip {
+  position: relative;
+  z-index: 1;
+}
+
+.login-logo-wrap {
+  width: 210px;
+  max-width: 72%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.login-logo {
+  width: 170px;
+  max-width: 82%;
+  max-height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.25));
+}
+
+.login-eyebrow {
+  margin: 0 0 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.login-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.7rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.login-description {
+  max-width: 360px;
+  margin: 1rem 0 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.login-tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 420px;
+  padding: 0.85rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.86rem;
+}
+
+.login-tip i {
+  color: var(--color-accent);
+}
+
+.login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--color-surface);
+}
+
+.login-form-box {
+  width: 100%;
+  max-width: 390px;
+}
+
+.login-form-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 1.65rem;
+}
+
+.login-form-icon {
+  width: 3rem;
+  height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface) 88%);
+  color: var(--color-primary);
+  font-size: 1.35rem;
+}
+
+.login-form-header h2 {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1.65rem;
+  font-weight: 800;
+}
+
+.login-form-header p {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.9rem;
+}
+
+.login-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.login-field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.login-label {
+  color: var(--color-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.login-input-wrap {
+  position: relative;
+}
+
+.login-input-wrap > i {
+  position: absolute;
+  left: 0.95rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-soft);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.login-input-wrap .login-input {
+  width: 100%;
+  min-height: 2.85rem;
+  padding-left: 2.55rem;
+  border-radius: 0.85rem;
+  border-color: var(--color-border);
+  background: var(--color-input-bg);
+  color: var(--color-input-text);
+}
+
+.login-input-wrap .login-input:focus {
+  border-color: var(--color-secondary);
+  box-shadow: var(--focus-ring);
+}
+
+.login-submit {
+  min-height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+  border: 0;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-strong) 100%);
+  color: var(--color-text-inverse);
+  font-weight: 800;
+  box-shadow: 0 0.75rem 1.4rem rgba(15, 61, 145, 0.24);
+  transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+}
+
+.login-submit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 0.9rem 1.65rem rgba(15, 61, 145, 0.3);
+}
+
+.login-submit:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), 0 0.9rem 1.65rem rgba(15, 61, 145, 0.3);
+}
+
+.login-help {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-soft);
+  font-size: 0.84rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.login-alert {
+  margin-bottom: 0.25rem;
+  border-radius: 0.85rem;
+}
+
+html[data-theme="dark"] .login-shell {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+html[data-theme="dark"] .login-form-panel {
+  background: var(--color-surface);
+}
+
+html[data-theme="dark"] .login-form-icon {
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface-soft) 82%);
+  color: var(--color-primary-soft);
+}
+
+@media (max-width: 767.98px) {
+  .login-page {
+    place-items: center;
+    padding: 0.85rem;
+  }
+
+  .login-shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    border-radius: 1.2rem;
+  }
+
+  .login-brand-panel {
+    min-height: auto;
+    padding: 1.5rem;
+  }
+
+  .login-logo-wrap {
+    width: 150px;
+    min-height: 86px;
+    margin-bottom: 1rem;
+  }
+
+  .login-logo {
+    width: 120px;
+    max-height: 76px;
+  }
+
+  .login-title {
+    font-size: 1.65rem;
+  }
+
+  .login-description {
+    font-size: 0.92rem;
+  }
+
+  .login-tip {
+    border-radius: 1rem;
+  }
+
+  .login-form-panel {
+    padding: 1.5rem;
+  }
+
+  .login-form-header {
+    align-items: flex-start;
+  }
+}

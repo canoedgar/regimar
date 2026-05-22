@@ -9,23 +9,23 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
       <h5 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2"></i>Notas de venta</h5>
-      <div class="text-muted small">Listado compacto para operación de caja.</div>
+      <div class="sg-form-help">Listado compacto para operación de caja.</div>
     </div>
-    <div class="d-flex gap-2">
-      <a href="{% url 'salida_venta_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Nueva venta</a>
-      <button class="btn btn-outline-primary btn-sm" type="button" onclick="imprimirSeleccionadas()"><i class="bi bi-printer me-1"></i>Imprimir selección</button>
+    <div class="d-flex gap-2 sg-page-actions">
+      <a href="{% url 'salida_venta_create' %}" class="sg-btn-primary sg-btn-sm"><i class="bi bi-plus-circle me-1"></i>Nueva venta</a>
+      <button class="sg-btn-outline sg-btn-sm" type="button" onclick="imprimirSeleccionadas()"><i class="bi bi-printer me-1"></i>Imprimir selección</button>
     </div>
   </div>
 
-  <div class="card border-0 shadow-sm mb-3">
+  <div class="card border-0 shadow-sm mb-3 sg-form-card sg-table-card">
     <div class="card-body py-3">
-      <form method="get" class="row g-2 align-items-end">
-        <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Inicio</label><input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}" class="form-control form-control-sm"></div>
-        <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Fin</label><input type="date" name="fecha_fin" value="{{ filtros.fecha_fin }}" class="form-control form-control-sm"></div>
-        <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Folio</label><input type="text" name="folio" value="{{ filtros.folio }}" class="form-control form-control-sm" placeholder="VTA..."></div>
-        <div class="col-6 col-md-3"><label class="form-label small fw-semibold">Cliente</label><input type="text" name="cliente" value="{{ filtros.cliente }}" class="form-control form-control-sm" placeholder="Cliente"></div>
-        <div class="col-6 col-md-2"><label class="form-label small fw-semibold">Estado</label><select name="estado" class="form-select form-select-sm"><option value="">Todos</option>{% for value, label in estado_choices %}<option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-        <div class="col-6 col-md-1 d-grid"><button class="btn btn-outline-primary btn-sm" type="submit"><i class="bi bi-search"></i></button></div>
+      <form method="get" class="row g-2 align-items-end sg-form-grid">
+        <div class="col-6 col-md-2"><label class="sg-form-label small">Inicio</label><input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}" class="form-control form-control-sm sg-form-control"></div>
+        <div class="col-6 col-md-2"><label class="sg-form-label small">Fin</label><input type="date" name="fecha_fin" value="{{ filtros.fecha_fin }}" class="form-control form-control-sm sg-form-control"></div>
+        <div class="col-6 col-md-2"><label class="sg-form-label small">Folio</label><input type="text" name="folio" value="{{ filtros.folio }}" class="form-control form-control-sm sg-form-control" placeholder="VTA..."></div>
+        <div class="col-6 col-md-3"><label class="sg-form-label small">Cliente</label><input type="text" name="cliente" value="{{ filtros.cliente }}" class="form-control form-control-sm sg-form-control" placeholder="Cliente"></div>
+        <div class="col-6 col-md-2"><label class="sg-form-label small">Estado</label><select name="estado" class="form-select form-select-sm sg-form-control"><option value="">Todos</option>{% for value, label in estado_choices %}<option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="col-6 col-md-1 d-grid"><button class="sg-btn-icon sg-btn-sm" type="submit"><i class="bi bi-search"></i></button></div>
       </form>
     </div>
   </div>
@@ -33,12 +33,12 @@
   <div class="row g-2 mb-3">
     <div class="col-6 col-md-3"><div class="mini-summary"><span>Importe</span><strong>$ {{ total_notas|dinero_decimal }}</strong></div></div>
     <div class="col-6 col-md-3"><div class="mini-summary"><span>Kg vendidos</span><strong>{{ total_cantidad|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-12 col-md-6 text-md-end small text-muted align-self-center">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
+    <div class="col-12 col-md-6 text-md-end small align-self-center sg-form-help">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
   </div>
 
-  <div class="card border-0 shadow-sm">
+  <div class="card border-0 shadow-sm sg-form-card sg-table-card">
     <div class="table-responsive">
-      <table class="table table-sm align-middle mb-0 ventas-compact-table">
+      <table class="table table-sm align-middle mb-0 ventas-compact-table sg-table">
         <thead class="table-light">
           <tr>
             <th style="width:34px;"></th>
@@ -63,26 +63,26 @@
               </td>
               <td class="text-end">{{ venta.total_cantidad|default:0|floatformat:2 }}</td>
               <td class="text-end fw-semibold">$ {{ venta.total_importe|default:0|dinero_decimal }}</td>
-              <td class="text-end text-nowrap">
-                <a class="btn btn-sm btn-outline-secondary" href="{% url 'salida_detalle' venta.id %}" title="Ver"><i class="bi bi-eye"></i></a>
-                <a class="btn btn-sm btn-outline-primary" target="_blank" href="{% url 'nota_venta_print' venta.id %}" title="Imprimir"><i class="bi bi-printer"></i></a>
-                {% if venta.estado != 'CAN' %}<button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#cancelar-{{ venta.id }}" title="Cancelar"><i class="bi bi-ban"></i></button>{% endif %}
+              <td class="text-end sg-table-actions text-nowrap">
+                <a class="sg-btn-table sg-btn-sm" href="{% url 'salida_detalle' venta.id %}" title="Ver"><i class="bi bi-eye"></i></a>
+                <a class="sg-btn-table sg-btn-sm" target="_blank" href="{% url 'nota_venta_print' venta.id %}" title="Imprimir"><i class="bi bi-printer"></i></a>
+                {% if venta.estado != 'CAN' %}<button class="sg-btn-table sg-btn-danger sg-btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#cancelar-{{ venta.id }}" title="Cancelar"><i class="bi bi-ban"></i></button>{% endif %}
               </td>
             </tr>
             {% if venta.estado != 'CAN' %}
               <tr class="collapse" id="cancelar-{{ venta.id }}">
                 <td colspan="8" class="bg-light">
-                  <form method="post" action="{% url 'cancelar_nota_venta' venta.id %}" class="d-flex flex-wrap gap-2 align-items-center">
+                  <form method="post" action="{% url 'cancelar_nota_venta' venta.id %}" class="d-flex flex-wrap gap-2 align-items-center sg-form-actions sg-form-actions-compact">
                     {% csrf_token %}
                     <span class="small fw-semibold">Motivo:</span>
-                    <input class="form-control form-control-sm flex-grow-1" name="motivo_cancelacion" required placeholder="Motivo de cancelación">
-                    <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('¿Cancelar la nota {{ venta.folio }} y retornar inventario?')">Confirmar</button>
+                    <input class="form-control form-control-sm flex-grow-1 sg-form-control" name="motivo_cancelacion" required placeholder="Motivo de cancelación">
+                    <button class="sg-btn-danger sg-btn-sm" type="submit" onclick="return confirm('¿Cancelar la nota {{ venta.folio }} y retornar inventario?')">Confirmar</button>
                   </form>
                 </td>
               </tr>
             {% endif %}
           {% empty %}
-            <tr><td colspan="8" class="text-center text-muted py-4">No hay notas de venta con los filtros seleccionados.</td></tr>
+            <tr><td colspan="8" class="text-center py-4 sg-form-help sg-empty-state">No hay notas de venta con los filtros seleccionados.</td></tr>
           {% endfor %}
         </tbody>
       </table>

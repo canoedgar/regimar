@@ -1,0 +1,304 @@
+/* ===============================
+   DASHBOARD CPC — Ejecutivo/Operativo
+   =============================== */
+.sg-dashboard-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sg-dashboard-hero {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-soft);
+  padding: 1.1rem;
+}
+
+.sg-dashboard-eyebrow {
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sg-dashboard-period {
+  min-width: min(260px, 100%);
+}
+
+.sg-dashboard-tabs {
+  gap: 0.5rem;
+}
+
+.sg-dashboard-tabs .nav-link {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  font-weight: 700;
+}
+
+.sg-dashboard-tabs .nav-link.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.sg-dashboard-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.sg-dashboard-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sg-dashboard-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sg-dashboard-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sg-kpi-card,
+.sg-dashboard-panel {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.08);
+}
+
+.sg-kpi-card {
+  min-height: 9.25rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.sg-kpi-card-success {
+  background: color-mix(in srgb, var(--color-success-soft) 35%, var(--color-surface) 65%);
+}
+
+.sg-kpi-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--color-text-soft);
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sg-kpi-value {
+  color: var(--color-text);
+  font-size: clamp(1.55rem, 2vw, 2.15rem);
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.sg-kpi-help {
+  color: var(--color-text-soft) !important;
+  font-size: 0.86rem;
+}
+
+.sg-dashboard-panel {
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.sg-dashboard-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.sg-dashboard-panel-header h5 {
+  margin: 0 0 0.15rem;
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.sg-dashboard-panel-header p {
+  margin: 0;
+  color: var(--color-text-soft);
+  font-size: 0.88rem;
+}
+
+.sg-dashboard-table {
+  min-width: 620px;
+}
+
+.sg-dashboard-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.2rem;
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.sg-dashboard-mini-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sg-dashboard-mini-panel strong {
+  font-size: 1.45rem;
+  color: var(--color-text);
+}
+
+.sg-dashboard-mini-panel small {
+  color: var(--color-text-soft);
+}
+
+.sg-dashboard-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.sg-dashboard-action {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 4.4rem;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.9rem;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 750;
+  transition: transform 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+}
+
+.sg-dashboard-action:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary-soft) 10%, var(--color-surface) 90%);
+  color: var(--color-primary);
+}
+
+.sg-dashboard-action i {
+  width: 2.2rem;
+  height: 2.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--color-primary-soft) 16%, var(--color-surface) 84%);
+  color: var(--color-primary);
+  font-size: 1.1rem;
+}
+
+.sg-dashboard-alerts {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.sg-dashboard-alert-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background: var(--color-surface-soft);
+}
+
+.sg-dashboard-alert-item strong {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.sg-dashboard-alert-item span {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.sg-dashboard-alert-item a {
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.sg-dashboard-movement-list h6 {
+  color: var(--color-text-soft);
+  font-size: 0.8rem;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sg-dashboard-movement {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.72rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.sg-dashboard-movement:hover {
+  color: var(--color-primary);
+  background: var(--color-surface-soft);
+}
+
+.sg-dashboard-movement span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.sg-dashboard-movement small {
+  color: var(--color-text-soft);
+}
+
+@media (max-width: 1199.98px) {
+  .sg-dashboard-grid-4,
+  .sg-dashboard-actions-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sg-dashboard-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .sg-dashboard-grid-2,
+  .sg-dashboard-grid-4,
+  .sg-dashboard-actions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-dashboard-panel-header {
+    flex-direction: column;
+  }
+
+  .sg-dashboard-period {
+    width: 100%;
+  }
+}

@@ -3,65 +3,82 @@
 {% load static widget_tweaks %}
 
 {% block title %}Iniciar sesión | CPC Alimentos{% endblock %}
-
 {% block body_class %}bg-solar-auth{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/login.css' %}">
+{% endblock %}
+
 {% block layout %}
-<div class="container d-flex justify-content-center">
-  <div class="auth-wrapper">
-    <div class="row g-0 auth-card">
-      <!-- Lado izquierdo: mensaje de la empresa -->
-      <div class="col-md-6 p-4 p-md-5 auth-hero d-flex flex-column justify-content-between">
-        <div>
-            <div class="mb-3 d-flex justify-content-center">
-                <img src="{% static 'resources/logo.png' %}"
-                     alt="Logo"
-                     class="auth-logo mb-2"
-                     style="width: 180px; max-height: 100%;">
-              </div>
-                                   
-          <p class="mb-4">
-            Accede al sistema para gestionar clientes, cotizaciones, ventas, inventarios e instalaciones.
-          </p>
+<main class="login-page">
+  <section class="login-shell" aria-label="Inicio de sesión CPC Alimentos">
+    <div class="login-brand-panel">
+      <div class="login-brand-content">
+        <div class="login-logo-wrap">
+          <img src="{% static 'resources/logo.png' %}" alt="CPC Alimentos" class="login-logo">
         </div>
-        <div class="small text-white-50">
-          <strong>Tip:</strong> protege tu usuario, no compartas tu contraseña.
+
+        <div>
+          <p class="login-eyebrow">Sistema de gestión</p>
+          <h1 class="login-title">CPC Alimentos</h1>
+          <p class="login-description">
+            Gestiona clientes, ventas, inventarios, notas y operaciones desde un solo lugar.
+          </p>
         </div>
       </div>
 
-      <!-- Lado derecho: formulario de login -->
-      <div class="col-md-6 p-4 p-md-5 bg-white">
-        <h3 class="mb-4 auth-form-title text-center">Iniciar sesión</h3>
+      <div class="login-tip">
+        <i class="bi bi-shield-lock"></i>
+        <span>Protege tu usuario y no compartas tu contraseña.</span>
+      </div>
+    </div>
 
-        <form method="post" novalidate>
+    <div class="login-form-panel">
+      <div class="login-form-box">
+        <div class="login-form-header">
+          <span class="login-form-icon"><i class="bi bi-person-lock"></i></span>
+          <div>
+            <h2>Iniciar sesión</h2>
+            <p>Ingresa tus credenciales para continuar.</p>
+          </div>
+        </div>
+
+        <form method="post" novalidate class="login-form">
           {% csrf_token %}
-        
+
           {% if form.non_field_errors %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger login-alert">
               {{ form.non_field_errors }}
             </div>
           {% endif %}
-        
-          <div class="mb-3">
-            <label for="{{ form.username.id_for_label }}" class="form-label">Usuario</label>
-            {{ form.username|add_class:'form-control' }}
+
+          <div class="login-field">
+            <label for="{{ form.username.id_for_label }}" class="login-label">Usuario</label>
+            <div class="login-input-wrap">
+              <i class="bi bi-person"></i>
+              {{ form.username|add_class:'form-control login-input' }}
+            </div>
           </div>
-        
-          <div class="mb-3">
-            <label for="{{ form.password.id_for_label }}" class="form-label">Contraseña</label>
-            {{ form.password|add_class:'form-control' }}
+
+          <div class="login-field">
+            <label for="{{ form.password.id_for_label }}" class="login-label">Contraseña</label>
+            <div class="login-input-wrap">
+              <i class="bi bi-key"></i>
+              {{ form.password|add_class:'form-control login-input' }}
+            </div>
           </div>
-        
-          <button type="submit" class="btn btn-solar w-100 mt-2">
-            Entrar al sistema
+
+          <button type="submit" class="login-submit">
+            <span>Entrar al sistema</span>
+            <i class="bi bi-arrow-right"></i>
           </button>
-        
-          <div class="text-center mt-3 text-muted small">
+
+          <p class="login-help">
             ¿Olvidaste tu contraseña? Pide al administrador del sistema que la restablezca.
-          </div>
+          </p>
         </form>
       </div>
     </div>
-  </div>
-</div>
+  </section>
+</main>
 {% endblock %}

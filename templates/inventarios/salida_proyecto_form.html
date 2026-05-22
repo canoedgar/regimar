@@ -1,88 +1,92 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Salida por proyecto | Inventarios{% endblock %}
 {% block page_title %}Salida por proyecto{% endblock %}
 {% block active_inventario %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventarios.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center sg-inventory-page">
   <div class="col-lg-11">
 
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm sg-form-card sg-table-card sg-inventory-section">
       <div class="card-body">
-        <h5 class="fw-bold mb-1">
-          <i class="bi bi-kanban me-2"></i>
-          Nueva salida por proyecto
-        </h5>
-        <p class="text-muted mb-4">Captura el encabezado y agrega los productos a retirar.</p>
+        <div class="sg-section-header"><div>
+          <h5 class="sg-section-title"><i class="bi bi-kanban"></i> Nueva salida por proyecto</h5>
+          <p class="sg-section-help">Captura el encabezado y agrega los productos a retirar.</p>
+        </div></div>
 
         {# Errores generales #}
         {% if form.non_field_errors %}
-          <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+          <div class="alert alert-danger sg-validation-summary">{{ form.non_field_errors }}</div>
         {% endif %}
         {% if formset.non_form_errors %}
-          <div class="alert alert-danger">{{ formset.non_form_errors }}</div>
+          <div class="alert alert-danger sg-validation-summary">{{ formset.non_form_errors }}</div>
         {% endif %}
 
-        <form method="post" novalidate>
+        <form method="post" class="sg-inventory-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas guardar esta salida y actualizar el inventario?" novalidate>
           {% csrf_token %}
 
           <input type="hidden" name="almacen_id" id="almacenId" value="{{ almacen.id }}">
 
-          <div class="row g-3">
+          <div class="row g-3 sg-form-grid">
             <div class="col-md-3">
-              <label class="form-label fw-semibold">Folio</label>
+              <label class="sg-form-label">Folio</label>
               {{ form.folio }}
-              {% for e in form.folio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.folio.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-3">
-              <label class="form-label fw-semibold">Fecha</label>
+              <label class="sg-form-label">Fecha</label>
               {{ form.fecha }}
-              {% for e in form.fecha.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.fecha.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Proyecto</label>
+              <label class="sg-form-label">Proyecto</label>
               {{ form.proyecto }}
-              {% for e in form.proyecto.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.proyecto.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Almacén</label>
-              <select class="form-select" id="almacenSelect">
+              <label class="sg-form-label">Almacén</label>
+              <select class="form-select sg-form-control" id="almacenSelect">
                 {% for a in almacenes %}
                   <option value="{{ a.id }}" {% if almacen and a.id == almacen.id %}selected{% endif %}>
                     {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
                   </option>
                 {% endfor %}
               </select>
-              <div class="form-text">El stock y la salida se aplicarán a este almacén.</div>
+              <div class="sg-form-help">El stock y la salida se aplicarán a este almacén.</div>
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Documento referencia</label>
+              <label class="sg-form-label">Documento referencia</label>
               {{ form.documento_referencia }}
-              {% for e in form.documento_referencia.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.documento_referencia.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-md-6">
-              <label class="form-label fw-semibold">Motivo</label>
+              <label class="sg-form-label">Motivo</label>
               {{ form.motivo }}
-              {% for e in form.motivo.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.motivo.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
             <div class="col-12">
-              <label class="form-label fw-semibold">Observaciones</label>
+              <label class="sg-form-label">Observaciones</label>
               {{ form.observaciones }}
-              {% for e in form.observaciones.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+              {% for e in form.observaciones.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
           </div>
 
           <hr class="my-4">
 
-          <div class="d-flex align-items-center justify-content-between mb-2">
-            <h6 class="fw-bold mb-0"><i class="bi bi-list-check me-2"></i>Detalle</h6>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddRow">
+          <div class="sg-inventory-detail-header">
+            <h6 class="sg-section-title"><i class="bi bi-list-check"></i> Detalle</h6>
+            <button type="button" class="sg-btn-outline sg-btn-sm" id="btnAddRow">
               <i class="bi bi-plus-circle me-1"></i> Agregar producto
             </button>
           </div>
@@ -90,7 +94,7 @@
           {{ formset.management_form }}
 
           <div class="table-responsive">
-            <table class="table table-hover align-middle" id="detalleTable">
+            <table class="table table-hover align-middle sg-table" id="detalleTable">
               <thead>
                 <tr>
                   <th>Producto</th>
@@ -106,18 +110,18 @@
                     <td>
                       {{ f.id }}
                       {{ f.producto }}
-                      {% for e in f.producto.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                      {% for e in f.producto.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
                     </td>
                     <td>
                       {{ f.cantidad }}
-                      {% for e in f.cantidad.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                      {% for e in f.cantidad.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
                     </td>
                     <td>
                       {{ f.precio_unitario }}
-                      {% for e in f.precio_unitario.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+                      {% for e in f.precio_unitario.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
                     </td>
                     <td class="text-center">
-                      <button type="button" class="btn btn-sm btn-outline-danger btnRemoveRow" title="Quitar">
+                      <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm btnRemoveRow" title="Quitar">
                         <i class="bi bi-x-lg"></i>
                       </button>
                     </td>
@@ -128,7 +132,7 @@
               </tbody>
             </table>
 
-            <div class="form-text">
+            <div class="sg-form-help">
               Usa “Agregar producto” para crear renglones. No se generan filas vacías automáticamente.
             </div>
           </div>
@@ -143,18 +147,18 @@
               <td>{{ formset.empty_form.cantidad }}</td>
               <td>{{ formset.empty_form.precio_unitario }}</td>
               <td class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-danger btnRemoveRow" title="Quitar">
+                <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm btnRemoveRow" title="Quitar">
                   <i class="bi bi-x-lg"></i>
                 </button>
               </td>
             </tr>
           </template>
 
-          <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-primary" type="submit">
+          <div class="sg-form-actions sg-form-actions-start">
+            <button class="sg-btn-primary sg-btn-md" type="submit">
               <i class="bi bi-check2-circle me-1"></i> Guardar
             </button>
-            <a class="btn btn-outline-secondary" href="{% url 'salidas_list' %}">
+            <a class="sg-btn-secondary sg-btn-md" href="{% url 'salidas_list' %}">
               <i class="bi bi-arrow-left me-1"></i> Volver
             </a>
           </div>
@@ -230,4 +234,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventarios_forms.js' %}"></script>
 {% endblock %}

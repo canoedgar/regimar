@@ -6,14 +6,16 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-6">
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 sg-form-card">
       <div class="card-body">
         <h5 class="fw-bold mb-3">Importar productos</h5>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" class="sg-form-section">
           {% csrf_token %}
-          <input type="file" name="archivo" class="form-control mb-3" required>
-          <button class="btn btn-primary w-100">Importar</button>
+          <input type="file" name="archivo" class="form-control mb-3 sg-form-control" required>
+          <div class="sg-form-actions sg-form-actions-compact">
+            <button class="sg-btn-primary sg-btn-lg w-100">Importar</button>
+          </div>
         </form>
 
       </div>

@@ -6,9 +6,10 @@
 {% block content %}
 <div class="container">
 
-  <h4 class="mb-3">Entrada Manual</h4>
+  <div class="sg-form-card p-4">
+    <h4 class="mb-3">Entrada Manual</h4>
 
-  <form method="post">
+    <form method="post">
     {% csrf_token %}
 
     {{ form.as_p }}
@@ -19,10 +20,10 @@
 
     <h5>Agregar producto</h5>
 
-    <div class="row mb-3">
+    <div class="row mb-3 sg-form-grid">
       <div class="col-md-3">
-        <label>Producto</label>
-        <select id="mpProducto" class="form-control">
+        <label class="sg-form-label">Producto</label>
+        <select id="mpProducto" class="form-control sg-form-control">
           <option value="">Selecciona</option>
           {% for p in productos %}
           <option value="{{ p.id }}">{{ p.nombre }}</option>
@@ -31,25 +32,25 @@
       </div>
 
       <div class="col-md-3">
-        <label>Presentación</label>
-        <select id="mpConversion" class="form-control">
+        <label class="sg-form-label">Presentación</label>
+        <select id="mpConversion" class="form-control sg-form-control">
           <option value="">Base (kg)</option>
         </select>
       </div>
 
       <div class="col-md-2">
-        <label>Cantidad</label>
-        <input type="number" id="mpCantidad" class="form-control" step="0.01" min="0.01">
+        <label class="sg-form-label">Cantidad</label>
+        <input type="number" id="mpCantidad" class="form-control sg-form-control" step="0.01" min="0.01">
       </div>
 
       <div class="col-md-2">
-        <label>Costo</label>
-        <input type="number" id="mpCosto" class="form-control" step="0.01" min="0">
+        <label class="sg-form-label">Costo</label>
+        <input type="number" id="mpCosto" class="form-control sg-form-control" step="0.01" min="0">
       </div>
 
       <div class="col-md-2">
-        <label>Almacén</label>
-        <select id="mpAlmacen" class="form-control">
+        <label class="sg-form-label">Almacén</label>
+        <select id="mpAlmacen" class="form-control sg-form-control">
           <option value="">Selecciona</option>
           {% for a in almacenes %}
           <option value="{{ a.id }}">{{ a.nombre }}</option>
@@ -58,11 +59,13 @@
       </div>
     </div>
 
-    <button type="button" class="btn btn-primary" id="btnAgregarLinea">Agregar</button>
+    <div class="sg-form-actions sg-form-actions-start sg-form-actions-compact">
+      <button type="button" class="sg-btn-primary sg-btn-md" id="btnAgregarLinea">Agregar</button>
+    </div>
 
     <hr>
 
-    <table class="table">
+    <table class="table sg-table">
       <thead>
         <tr>
           <th>Producto</th>
@@ -76,8 +79,11 @@
       <tbody id="tabla"></tbody>
     </table>
 
-    <button class="btn btn-success">Guardar</button>
-  </form>
+    <div class="sg-form-actions">
+      <button class="sg-btn-success sg-btn-md">Guardar</button>
+    </div>
+    </form>
+  </div>
 </div>
 
 {{ productos_conversiones_json|json_script:"productos-conversiones-data" }}
@@ -143,7 +149,7 @@
       const tdAccion = document.createElement("td");
       const btnQuitar = document.createElement("button");
       btnQuitar.type = "button";
-      btnQuitar.className = "btn btn-sm btn-outline-danger";
+      btnQuitar.className = "sg-btn-table sg-btn-danger sg-btn-sm";
       btnQuitar.textContent = "Quitar";
       btnQuitar.addEventListener("click", function () {
         lineas.splice(idx, 1);

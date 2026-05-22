@@ -16,11 +16,13 @@
 
     const isOpen = sidebar.classList.toggle("show");
     overlay?.classList.toggle("show", isOpen);
+    document.body.classList.toggle("sidebar-open", isOpen);
   };
 
   window.closeSidebar = function closeSidebar() {
     document.getElementById("solarSidebar")?.classList.remove("show");
     document.getElementById("sidebarOverlay")?.classList.remove("show");
+    document.body.classList.remove("sidebar-open");
   };
 
   function setShown(element, shouldShow) {
@@ -39,13 +41,33 @@
 
   function initMenuSearch() {
     const input = document.getElementById("menuSearch");
+    const emptyState = document.getElementById("menuSearchEmpty");
     const rootNav = document.querySelector("#solarSidebar nav.nav");
     if (!input || !rootNav) return;
 
     const allLinks = Array.from(rootNav.querySelectorAll("a.nav-link"));
+    const leafLinks = allLinks.filter((link) => !link.matches('[data-bs-toggle="collapse"]'));
     const sectionTitles = Array.from(rootNav.querySelectorAll(".nav-section-title"));
     const subtitles = Array.from(rootNav.querySelectorAll(".nav-subtitle"));
     const collapses = getCollapseElements(rootNav);
+
+    collapses.forEach(({ target }) => {
+      target.dataset.initialExpanded = target.classList.contains("show") ? "true" : "false";
+    });
+
+    function restoreMenu() {
+      allLinks.forEach((link) => link.classList.remove("d-none"));
+      sectionTitles.forEach((title) => title.classList.remove("d-none"));
+      subtitles.forEach((subtitle) => subtitle.classList.remove("d-none"));
+      collapses.forEach(({ toggle, target }) => {
+        const shouldShow = target.dataset.initialExpanded === "true";
+        target.classList.toggle("show", shouldShow);
+        target.classList.remove("menu-search-open");
+        toggle.classList.remove("d-none");
+        toggle.setAttribute("aria-expanded", String(shouldShow));
+      });
+      setShown(emptyState, false);
+    }
 
     function sectionHasVisibleLinks(sectionTitle) {
       let node = sectionTitle.nextElementSibling;
@@ -70,20 +92,22 @@
       const query = normalizeText(input.value);
 
       if (!query) {
-        allLinks.forEach((link) => link.classList.remove("d-none"));
-        sectionTitles.forEach((title) => title.classList.remove("d-none"));
-        subtitles.forEach((subtitle) => subtitle.classList.remove("d-none"));
-        collapses.forEach(({ target }) => target.classList.remove("menu-search-open"));
+        restoreMenu();
         return;
       }
 
-      allLinks.forEach((link) => {
+      leafLinks.forEach((link) => {
         const text = normalizeText(link.textContent);
         setShown(link, text.includes(query));
       });
 
       collapses.forEach(({ toggle, target }) => {
         const toggleMatches = normalizeText(toggle.textContent).includes(query);
+
+        if (toggleMatches) {
+          target.querySelectorAll("a.nav-link").forEach((link) => link.classList.remove("d-none"));
+        }
+
         const hasVisibleChildren = target.querySelectorAll("a.nav-link:not(.d-none)").length > 0;
         const shouldShow = toggleMatches || hasVisibleChildren;
 
@@ -95,13 +119,17 @@
 
       subtitles.forEach((subtitle) => setShown(subtitle, subtitleHasVisibleLinks(subtitle)));
       sectionTitles.forEach((title) => setShown(title, sectionHasVisibleLinks(title)));
+
+      const visibleLeafLinks = leafLinks.filter((link) => !link.classList.contains("d-none")).length;
+      setShown(emptyState, visibleLeafLinks === 0);
     }
 
     input.addEventListener("input", filterMenu);
     input.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
+        event.preventDefault();
         input.value = "";
-        filterMenu();
+        restoreMenu();
       }
     });
   }
@@ -172,9 +200,15 @@
     });
   }
 
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      window.closeSidebar?.();
+    }
+  });
+
   document.addEventListener("DOMContentLoaded", () => {
-    initMenuSearch();
     initActiveMenu();
+    initMenuSearch();
     initThemeSwitcher();
   });
 })();

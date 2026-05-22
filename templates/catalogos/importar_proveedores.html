@@ -7,32 +7,34 @@
 <div class="row justify-content-center">
   <div class="col-md-6">
 
-    <div class="card shadow-sm border-0">
+    <div class="card shadow-sm border-0 sg-form-card">
       <div class="card-body">
 
         <h5 class="fw-bold mb-3">
           Importar proveedores
         </h5>
 
-        <p class="text-muted mb-4">
+        <p class="sg-form-help mb-4">
           Sube el archivo <strong>proveedores.xlsx</strong> con las columnas:
           <code>nombre</code>, <code>telefono</code>, <code>email</code>.
         </p>
 
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" class="sg-form-section">
           {% csrf_token %}
 
           <input
             type="file"
             name="archivo"
-            class="form-control mb-3"
+            class="form-control mb-3 sg-form-control"
             accept=".xlsx,.xls"
             required
           >
 
-          <button class="btn btn-primary w-100">
+          <div class="sg-form-actions sg-form-actions-compact">
+            <button class="sg-btn-primary sg-btn-lg w-100">
             Importar proveedores
-          </button>
+            </button>
+          </div>
         </form>
 
       </div>

@@ -211,13 +211,8 @@ class SalidaInventario(models.Model):
     TIPO_PROYECTO = "PRY"
 
     TIPO_CHOICES = [
-        (TIPO_VENTA, "Salida por venta"),
-        (TIPO_CONSUMO_INTERNO, "Consumo interno / servicio"),
-        (TIPO_MERMA, "Merma / daño / robo"),
-        (TIPO_DEVOLUCION_PROVEEDOR, "Devolución a proveedor"),
-        (TIPO_AJUSTE_NEGATIVO, "Ajuste (disminuye stock)"),
-        (TIPO_TRASLADO_SALIDA, "Salida por traslado"),
-        (TIPO_PROYECTO, "Salida por poryecto")
+        (TIPO_VENTA, "Salida por venta"),        
+        (TIPO_AJUSTE_NEGATIVO, "Ajuste (disminuye stock)")        
     ]
 
     folio = models.CharField("Folio", max_length=20, unique=True)

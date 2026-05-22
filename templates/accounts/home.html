@@ -1,466 +1,293 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Inicio | CPC Alimentos{% endblock %}
-{% block active_inicio %}active{% endblock %}
+{% block title %}Dashboard | CPC Alimentos{% endblock %}
+{% block active_home %}active{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
-<style>
-  .dashboard-option-card {
-    border: 1px solid rgba(0,0,0,.06);
-    border-radius: 1rem;
-    transition: all .2s ease;
-    background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
-  }
-  .dashboard-option-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.08);
-  }
-  .metric-card {
-    border: 0;
-    border-radius: 1rem;
-    box-shadow: 0 .3rem 1rem rgba(0,0,0,.06);
-    height: 100%;
-  }
-  .metric-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    background: rgba(13,110,253,.1);
-    color: #0d6efd;
-  }
-  .mock-chart {
-    display: flex;
-    align-items: end;
-    gap: 12px;
-    min-height: 220px;
-  }
-  .mock-bar-wrap {
-    flex: 1;
-    text-align: center;
-  }
-  .mock-bar {
-    width: 100%;
-    border-radius: 14px 14px 6px 6px;
-    background: linear-gradient(180deg, rgba(13,110,253,.85), rgba(13,110,253,.35));
-    min-height: 24px;
-  }
-  .mock-bar.secondary {
-    background: linear-gradient(180deg, rgba(25,135,84,.85), rgba(25,135,84,.35));
-  }
-  .mock-bar.warning {
-    background: linear-gradient(180deg, rgba(255,193,7,.9), rgba(255,193,7,.35));
-  }
-  .mock-bar.info {
-    background: linear-gradient(180deg, rgba(13,202,240,.9), rgba(13,202,240,.35));
-  }
-  .product-pill {
-    border: 1px solid rgba(0,0,0,.08);
-    border-radius: 999px;
-    padding: .4rem .75rem;
-    background: #fff;
-    font-size: .85rem;
-  }
-  .mini-stat {
-    border-radius: .9rem;
-    background: #f8f9fa;
-    padding: .85rem 1rem;
-    height: 100%;
-  }
-  .table-dashboard thead th {
-    font-size: .82rem;
-    text-transform: uppercase;
-    letter-spacing: .03em;
-    color: #6c757d;
-    border-bottom-width: 1px;
-  }
-  .selector-btn {
-    border-radius: 999px !important;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  .period-select {
-    min-width: 190px;
-    border-radius: .85rem;
-  }
-  .subtle-label {
-    font-size: .8rem;
-    color: #6c757d;
-    margin-bottom: .35rem;
-  }
-</style>
-
-<div class="row g-4">
-
-  <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body p-4">        
-
-        <div class="tab-content" id="dashboard-options-content">      
-
-          <!-- OPCION 2 -->
-          <div class="tab-pane fade show active" id="opcion2" role="tabpanel" aria-labelledby="opcion2-tab">
-            <div class="dashboard-option-card p-3 p-lg-4">
-              <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-4">
-                <div>
-                  <h4 class="mb-1">Dashboard de ventas</h4>
-                  <p class="text-muted mb-0">Mockup dinámico para visualizar kilos, venta, costo, utilidad y cartera vencida por periodo.</p>
-                </div>
-                <div>
-                  <div class="subtle-label">Mostrar información</div>
-                  <select class="form-select period-select" id="periodSelector">
-                    <option value="semanal" selected>Semanal</option>
-                    <option value="mensual">Mensual</option>
-                    <option value="anual">Anual</option>
-                  </select>
-                </div>
-              </div>
-
-              <div class="row g-3 mb-4">
-                <div class="col-md-6 col-xl-3">
-                  <div class="mini-stat">
-                    <div class="text-muted small">Total kilos</div>
-                    <div class="h3 fw-bold mb-1" id="totalKilos">1,245 kg</div>
-                    <small class="text-muted" id="periodDescription">Semana actual</small>
-                  </div>
-                </div>
-                <div class="col-md-6 col-xl-3">
-                  <div class="mini-stat">
-                    <div class="text-muted small">Total venta</div>
-                    <div class="h3 fw-bold mb-1" id="totalVenta">$286,500</div>
-                    <small class="text-muted" id="ventaDescription">Ingreso bruto</small>
-                  </div>
-                </div>
-                <div class="col-md-6 col-xl-3">
-                  <div class="mini-stat">
-                    <div class="text-muted small">Costo estimado</div>
-                    <div class="h3 fw-bold mb-1" id="costoEstimado">$204,274</div>
-                    <small class="text-muted" id="costoDescription">Costo de mercancía</small>
-                  </div>
-                </div>
-                <div class="col-md-6 col-xl-3">
-                  <div class="mini-stat">
-                    <div class="text-muted small">Utilidad</div>
-                    <div class="h3 fw-bold mb-1" id="utilidadTotal">$82,226</div>
-                    <small class="text-success" id="margenTotal">Margen 28.7%</small>
-                  </div>
-                </div>
-              </div>
-
-              <div class="row g-4">
-                <div class="col-xl-8">
-                  <div class="card border-0 bg-light h-100">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                          <h5 class="mb-1" id="resumenTitulo">Resumen semanal por producto</h5>
-                          <p class="text-muted small mb-0">Tabla mockup con foco en utilidad y margen.</p>
-                        </div>
-                        <div class="d-flex gap-2 flex-wrap">
-                          <span class="badge text-bg-primary-subtle text-primary">Kilos</span>
-                          <span class="badge text-bg-success-subtle text-success">Pesos</span>
-                          <span class="badge text-bg-warning-subtle text-warning">Margen</span>
-                        </div>
-                      </div>
-
-                      <div class="table-responsive">
-                        <table class="table align-middle table-dashboard mb-0">
-                          <thead>
-                            <tr>
-                              <th>Producto</th>
-                              <th class="text-end">Kilos</th>
-                              <th class="text-end">Venta</th>
-                              <th class="text-end">Costo</th>
-                              <th class="text-end">Utilidad</th>
-                              <th class="text-end">Margen</th>
-                            </tr>
-                          </thead>
-                          <tbody id="productosBody">
-                            <tr>
-                              <td><strong>Camarón</strong></td>
-                              <td class="text-end">420</td>
-                              <td class="text-end">$108,000</td>
-                              <td class="text-end">$76,500</td>
-                              <td class="text-end">$31,500</td>
-                              <td class="text-end text-success">29.2%</td>
-                            </tr>
-                            <tr>
-                              <td><strong>Pulpo</strong></td>
-                              <td class="text-end">265</td>
-                              <td class="text-end">$59,625</td>
-                              <td class="text-end">$44,850</td>
-                              <td class="text-end">$14,775</td>
-                              <td class="text-end text-success">24.8%</td>
-                            </tr>
-                            <tr>
-                              <td><strong>Salmón</strong></td>
-                              <td class="text-end">310</td>
-                              <td class="text-end">$83,700</td>
-                              <td class="text-end">$58,900</td>
-                              <td class="text-end">$24,800</td>
-                              <td class="text-end text-success">29.6%</td>
-                            </tr>
-                            <tr>
-                              <td><strong>Atún</strong></td>
-                              <td class="text-end">250</td>
-                              <td class="text-end">$35,175</td>
-                              <td class="text-end">$24,024</td>
-                              <td class="text-end">$11,151</td>
-                              <td class="text-end text-success">31.7%</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="col-xl-4">
-                  <div class="card border-0 bg-light h-100">
-                    <div class="card-body">
-                      <div class="d-flex justify-content-between align-items-start mb-3">
-                        <div>
-                          <h5 class="mb-1" id="carteraTitulo">Cartera vencida</h5>
-                          <p class="text-muted small mb-0">Clientes con saldo pendiente fuera de plazo.</p>
-                        </div>
-                        <span class="badge text-bg-danger-subtle text-danger">Cobranza</span>
-                      </div>
-
-                      <div class="row g-2 mb-3">
-                        <div class="col-6">
-                          <div class="mini-stat">
-                            <div class="text-muted small">Clientes vencidos</div>
-                            <div class="h4 fw-bold mb-0" id="clientesVencidos">8</div>
-                          </div>
-                        </div>
-                        <div class="col-6">
-                          <div class="mini-stat">
-                            <div class="text-muted small">Saldo vencido</div>
-                            <div class="h4 fw-bold mb-0" id="saldoVencido">$148,900</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="table-responsive">
-                        <table class="table align-middle table-dashboard mb-0">
-                          <thead>
-                            <tr>
-                              <th>Cliente</th>
-                              <th class="text-end">Vencido</th>
-                              <th class="text-end">Días</th>
-                            </tr>
-                          </thead>
-                          <tbody id="carteraBody">
-                            <tr>
-                              <td>
-                                <strong>Mariscos del Pacífico</strong>
-                                <div class="small text-muted">3 facturas</div>
-                              </td>
-                              <td class="text-end text-danger">$42,500</td>
-                              <td class="text-end">18</td>
-                            </tr>
-                            <tr>
-                              <td>
-                                <strong>Distribuidora Bahía Norte</strong>
-                                <div class="small text-muted">2 facturas</div>
-                              </td>
-                              <td class="text-end text-danger">$31,800</td>
-                              <td class="text-end">11</td>
-                            </tr>
-                            <tr>
-                              <td>
-                                <strong>Restaurante Costa Azul</strong>
-                                <div class="small text-muted">1 factura</div>
-                              </td>
-                              <td class="text-end text-danger">$27,400</td>
-                              <td class="text-end">24</td>
-                            </tr>
-                            <tr>
-                              <td>
-                                <strong>Comercializadora Marejada</strong>
-                                <div class="small text-muted">2 facturas</div>
-                              </td>
-                              <td class="text-end text-danger">$19,600</td>
-                              <td class="text-end">9</td>
-                            </tr>
-                            <tr>
-                              <td>
-                                <strong>Hotel Marina Suites</strong>
-                                <div class="small text-muted">Saldo parcial</div>
-                              </td>
-                              <td class="text-end text-danger">$27,600</td>
-                              <td class="text-end">15</td>
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>          
-
-        </div>
-      </div>
+<div class="sg-dashboard-page">
+  <div class="sg-page-header sg-dashboard-hero">
+    <div>
+      <div class="sg-dashboard-eyebrow">CPC Alimentos</div>
+      <h2 class="mb-1">Dashboard ejecutivo y operativo</h2>
+      <p class="mb-0 sg-kpi-help">
+        Información calculada con notas de venta activas, inventario actual, catálogos y últimos movimientos del sistema.
+      </p>
     </div>
+
+    <form method="get" class="sg-dashboard-period" id="dashboardPeriodForm">
+      <label for="periodo" class="sg-kpi-help mb-1">Periodo ejecutivo</label>
+      <select name="periodo" id="periodo" class="form-select sg-form-control">
+        {% for key, item in periodos.items %}
+          <option value="{{ key }}" {% if periodo == key %}selected{% endif %}>{{ item.label }}</option>
+        {% endfor %}
+      </select>
+    </form>
   </div>
 
+  <ul class="nav nav-pills sg-dashboard-tabs" id="dashboardTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="executive-tab" data-bs-toggle="pill" data-bs-target="#executiveDashboard" type="button" role="tab">
+        <i class="bi bi-graph-up-arrow me-1"></i> Ejecutivo
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="operative-tab" data-bs-toggle="pill" data-bs-target="#operativeDashboard" type="button" role="tab">
+        <i class="bi bi-kanban me-1"></i> Operativo
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <section class="tab-pane fade show active" id="executiveDashboard" role="tabpanel" aria-labelledby="executive-tab">
+      <div class="sg-dashboard-grid sg-dashboard-grid-4 mb-3">
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-box-seam"></i> Kilos vendidos</div>
+          <div class="sg-kpi-value">{{ ejecutivo.total_kilos|floatformat:2 }}</div>
+          <div class="sg-kpi-help">Del {{ fecha_inicio|date:"d/m/Y" }} al {{ fecha_fin|date:"d/m/Y" }}</div>
+        </article>
+
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-cash-stack"></i> Venta</div>
+          <div class="sg-kpi-value">${{ ejecutivo.total_venta|floatformat:2 }}</div>
+          <div class="sg-kpi-help">{{ ejecutivo.notas }} notas activas · ticket prom. ${{ ejecutivo.ticket_promedio|floatformat:2 }}</div>
+        </article>
+
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-receipt"></i> Costo aplicado</div>
+          <div class="sg-kpi-value">${{ ejecutivo.total_costo|floatformat:2 }}</div>
+          <div class="sg-kpi-help">Costo histórico guardado en la venta</div>
+        </article>
+
+        <article class="sg-kpi-card sg-kpi-card-success">
+          <div class="sg-kpi-title"><i class="bi bi-percent"></i> Utilidad / margen</div>
+          <div class="sg-kpi-value">${{ ejecutivo.total_utilidad|floatformat:2 }}</div>
+          <div class="sg-kpi-help">Margen {{ ejecutivo.margen|floatformat:2 }}%</div>
+        </article>
+      </div>
+
+      <div class="sg-dashboard-grid sg-dashboard-grid-2">
+        <section class="sg-dashboard-panel">
+          <div class="sg-dashboard-panel-header">
+            <div>
+              <h5>Margen por producto</h5>
+              <p>Productos ordenados por utilidad generada en el periodo.</p>
+            </div>
+            <a href="{% url 'precios_productos_list' %}" class="sg-btn-outline sg-btn-sm">Ver precios</a>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table sg-table sg-dashboard-table">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="text-end">Kg</th>
+                  <th class="text-end">Venta</th>
+                  <th class="text-end">Utilidad</th>
+                  <th class="text-end">Margen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for p in ejecutivo.productos_margen %}
+                <tr>
+                  <td class="fw-semibold">{{ p.nombre }}</td>
+                  <td class="text-end">{{ p.kilos|floatformat:2 }}</td>
+                  <td class="text-end">${{ p.venta|floatformat:2 }}</td>
+                  <td class="text-end">${{ p.utilidad|floatformat:2 }}</td>
+                  <td class="text-end"><span class="sg-dashboard-badge">{{ p.margen|floatformat:2 }}%</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="sg-empty-state">Aún no hay ventas activas en este periodo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="sg-dashboard-panel">
+          <div class="sg-dashboard-panel-header">
+            <div>
+              <h5>Mejores clientes</h5>
+              <p>Clientes ordenados por venta generada.</p>
+            </div>
+            <a href="{% url 'clientes_list' %}" class="sg-btn-outline sg-btn-sm">Ver clientes</a>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table sg-table sg-dashboard-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th class="text-end">Notas</th>
+                  <th class="text-end">Venta</th>
+                  <th class="text-end">Margen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in ejecutivo.mejores_clientes %}
+                <tr>
+                  <td class="fw-semibold">{{ c.nombre }}</td>
+                  <td class="text-end">{{ c.notas }}</td>
+                  <td class="text-end">${{ c.venta|floatformat:2 }}</td>
+                  <td class="text-end"><span class="sg-dashboard-badge">{{ c.margen|floatformat:2 }}%</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="sg-empty-state">Aún no hay clientes con ventas activas en este periodo.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div class="sg-dashboard-grid sg-dashboard-grid-3 mt-3">
+        <article class="sg-dashboard-panel sg-dashboard-mini-panel">
+          <span class="sg-kpi-title"><i class="bi bi-credit-card"></i> Ventas a crédito</span>
+          <strong>${{ ejecutivo.credito_total|floatformat:2 }}</strong>
+          <small>{{ ejecutivo.credito_notas }} notas marcadas como crédito para seguimiento.</small>
+        </article>
+        <article class="sg-dashboard-panel sg-dashboard-mini-panel">
+          <span class="sg-kpi-title"><i class="bi bi-people"></i> Precios por cliente</span>
+          <strong>{{ operativo.precios_cliente }}</strong>
+          <small>Registros de último precio otorgado por cliente/producto.</small>
+        </article>
+        <article class="sg-dashboard-panel sg-dashboard-mini-panel">
+          <span class="sg-kpi-title"><i class="bi bi-exclamation-triangle"></i> Alertas de margen</span>
+          <strong>{{ operativo.productos_sin_costo }}</strong>
+          <small>Productos sin costo promedio o último costo registrado.</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="tab-pane fade" id="operativeDashboard" role="tabpanel" aria-labelledby="operative-tab">
+      <div class="sg-dashboard-grid sg-dashboard-grid-4 mb-3">
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-cart-check"></i> Ventas hoy</div>
+          <div class="sg-kpi-value">{{ operativo.ventas_hoy }}</div>
+          <div class="sg-kpi-help">Notas activas registradas hoy</div>
+        </article>
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-box-arrow-in-down"></i> Entradas hoy</div>
+          <div class="sg-kpi-value">{{ operativo.entradas_hoy }}</div>
+          <div class="sg-kpi-help">Movimientos de entrada del día</div>
+        </article>
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-exclamation-circle"></i> Stock bajo</div>
+          <div class="sg-kpi-value">{{ operativo.stock_bajo_total }}</div>
+          <div class="sg-kpi-help">Productos en o debajo del mínimo</div>
+        </article>
+        <article class="sg-kpi-card">
+          <div class="sg-kpi-title"><i class="bi bi-building"></i> Almacenes activos</div>
+          <div class="sg-kpi-value">{{ operativo.almacenes_activos }}</div>
+          <div class="sg-kpi-help">{{ operativo.stocks_por_almacen }} registros de stock por almacén</div>
+        </article>
+      </div>
+
+      <section class="sg-dashboard-panel mb-3">
+        <div class="sg-dashboard-panel-header">
+          <div>
+            <h5>Accesos rápidos</h5>
+            <p>Atajos operativos a las funcionalidades principales.</p>
+          </div>
+        </div>
+        <div class="sg-dashboard-actions-grid">
+          <a href="{% url 'salida_venta_create' %}" class="sg-dashboard-action"><i class="bi bi-cash-coin"></i><span>Nueva venta</span></a>
+          <a href="{% url 'ventas_list' %}" class="sg-dashboard-action"><i class="bi bi-receipt-cutoff"></i><span>Notas de venta</span></a>
+          <a href="{% url 'entrada_manual_create' %}" class="sg-dashboard-action"><i class="bi bi-journal-plus"></i><span>Entrada manual</span></a>
+          <a href="{% url 'entrada_ocf_create' %}" class="sg-dashboard-action"><i class="bi bi-filetype-xml"></i><span>Entrada XML</span></a>
+          <a href="{% url 'ajuste_inventario' %}" class="sg-dashboard-action"><i class="bi bi-sliders"></i><span>Ajuste inventario</span></a>
+          <a href="{% url 'inventario_actual' %}" class="sg-dashboard-action"><i class="bi bi-boxes"></i><span>Inventario actual</span></a>
+          <a href="{% url 'kardex' %}" class="sg-dashboard-action"><i class="bi bi-clock-history"></i><span>Kardex</span></a>
+          <a href="{% url 'cliente_create' %}" class="sg-dashboard-action"><i class="bi bi-person-plus"></i><span>Nuevo cliente</span></a>
+        </div>
+      </section>
+
+      <div class="sg-dashboard-grid sg-dashboard-grid-2">
+        <section class="sg-dashboard-panel">
+          <div class="sg-dashboard-panel-header">
+            <div>
+              <h5>Alertas de operación</h5>
+              <p>Elementos que conviene revisar para mantener inventario y precios controlados.</p>
+            </div>
+          </div>
+
+          <div class="sg-dashboard-alerts">
+            <div class="sg-dashboard-alert-item">
+              <strong>{{ operativo.stock_bajo_total }}</strong>
+              <span>Productos con stock bajo</span>
+              <a href="{% url 'inventario_actual' %}">Revisar</a>
+            </div>
+            <div class="sg-dashboard-alert-item">
+              <strong>{{ operativo.productos_sin_costo }}</strong>
+              <span>Productos sin costo completo</span>
+              <a href="{% url 'precios_productos_list' %}">Revisar</a>
+            </div>
+            <div class="sg-dashboard-alert-item">
+              <strong>{{ operativo.productos_sin_precio_minimo }}</strong>
+              <span>Productos sin precio mínimo</span>
+              <a href="{% url 'precios_productos_list' %}">Revisar</a>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="table sg-table sg-dashboard-table">
+              <thead><tr><th>Producto</th><th class="text-end">Stock</th><th class="text-end">Mínimo</th></tr></thead>
+              <tbody>
+                {% for p in operativo.stock_bajo %}
+                <tr>
+                  <td class="fw-semibold">{{ p.nombre }}</td>
+                  <td class="text-end">{{ p.stock|floatformat:2 }}</td>
+                  <td class="text-end">{{ p.stock_minimo|floatformat:2 }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="sg-empty-state">No hay productos con stock bajo configurado.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="sg-dashboard-panel">
+          <div class="sg-dashboard-panel-header">
+            <div>
+              <h5>Últimos movimientos</h5>
+              <p>Referencia rápida de actividad reciente.</p>
+            </div>
+          </div>
+
+          <div class="sg-dashboard-movement-list">
+            <h6>Entradas recientes</h6>
+            {% for e in operativo.ultimas_entradas %}
+              <a href="{% url 'entrada_detalle' e.id %}" class="sg-dashboard-movement">
+                <span><strong>{{ e.folio }}</strong><small>{{ e.get_tipo_display }} · {{ e.fecha|date:"d/m/Y" }}</small></span>
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            {% empty %}
+              <div class="sg-empty-state">Sin entradas registradas.</div>
+            {% endfor %}
+
+            <h6 class="mt-3">Ventas recientes</h6>
+            {% for s in operativo.ultimas_salidas %}
+              <a href="{% url 'salida_detalle' s.id %}" class="sg-dashboard-movement">
+                <span><strong>{{ s.folio }}</strong><small>{{ s.cliente|default:"Cliente sin nombre" }} · {{ s.fecha|date:"d/m/Y" }}</small></span>
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            {% empty %}
+              <div class="sg-empty-state">Sin ventas registradas.</div>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
+    </section>
+  </div>
 </div>
+{% endblock %}
 
-<script>
-  (function () {
-    const dashboardData = {
-      semanal: {
-        periodDescription: 'Semana actual',
-        ventaDescription: 'Ingreso bruto',
-        costoDescription: 'Costo de mercancía',
-        resumenTitulo: 'Resumen semanal por producto',
-        totalKilos: '1,245 kg',
-        totalVenta: '$286,500',
-        costoEstimado: '$204,274',
-        utilidadTotal: '$82,226',
-        margenTotal: 'Margen 28.7%',
-        clientesVencidos: '8',
-        saldoVencido: '$148,900',
-        productos: [
-          ['Camarón', '420', '$108,000', '$76,500', '$31,500', '29.2%'],
-          ['Pulpo', '265', '$59,625', '$44,850', '$14,775', '24.8%'],
-          ['Salmón', '310', '$83,700', '$58,900', '$24,800', '29.6%'],
-          ['Atún', '250', '$35,175', '$24,024', '$11,151', '31.7%'],
-        ],
-        cartera: [
-          ['Mariscos del Pacífico', '3 facturas', '$42,500', '18'],
-          ['Distribuidora Bahía Norte', '2 facturas', '$31,800', '11'],
-          ['Restaurante Costa Azul', '1 factura', '$27,400', '24'],
-          ['Comercializadora Marejada', '2 facturas', '$19,600', '9'],
-          ['Hotel Marina Suites', 'Saldo parcial', '$27,600', '15'],
-        ]
-      },
-      mensual: {
-        periodDescription: 'Mes actual',
-        ventaDescription: 'Ingreso acumulado',
-        costoDescription: 'Costo acumulado',
-        resumenTitulo: 'Resumen mensual por producto',
-        totalKilos: '5,380 kg',
-        totalVenta: '$1,148,900',
-        costoEstimado: '$821,470',
-        utilidadTotal: '$327,430',
-        margenTotal: 'Margen 28.5%',
-        clientesVencidos: '14',
-        saldoVencido: '$386,250',
-        productos: [
-          ['Camarón', '1,820', '$435,200', '$308,400', '$126,800', '29.1%'],
-          ['Pulpo', '1,145', '$251,900', '$188,760', '$63,140', '25.1%'],
-          ['Salmón', '1,360', '$344,800', '$244,900', '$99,900', '29.0%'],
-          ['Atún', '1,055', '$116,000', '$79,410', '$36,590', '31.5%'],
-        ],
-        cartera: [
-          ['Mariscos del Pacífico', '5 facturas', '$96,400', '21'],
-          ['Distribuidora Bahía Norte', '3 facturas', '$74,250', '16'],
-          ['Restaurante Costa Azul', '2 facturas', '$58,300', '28'],
-          ['Comercializadora Marejada', '2 facturas', '$49,100', '13'],
-          ['Hotel Marina Suites', 'Saldo parcial', '$108,200', '19'],
-        ]
-      },
-      anual: {
-        periodDescription: 'Año actual',
-        ventaDescription: 'Ingreso acumulado',
-        costoDescription: 'Costo acumulado',
-        resumenTitulo: 'Resumen anual por producto',
-        totalKilos: '64,950 kg',
-        totalVenta: '$13,986,000',
-        costoEstimado: '$10,024,200',
-        utilidadTotal: '$3,961,800',
-        margenTotal: 'Margen 28.3%',
-        clientesVencidos: '29',
-        saldoVencido: '$1,248,700',
-        productos: [
-          ['Camarón', '21,800', '$5,280,000', '$3,761,000', '$1,519,000', '28.8%'],
-          ['Pulpo', '13,950', '$3,062,500', '$2,298,700', '$763,800', '24.9%'],
-          ['Salmón', '16,400', '$4,220,000', '$2,980,800', '$1,239,200', '29.4%'],
-          ['Atún', '12,800', '$1,423,500', '$983,700', '$439,800', '30.9%'],
-        ],
-        cartera: [
-          ['Mariscos del Pacífico', '11 facturas', '$296,500', '34'],
-          ['Distribuidora Bahía Norte', '7 facturas', '$238,900', '26'],
-          ['Restaurante Costa Azul', '4 facturas', '$185,300', '41'],
-          ['Comercializadora Marejada', '3 facturas', '$159,600', '22'],
-          ['Hotel Marina Suites', 'Saldo parcial', '$368,400', '30'],
-        ]
-      }
-    };
-
-    const periodSelector = document.getElementById('periodSelector');
-    const totalKilos = document.getElementById('totalKilos');
-    const periodDescription = document.getElementById('periodDescription');
-    const totalVenta = document.getElementById('totalVenta');
-    const ventaDescription = document.getElementById('ventaDescription');
-    const costoEstimado = document.getElementById('costoEstimado');
-    const costoDescription = document.getElementById('costoDescription');
-    const utilidadTotal = document.getElementById('utilidadTotal');
-    const margenTotal = document.getElementById('margenTotal');
-    const resumenTitulo = document.getElementById('resumenTitulo');
-    const clientesVencidos = document.getElementById('clientesVencidos');
-    const saldoVencido = document.getElementById('saldoVencido');
-    const productosBody = document.getElementById('productosBody');
-    const carteraBody = document.getElementById('carteraBody');
-
-    function renderProductos(rows) {
-      productosBody.innerHTML = rows.map((row) => `
-        <tr>
-          <td><strong>${row[0]}</strong></td>
-          <td class="text-end">${row[1]}</td>
-          <td class="text-end">${row[2]}</td>
-          <td class="text-end">${row[3]}</td>
-          <td class="text-end">${row[4]}</td>
-          <td class="text-end text-success">${row[5]}</td>
-        </tr>
-      `).join('');
-    }
-
-    function renderCartera(rows) {
-      carteraBody.innerHTML = rows.map((row) => `
-        <tr>
-          <td>
-            <strong>${row[0]}</strong>
-            <div class="small text-muted">${row[1]}</div>
-          </td>
-          <td class="text-end text-danger">${row[2]}</td>
-          <td class="text-end">${row[3]}</td>
-        </tr>
-      `).join('');
-    }
-
-    function updateDashboard(period) {
-      const data = dashboardData[period];
-      if (!data) return;
-
-      totalKilos.textContent = data.totalKilos;
-      periodDescription.textContent = data.periodDescription;
-      totalVenta.textContent = data.totalVenta;
-      ventaDescription.textContent = data.ventaDescription;
-      costoEstimado.textContent = data.costoEstimado;
-      costoDescription.textContent = data.costoDescription;
-      utilidadTotal.textContent = data.utilidadTotal;
-      margenTotal.textContent = data.margenTotal;
-      resumenTitulo.textContent = data.resumenTitulo;
-      clientesVencidos.textContent = data.clientesVencidos;
-      saldoVencido.textContent = data.saldoVencido;
-
-      renderProductos(data.productos);
-      renderCartera(data.cartera);
-    }
-
-    periodSelector.addEventListener('change', function () {
-      updateDashboard(this.value);
-    });
-
-    updateDashboard(periodSelector.value);
-  })();
-</script>
+{% block extra_js %}
+<script src="{% static 'js/dashboard.js' %}"></script>
 {% endblock %}

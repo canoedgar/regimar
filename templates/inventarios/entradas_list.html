@@ -5,178 +5,166 @@
 {% block page_title %}Entradas de inventario{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card border-0 shadow-sm mb-3">
-      <div class="card-body d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="mb-1">
-            <i class="bi bi-box-arrow-in-down me-2"></i>
-            Entradas de inventario
-          </h5>
-          <p class="text-muted mb-0">
-            Consulta las entradas por orden de compra y ajustes de inventario.
-          </p>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-plus-circle me-1"></i>
-            Nueva entrada
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <a class="dropdown-item" href="{% url 'entrada_ocf_create' %}">
-                <i class="bi bi-file-earmark-text me-2"></i>
-                Factura XML (OCF)
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'entrada_manual_create' %}">
-                <i class="bi bi-journal-text me-2"></i>
-                Nota / remisión (Manual)
-              </a>
-            </li>
-          </ul>
-        </div>
-        
-
-      </div>
-    </div>
+<div class="sg-page-header sg-table-card">
+  <div>
+    <h5 class="sg-page-header-title">
+      <i class="bi bi-box-arrow-in-down me-1"></i>
+      Entradas de inventario
+    </h5>
+    <p class="sg-page-header-subtitle">
+      Consulta las entradas por orden de compra y ajustes de inventario.
+    </p>
   </div>
 
-  <!-- Filtros por tipo -->
-  <div class="col-12 mb-3">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body d-flex flex-wrap align-items-center gap-2">
-        <span class="fw-semibold me-2">Filtrar:</span>
-
-        <form method="get" class="d-flex flex-wrap align-items-center gap-2">
-          <input type="hidden" name="tipo" value="{{ tipo_actual|default:'' }}">
-          <select name="almacen" class="form-select form-select-sm" style="min-width: 220px;">
-            <option value="">Todos los almacenes</option>
-            {% for a in almacenes %}
-              <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
-                {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
-              </option>
-            {% endfor %}
-          </select>
-
-          <button class="btn btn-sm btn-outline-primary" type="submit">
-            <i class="bi bi-funnel"></i>
-          </button>
-        </form>
-
-        <a href="{% url 'entradas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
-           class="btn btn-sm {% if not tipo_actual %}btn-primary{% else %}btn-outline-primary{% endif %}">
-          Todas
-        </a>
-
-        {% for value, label in TIPO_CHOICES %}
-          <a href="{% url 'entradas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
-             class="btn btn-sm {% if tipo_actual == value %}btn-primary{% else %}btn-outline-primary{% endif %}">
-            {{ label }}
+  <div class="sg-page-actions">
+    <div class="btn-group">
+      <button type="button" class="sg-btn-primary sg-btn-md dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-plus-circle me-1"></i>
+        Nueva entrada
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item" href="{% url 'entrada_ocf_create' %}">
+            <i class="bi bi-file-earmark-text me-2"></i>
+            Factura XML (OCF)
           </a>
-        {% endfor %}
-      </div>
+        </li>
+        <li>
+          <a class="dropdown-item" href="{% url 'entrada_manual_create' %}">
+            <i class="bi bi-journal-text me-2"></i>
+            Nota / remisión (Manual)
+          </a>
+        </li>
+      </ul>
     </div>
   </div>
+</div>
 
-  <div class="col-12">
-    <div class="card border-0 shadow-sm">
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Folio</th>
-                <th>Fecha</th>
-                <th>Almacén</th>
-                <th>Tipo</th>
-                <th>Proveedor</th>
-                <th class="text-end">Productos</th>
-                <th class="text-end">Importe total</th>
-                <th class="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for entrada in entradas %}
-                <tr>
-                  <td class="fw-semibold">{{ entrada.folio }}</td>
-                  <td>{{ entrada.fecha|date:"d/m/Y" }}</td>
-                  <td>
-                    {% if entrada.num_almacenes|default:0 > 1 %}
-                      <span class="badge text-bg-warning">Varios</span>
-                      <span class="text-muted">({{ entrada.num_almacenes }})</span>
-                  
-                    {% elif entrada.num_almacenes|default:0 == 1 %}
-                      {% with det=entrada.detalles.all|first %}
-                        {% if det and det.almacen %}
-                          <span class="badge text-bg-light border">{{ det.almacen.codigo }}</span>
-                          <span class="text-muted">{{ det.almacen.nombre }}</span>
-                        {% elif entrada.almacen %}
-                          <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
-                          <span class="text-muted">{{ entrada.almacen.nombre }}</span>
-                        {% else %}
-                          <span class="text-muted">—</span>
-                        {% endif %}
-                      {% endwith %}
-                  
-                    {% else %}
-                      {# num_almacenes == 0 (o null) #}
-                      {% if entrada.almacen %}
-                        <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
-                        <span class="text-muted">{{ entrada.almacen.nombre }}</span>
-                      {% else %}
-                        <span class="text-muted">—</span>
-                      {% endif %}
-                    {% endif %}
-                  </td>
-                  
-                  
-                  <td>
-                    {% if entrada.tipo == "OCF" %}
-                      <span class="badge text-bg-success">
-                        <i class="bi bi-file-earmark-text me-1"></i>
-                        Entrada Factura
-                      </span>
-                    {% elif entrada.tipo == "MAN" %}
-                      <span class="badge text-bg-warning text-dark">
-                        <i class="bi bi-file-earmark-excel me-1"></i>
-                        Entrada Manual
-                      </span>
-                    {% else %}
-                      <span class="badge text-bg-info text-dark">
-                        <i class="bi bi-sliders me-1"></i>
-                        Ajuste
-                      </span>
-                    {% endif %}
-                  </td>
-                  <td>{{ entrada.proveedor|default:"-" }}</td>
-                  <td class="text-end">
-                    {{ entrada.total_productos|default:"0" }}
-                  </td>
-                  <td class="text-end">
-                    $ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}
-                  </td>
-                  <td class="text-end">
-                    <a href="{% url 'entrada_detalle' entrada.id %}" class="btn btn-sm btn-outline-secondary">
-                      <i class="bi bi-eye"></i>
-                    </a>                    
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="8" class="text-center text-muted py-4">
-                    No hay entradas registradas.
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+<div class="sg-toolbar sg-table-card">
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <span class="fw-semibold me-1">Filtrar:</span>
 
-      </div>
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline">
+      <input type="hidden" name="tipo" value="{{ tipo_actual|default:'' }}">
+      <select name="almacen" class="form-select form-select-sm sg-form-control" style="min-width: 220px;">
+        <option value="">Todos los almacenes</option>
+        {% for a in almacenes %}
+          <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
+            {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+
+      <button class="sg-btn-outline sg-btn-icon sg-btn-sm" type="submit" title="Aplicar filtro">
+        <i class="bi bi-funnel"></i>
+      </button>
+    </form>
+  </div>
+
+  <div class="sg-toolbar-actions">
+    <a href="{% url 'entradas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
+       class="sg-btn-sm {% if not tipo_actual %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
+      Todas
+    </a>
+
+    {% for value, label in TIPO_CHOICES %}
+      <a href="{% url 'entradas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
+         class="sg-btn-sm {% if tipo_actual == value %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
+        {{ label }}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="sg-table-card">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle sg-table">
+        <thead class="table-light">
+          <tr>
+            <th>Folio</th>
+            <th>Fecha</th>
+            <th>Almacén</th>
+            <th>Tipo</th>
+            <th>Proveedor</th>
+            <th class="text-end">Kilogramos</th>
+            <th class="text-end">Importe total</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entrada in entradas %}
+            <tr>
+              <td class="fw-semibold">{{ entrada.folio }}</td>
+              <td>{{ entrada.fecha|date:"d/m/Y" }}</td>
+              <td>
+                {% if entrada.num_almacenes|default:0 > 1 %}
+                  <span class="badge text-bg-warning">Varios</span>
+                  <span class="sg-form-help">({{ entrada.num_almacenes }})</span>
+
+                {% elif entrada.num_almacenes|default:0 == 1 %}
+                  {% with det=entrada.detalles.all|first %}
+                    {% if det and det.almacen %}
+                      <span class="badge text-bg-light border">{{ det.almacen.codigo }}</span>
+                      <span class="sg-form-help">{{ det.almacen.nombre }}</span>
+                    {% elif entrada.almacen %}
+                      <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
+                      <span class="sg-form-help">{{ entrada.almacen.nombre }}</span>
+                    {% else %}
+                      <span class="sg-form-help">—</span>
+                    {% endif %}
+                  {% endwith %}
+
+                {% else %}
+                  {% if entrada.almacen %}
+                    <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
+                    <span class="sg-form-help">{{ entrada.almacen.nombre }}</span>
+                  {% else %}
+                    <span class="sg-form-help">—</span>
+                  {% endif %}
+                {% endif %}
+              </td>
+
+              <td>
+                {% if entrada.tipo == "OCF" %}
+                  <span class="badge text-bg-success">
+                    <i class="bi bi-file-earmark-text me-1"></i>
+                    Entrada Factura
+                  </span>
+                {% elif entrada.tipo == "MAN" %}
+                  <span class="badge text-bg-warning text-dark">
+                    <i class="bi bi-file-earmark-excel me-1"></i>
+                    Entrada Manual
+                  </span>
+                {% else %}
+                  <span class="badge text-bg-info text-dark">
+                    <i class="bi bi-sliders me-1"></i>
+                    Ajuste
+                  </span>
+                {% endif %}
+              </td>
+              <td>{{ entrada.proveedor|default:"-" }}</td>
+              <td class="text-end">
+                {{ entrada.total_productos|default:"0" }}
+              </td>
+              <td class="text-end">
+                $ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}
+              </td>
+              <td class="text-end sg-table-actions">
+                <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
+                  <i class="bi bi-eye"></i>
+                </a>                    
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="8" class="sg-empty-state">
+                No hay entradas registradas.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
