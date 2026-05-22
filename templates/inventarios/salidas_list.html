@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static formatos %}
 
 {% block title %}Salidas de inventario | Sistema de Gestión{% endblock %}
 {% block page_title %}Salidas de inventario{% endblock %}
@@ -29,12 +29,7 @@
               <a class="dropdown-item" href="{% url 'salida_venta_create' %}">
                 <i class="bi bi-cart-check me-2"></i>Venta
               </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'salida_proyecto_create' %}">
-                <i class="bi bi-kanban me-2"></i>Proyecto
-              </a>
-            </li>
+            </li>            
             <li><hr class="dropdown-divider"></li>
             <li>
               <a class="dropdown-item" href="{% url 'ajuste_inventario' %}">
@@ -147,7 +142,7 @@
                   </td>
 
                   <td class="text-end">
-                    $ {{ salida.total_importe|default:"0.00"|floatformat:2 }}
+                    $ {{ salida.total_importe|default:"0.00"|dinero_decimal }}
                   </td>
 
                   <td class="text-end">

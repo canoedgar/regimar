@@ -3,7 +3,7 @@
 #Productos
 from django import forms
 from django.forms import inlineformset_factory
-from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ProductoMetricaConversion
+from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ProductoMetricaConversion, ParametroSistema, ClienteProductoPrecio
 
 from django.core.exceptions import ValidationError
 
@@ -70,63 +70,49 @@ class CategoriaForm(forms.ModelForm):
 #Inicio de productos
 
 class ProductoForm(forms.ModelForm):
-
-    # Campo de imagen SOLO en el formulario, no en el modelo
-    imagen = forms.ImageField(
-        required=False,
-        widget=forms.ClearableFileInput(attrs={"class": "form-control"})
-    )
-
-    eliminar_imagen = forms.BooleanField(
-        required=False, 
-        label="Eliminar imagen", 
-        widget=forms.CheckboxInput(attrs={"class": "form-check-input"})
-    )
-
     class Meta:
         model = Producto
         fields = [
             "categoria",
             "nombre",
-            "clave_sat",
             "metrica",
             "precio",
+            "precio_minimo",
+            "ultimo_costo_compra",
+            "costo_promedio",
             "stock",
             "stock_minimo",
             "stock_maximo",
-            "es_equipo",                        
+            "maneja_peso_variable",
         ]
         widgets = {
             "categoria": forms.Select(attrs={"class": "form-select"}),
             "nombre": forms.TextInput(attrs={"class": "form-control"}),
-            "clave_sat": forms.TextInput(attrs={"class": "form-control"}),
-            "metrica": forms.TextInput(attrs={"class": "form-control"}),
-            "precio": forms.NumberInput(attrs={"class": "form-control"}),
-            "stock": forms.NumberInput(attrs={"class": "form-control"}),
-            "stock_minimo": forms.NumberInput(attrs={"class": "form-control"}),
-            "stock_maximo": forms.NumberInput(attrs={"class": "form-control"}),   
-            "es_equipo": forms.CheckboxInput(attrs={"class": "form-cotrol"}),
+            "metrica": forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
+            "precio": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "precio_minimo": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "ultimo_costo_compra": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "costo_promedio": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "stock": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "stock_minimo": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "stock_maximo": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "maneja_peso_variable": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Stock solo visible, no editable
-        self.fields["stock"].disabled = True
-        # Que se vea claramente de solo lectura
-        self.fields["stock"].widget.attrs["readonly"] = True
-        
+        if not self.instance.pk and not self.initial.get("metrica"):
+            self.initial["metrica"] = "KG"
+        self.fields["metrica"].disabled = True
+        self.fields["metrica"].initial = self.initial.get("metrica") or getattr(self.instance, "metrica", None) or "KG"
+        for field_name in ["stock", "ultimo_costo_compra", "costo_promedio"]:
+            self.fields[field_name].disabled = True
+            self.fields[field_name].widget.attrs["readonly"] = True
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-
-        if self.cleaned_data.get("eliminar_imagen"):
-            instance.imagen_base64 = None
-
-        archivo_imagen = self.cleaned_data.get("imagen")
-        if archivo_imagen:
-            instance.imagen_base64 = imagen_a_base64_comprimida(archivo_imagen)
-
+        instance.metrica = "KG"
+        instance.es_equipo = False
         if commit:
             instance.save()
         return instance
@@ -145,8 +131,8 @@ class ProductoMetricaConversionForm(forms.ModelForm):
         widgets = {
             "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej: Caja 10 kgs"}),
             "unidad_origen": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej: Caja"}),
-            "cantidad_origen": forms.NumberInput(attrs={"class": "form-control", "step": "0.0001", "min": "0.0001"}),
-            "factor_conversion": forms.NumberInput(attrs={"class": "form-control", "step": "0.0001", "min": "0.0001"}),
+            "cantidad_origen": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01"}),
+            "factor_conversion": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01"}),
             "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
@@ -257,6 +243,32 @@ class ProyectoForm(forms.ModelForm):
 
 # --- Inicio Clientes ---
 
+class ParametroSistemaForm(forms.ModelForm):
+    class Meta:
+        model = ParametroSistema
+        fields = ["clave", "nombre", "valor", "descripcion", "activo"]
+        widgets = {
+            "clave": forms.TextInput(attrs={"class": "form-control", "style": "text-transform: uppercase;"}),
+            "nombre": forms.TextInput(attrs={"class": "form-control"}),
+            "valor": forms.TextInput(attrs={"class": "form-control"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+    def clean_clave(self):
+        return (self.cleaned_data.get("clave") or "").strip().upper()
+
+
+class ClienteProductoPrecioForm(forms.ModelForm):
+    class Meta:
+        model = ClienteProductoPrecio
+        fields = ["ultimo_precio", "observaciones"]
+        widgets = {
+            "ultimo_precio": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "observaciones": forms.TextInput(attrs={"class": "form-control"}),
+        }
+
+
 class ClienteForm(forms.ModelForm):
     class Meta:
         model = Cliente
@@ -343,7 +355,7 @@ class ClienteForm(forms.ModelForm):
 
     def clean_rfc(self):
         rfc = (self.cleaned_data.get("rfc") or "").strip().upper()
-        return rfc
+        return rfc or None
 
     def clean(self):
         cleaned = super().clean()
@@ -351,6 +363,19 @@ class ClienteForm(forms.ModelForm):
         if mp and mp not in ("PUE", "PPD"):
             self.add_error("metodo_pago_default", ValidationError("Método de pago inválido. Usa PUE o PPD."))
         cleaned["metodo_pago_default"] = mp
+
+        # Los datos fiscales son opcionales, pero si se captura alguno se pide el bloque completo mínimo.
+        fiscales = [
+            cleaned.get("rfc"),
+            cleaned.get("nombre_fiscal"),
+            cleaned.get("regimen_fiscal"),
+            cleaned.get("domicilio_fiscal_cp"),
+        ]
+        if any(fiscales) and not all(fiscales):
+            raise ValidationError("Si capturas información fiscal, completa RFC, nombre fiscal, régimen fiscal y CP fiscal.")
+
+        if not cleaned.get("nombre_fiscal"):
+            cleaned["nombre_fiscal"] = cleaned.get("nombre_comercial") or "PÚBLICO GENERAL"
         return cleaned
 
 

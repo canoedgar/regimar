@@ -101,18 +101,6 @@ body {
   background: color-mix(in srgb, var(--color-surface) 92%, transparent);
 }
 
-.theme-switcher {
-  min-width: 110px;
-  border-color: var(--color-border);
-  background-color: var(--color-surface);
-  color: var(--color-text);
-}
-
-.theme-switcher:focus {
-  border-color: var(--color-secondary);
-  box-shadow: var(--focus-ring);
-}
-
 .solar-main-content {
   color: var(--color-text);
 }
@@ -342,21 +330,6 @@ html[data-theme="dark"] .solar-main-header {
 }
 
 /* ============================
-   CONTROLES EXTRA TEMA
-   ============================ */
-.theme-switcher {
-  min-width: 130px;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
-}
-
-html[data-theme="dark"] .theme-switcher {
-  background: rgba(22, 32, 51, 0.85);
-  color: var(--color-text);
-}
-
-/* ============================
    TOGGLE BUTTON
    ============================ */
 .sidebar-toggle-btn {
@@ -409,12 +382,60 @@ html[data-theme="dark"] .theme-switcher {
   }
 }
 
+/* ============================
+   MODALES GLOBALES
+   ============================ */
+/*
+  Bootstrap agrega el backdrop al <body>. Se mantiene un z-index superior
+  para evitar que el fondo oscuro quede encima del modal cuando algún layout
+  genera un stacking context.
+
+  Además, los modales fuerzan fondo claro y texto oscuro para evitar problemas
+  de contraste cuando el tema global o el navegador aplican colores claros/oscuros.
+*/
 .modal {
   z-index: 2000 !important;
+  color: #1f2937;
 }
 
 .modal-backdrop {
   z-index: 1990 !important;
+}
+
+.modal .modal-content {
+  background-color: #ffffff;
+  color: #1f2937;
+  border: 1px solid rgba(15, 61, 145, 0.12);
+  box-shadow: var(--shadow-strong);
+}
+
+.modal .modal-header,
+.modal .modal-body,
+.modal .modal-footer {
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.modal .modal-title,
+.modal .modal-body p,
+.modal .modal-body div,
+.modal .modal-body span,
+.modal .modal-body strong,
+.modal .modal-footer {
+  color: #1f2937;
+}
+
+.modal .text-muted {
+  color: #5b6472 !important;
+}
+
+.modal .bg-body-tertiary {
+  background-color: #f8fbff !important;
+  color: #1f2937;
+}
+
+.modal .btn-close {
+  filter: none;
 }
 
 /* Compactación adicional sidebar */
@@ -438,4 +459,95 @@ html[data-theme="dark"] .theme-switcher {
   letter-spacing: 0.03em;
   color: var(--color-sidebar-muted);
   margin-top: 0.35rem;
+}
+
+
+/* ============================
+   THEME SWITCHER GLOBAL
+   ============================ */
+.theme-switcher-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  flex: 0 0 auto;
+}
+
+.theme-switcher-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  color: var(--color-text-soft);
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+/*
+  El thumb se mantiene dentro del botón usando flex, no position:absolute.
+  Esto evita que el círculo se salga del switch si algún contenedor/header
+  genera un contexto de posición distinto.
+*/
+.theme-switcher-toggle {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 56px;
+  min-width: 56px;
+  height: 30px;
+  padding: 3px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-surface) 86%, var(--color-primary-soft) 14%);
+  cursor: pointer;
+  outline: none;
+  line-height: 1;
+  vertical-align: middle;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.theme-switcher-toggle:hover {
+  border-color: var(--color-secondary);
+}
+
+.theme-switcher-toggle:focus-visible {
+  box-shadow: var(--focus-ring), inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.theme-switcher-thumb {
+  display: block;
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+  transform: translateX(0);
+  transition: transform 0.25s ease, background-color 0.25s ease;
+  pointer-events: none;
+}
+
+.theme-switcher-toggle[aria-checked="true"] {
+  background: color-mix(in srgb, var(--color-primary-strong) 70%, var(--color-bg-alt) 30%);
+  border-color: var(--color-primary-soft);
+}
+
+.theme-switcher-toggle[aria-checked="true"] .theme-switcher-thumb {
+  transform: translateX(26px);
+  background: var(--color-accent);
+}
+
+html[data-theme="light"] .theme-switcher-sun,
+html[data-theme="dark"] .theme-switcher-moon {
+  color: var(--color-accent);
+}
+
+@media (max-width: 767.98px) {
+  .theme-switcher-wrap {
+    display: none;
+  }
 }

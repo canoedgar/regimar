@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static formatos %}
 
 {% block title %}Detalle de entrada | Sistema de Gestión{% endblock %}
 {% block page_title %}Detalle de entrada{% endblock %}
@@ -64,7 +64,15 @@
           <div class="col-md-4">
             <div class="text-muted small">Almacén</div>
             <div class="fw-semibold">
-              {% if entrada.almacen %}{{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}{% else %}-{% endif %}
+              {% if entrada.almacen %}
+                {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
+              {% elif almacenes_detalle %}
+                {% for a in almacenes_detalle %}
+                  <span class="badge text-bg-light border me-1">{{ a.codigo }} - {{ a.nombre }}</span>
+                {% endfor %}
+              {% else %}
+                -
+              {% endif %}
             </div>
           </div>
 
@@ -109,7 +117,7 @@
           </div>
           <div class="col-md-6 text-md-end">
             <div class="text-muted small">Importe total</div>
-            <div class="fw-semibold">$ {{ total_importe|floatformat:2 }}</div>
+            <div class="fw-semibold">$ {{ total_importe|dinero_decimal }}</div>
           </div>
         </div>
 
@@ -158,8 +166,8 @@
                 </td>
                 <td class="text-end">{{ d.cantidad_presentacion|default:d.cantidad|floatformat:2 }}</td>
                 <td class="text-end">{{ d.cantidad|floatformat:2 }} {{ d.presentacion_metrica_default|default:d.producto.metrica }}</td>
-                <td class="text-end">$ {{ d.costo_unitario|floatformat:2 }}</td>
-                <td class="text-end">$ {{ d.importe|floatformat:2 }}</td>
+                <td class="text-end">$ {{ d.costo_unitario|precio_entero }}</td>
+                <td class="text-end">$ {{ d.importe|dinero_decimal }}</td>
               </tr>
               {% empty %}
               <tr>
@@ -174,7 +182,7 @@
                 <th colspan="4" class="text-end">Totales:</th>
                 <th class="text-end">{{ total_productos|floatformat:2 }}</th>
                 <th></th>
-                <th class="text-end">$ {{ total_importe|floatformat:2 }}</th>
+                <th class="text-end">$ {{ total_importe|dinero_decimal }}</th>
               </tr>
             </tfoot>
           </table>

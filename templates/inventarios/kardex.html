@@ -1,6 +1,6 @@
 {# templates/inventarios/kardex.html #}
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize formatos %}
 
 {% block title %}Kardex | Sistema de Gestión{% endblock %}
 
@@ -261,7 +261,7 @@
 
                     <td class="text-end">
                       {% if m.unitario is not None %}
-                        $ {{ m.unitario|floatformat:"-2" }}
+                        $ {{ m.unitario|precio_entero }}
                       {% else %}
                         <span class="text-muted">—</span>
                       {% endif %}
@@ -269,7 +269,7 @@
 
                     <td class="text-end">
                       {% if m.importe is not None %}
-                        $ {{ m.importe|floatformat:"-2" }}
+                        $ {{ m.importe|dinero_decimal }}
                       {% else %}
                         <span class="text-muted">—</span>
                       {% endif %}

@@ -6,7 +6,6 @@ from django.db import transaction
 from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -16,15 +15,26 @@ from ..services.stock import aplicar_movimiento_stock
 
 
 def _importe_expr():
+    """
+    Importe comercial de una línea de venta.
+
+    Regla única del módulo:
+    - cantidad = cantidad ya convertida a la métrica base que afecta inventario (kg/base).
+    - precio_unitario = precio por la métrica base (precio por kg/base).
+    - cantidad_presentacion solo sirve para mostrar la captura original (cajas, piezas, etc.).
+
+    Por eso el importe NUNCA debe calcularse con cantidad_presentacion.
+    """
     return ExpressionWrapper(
-        Coalesce(F("cantidad_presentacion"), F("cantidad")) * F("precio_unitario"),
+        F("cantidad") * F("precio_unitario"),
         output_field=DecimalField(max_digits=14, decimal_places=2),
     )
 
 
 def _importe_detalles_expr():
+    """Misma regla anterior, aplicada desde SalidaInventario hacia sus detalles."""
     return ExpressionWrapper(
-        Coalesce(F("detalles__cantidad_presentacion"), F("detalles__cantidad")) * F("detalles__precio_unitario"),
+        F("detalles__cantidad") * F("detalles__precio_unitario"),
         output_field=DecimalField(max_digits=14, decimal_places=2),
     )
 

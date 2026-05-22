@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load humanize formatos %}
 
 {% block title %}Notas de venta | Sistema de Gestión{% endblock %}
 {% block page_title %}Notas de venta{% endblock %}
@@ -31,8 +31,8 @@
   </div>
 
   <div class="row g-2 mb-3">
-    <div class="col-6 col-md-3"><div class="mini-summary"><span>Importe</span><strong>$ {{ total_notas|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-6 col-md-3"><div class="mini-summary"><span>Cantidad</span><strong>{{ total_cantidad|floatformat:2|intcomma }}</strong></div></div>
+    <div class="col-6 col-md-3"><div class="mini-summary"><span>Importe</span><strong>$ {{ total_notas|dinero_decimal }}</strong></div></div>
+    <div class="col-6 col-md-3"><div class="mini-summary"><span>Kg vendidos</span><strong>{{ total_cantidad|floatformat:2|intcomma }}</strong></div></div>
     <div class="col-12 col-md-6 text-md-end small text-muted align-self-center">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
   </div>
 
@@ -46,7 +46,7 @@
             <th>Fecha</th>
             <th>Cliente</th>
             <th class="text-center">Estado</th>
-            <th class="text-end">Cant.</th>
+            <th class="text-end">Kg</th>
             <th class="text-end">Total</th>
             <th class="text-end">Acciones</th>
           </tr>
@@ -62,7 +62,7 @@
                 {% if venta.estado == 'CAN' %}<span class="badge text-bg-danger">Cancelada</span>{% else %}<span class="badge text-bg-success">Activa</span>{% endif %}
               </td>
               <td class="text-end">{{ venta.total_cantidad|default:0|floatformat:2 }}</td>
-              <td class="text-end fw-semibold">$ {{ venta.total_importe|default:0|floatformat:2 }}</td>
+              <td class="text-end fw-semibold">$ {{ venta.total_importe|default:0|dinero_decimal }}</td>
               <td class="text-end text-nowrap">
                 <a class="btn btn-sm btn-outline-secondary" href="{% url 'salida_detalle' venta.id %}" title="Ver"><i class="bi bi-eye"></i></a>
                 <a class="btn btn-sm btn-outline-primary" target="_blank" href="{% url 'nota_venta_print' venta.id %}" title="Imprimir"><i class="bi bi-printer"></i></a>

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static formatos %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -27,33 +27,38 @@
     .sale-note-top{ display:block; }
     .sale-note-header{ margin-bottom:10px; }
     .sale-note-logo{ width:180px; max-width:180px; max-height:120px; object-fit:contain; display:block; margin:0; }
-    .sale-note-title{ font-size:1.3rem; font-weight:700; text-align:center; letter-spacing:.02em; margin-top:6px; }
+    .sale-note-title{ font-size:1.3rem; font-weight:700; text-align:center; letter-spacing:.02em; margin-top:18px; }
     .sale-note-brand{ text-align:right; margin-left:auto; max-width:260px; display:flex; flex-direction:column; }
     .brand-name{ font-size:.98rem; font-weight:800; line-height:1.15; }
     .brand-owner{ font-weight:600; font-size:.84rem; line-height:1.15; }
     .sale-note-address{ margin-top:4px; text-align:left; white-space:pre-line; font-size:.76rem; line-height:1.2; min-height:auto; }
     .sale-note-message{ margin:10px 0 10px; font-size:.84rem; line-height:1.25; }
 
-    .sale-note-fields{ display:grid; grid-template-columns:3fr 1.3fr 1.7fr; gap:0; border:1px solid #212529; border-bottom:0; }
-    .sale-note-field{ border-bottom:1px solid #212529; border-right:1px solid #212529; min-height:65px; display:flex; flex-direction:column; }
+    .sale-note-fields{ display:grid; grid-template-columns:2.35fr 1.45fr 1.2fr; gap:0; border:1px solid #212529; border-bottom:0; }
+    .sale-note-field.field-client{ grid-column:auto; }
+    .sale-note-field.field-address{ grid-column:auto; }
+    .sale-note-field{ border-bottom:1px solid #212529; border-right:1px solid #212529; min-height:auto; display:flex; flex-direction:column; }
     .sale-note-field:nth-child(3n){ border-right:0; }
-    .label{ font-size:.78rem; font-weight:700; text-transform:uppercase; text-align:center; padding:6px 8px; border-bottom:1px solid #212529; background:#f6f7f8; }
-    .value{ flex:1; padding:10px 12px; font-size:.95rem; white-space:pre-line; }
+    .label{ font-size:.76rem; font-weight:700; text-transform:uppercase; text-align:center; padding:4px 7px; border-bottom:1px solid #212529; background:#f6f7f8; }
+    .value{ flex:1; padding:5px 8px; font-size:.9rem; white-space:pre-line; line-height:1.16; display:flex; align-items:center; }
+    .value.value-left{ justify-content:flex-start; text-align:left; }
+    .value.value-center{ justify-content:center; text-align:center; }
+    .value.value-wrap{ align-items:flex-start; min-height:28px; }
     .value br{ display:block; content:""; }
     .text-center{ text-align:center; }
     .text-end{ text-align:right; }
 
-    .sale-note-table{ width:100%; border-collapse:collapse; margin-top:14px; }
+    .sale-note-table{ width:100%; border-collapse:collapse; margin-top:9px; }
     .sale-note-table th,.sale-note-table td{ border:1px solid #212529; padding:4px 6px; font-size:.78rem; vertical-align:middle; line-height:1.15; }
     .sale-note-table th{ background:#f6f7f8; text-align:center; font-weight:800; }
     .qty,.price,.amount{ text-align:center; white-space:nowrap; }
     .desc{ min-width:0; }
     .sale-note-total-row td{ font-weight:800; }
 
-    .pagare{ margin-top:1.5rem; }
-    .pagare h6{ margin:0 0 .5rem; text-align:center; font-size:.9rem; font-weight:800; }
+    .pagare{ margin-top:12px; }
+    .pagare h6{ margin:0 0 .5rem; text-align:left; font-size:.9rem; font-weight:800; }
     .pagare p{ margin:0 0 .5rem; font-size:12px; text-align:justify; line-height:1.25; }
-    .sale-note-footer{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-top:16px; }
+    .sale-note-footer{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-top:48px; }
     .sale-note-copy-tag{ font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#6c757d; }
     .sale-note-sign{ min-width:180px; text-align:center; padding-top:22px; margin-top:6px; border-top:1px solid #212529; font-size:.85rem; }
     .note-observaciones{ font-size:.85rem; color:#6c757d; white-space:pre-line; max-width:55%; }
@@ -84,17 +89,18 @@
       }
       .sale-note-logo{ width:145px; max-width:145px; max-height:90px; }
       .sale-note-header{ margin-bottom:6px; }
-      .sale-note-title{ font-size:18px; margin-top:3px; }
+      .sale-note-title{ font-size:18px; margin-top:9px; }
       .sale-note-message{ margin:6px 0; font-size:10.5px; line-height:1.15; }
-      .sale-note-field{ min-height:48px; }
-      .label{ padding:3px 5px; font-size:10px; }
-      .value{ padding:5px 7px; font-size:11px; }
+      .sale-note-field{ min-height:auto; }
+      .label{ padding:2px 4px; font-size:9.5px; }
+      .value{ padding:2px 5px; font-size:10.5px; line-height:1.08; }
+      .value.value-wrap{ min-height:22px; }
       .sale-note-table{ margin-top:7px; }
       .sale-note-table th,.sale-note-table td{ padding:2px 4px; font-size:9px; line-height:1.05; }
       .pagare{ margin-top:8px; }
-      .pagare h6{ margin-bottom:4px; font-size:11px; }
+      .pagare h6{ margin-bottom:4px; font-size:11px; text-align:left; }
       .pagare p{ margin-bottom:4px; font-size:9.5px; line-height:1.14; }
-      .sale-note-footer{ margin-top:10px; }
+      .sale-note-footer{ margin-top:30px; }
       .sale-note-sign{ padding-top:18px; margin-top:4px; font-size:10px; }
       .note-observaciones{ font-size:10px; }
       .cancel-note{ margin-top:5px; padding:4px 6px; font-size:9.5px; }
@@ -105,8 +111,7 @@
   <div class="toolbar">
     <div class="toolbar-title">Notas de venta</div>
     <div class="toolbar-actions">
-      <button class="btn btn-primary" onclick="window.print()">Imprimir / guardar PDF</button>
-      <a class="btn" href="{% url 'ventas_list' %}">Notas de venta</a>
+      <button class="btn btn-primary" onclick="printSaleNote()">Imprimir / guardar PDF</button>      
       <button class="btn" onclick="window.close()">Cerrar</button>
     </div>
   </div>
@@ -115,7 +120,7 @@
     <div class="page">
       <div class="sale-note-grid">
         {% for copia in "12" %}
-          <article class="sale-note-copy {% if not forloop.first %}is-copy{% endif %} {% if nota.estado == 'CAN' %}is-cancelled{% endif %}">
+          <article class="sale-note-copy {% if not forloop.first %}is-copy{% endif %} {% if nota.estado == 'CAN' %}is-cancelled{% endif %}" data-note-id="{{ nota.id }}">
             <div class="sale-note-copy-tag">{% if forloop.first %}ORIGINAL{% else %}COPIA{% endif %}</div>
 
             <div class="sale-note-top mt-1">
@@ -125,8 +130,8 @@
                   <div class="sale-note-brand">
                     <div class="brand-name">CPC Alimentos</div>
                     <div class="brand-owner">Jaime Parada Villarreal</div>
-                    <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
-Mayakhan Residencial Mexicali B.C
+                    <div class="sale-note-address">Mexicali, B.C
+CP.: 21376
 Teléfono: 686 162 7239
 Email: cpcalimentosbc@gmail.com</div>
                   </div>
@@ -138,54 +143,30 @@ Email: cpcalimentosbc@gmail.com</div>
             <div class="sale-note-message">Atendiendo a su amable solicitud enviamos la nota de venta correspondiente quedando a sus órdenes.</div>
 
             <div class="sale-note-fields">
-              <div class="sale-note-field">
+              <div class="sale-note-field field-client">
                 <div class="label">Cliente</div>
-                <div class="value">{{ nota.cliente|default:'MOSTRADOR' }}</div>
+                <div class="value value-left js-client-name">{% firstof nota.cliente.nombre_fiscal nota.cliente_nombre nota.nombre_cliente nota.cliente "MOSTRADOR" %}</div>
               </div>
               <div class="sale-note-field">
                 <div class="label">Folio</div>
-                <div class="value text-center">{{ nota.folio }}</div>
+                <div class="value value-center js-note-folio">{{ nota.folio }}</div>
               </div>
               <div class="sale-note-field">
                 <div class="label">Fecha de entrega</div>
-                <div class="value text-center">{{ nota.fecha|date:'d/m/Y' }}</div>
+                <div class="value value-center">{{ nota.fecha|date:'d/m/Y' }}</div>
               </div>
 
-              <div class="sale-note-field">
+              <div class="sale-note-field field-address">
                 <div class="label">Dirección</div>
-                <div class="value">
-                  {% if nota.cliente_direccion %}
-                    {{ nota.cliente_direccion|linebreaksbr }}
-                  {% elif nota.direccion %}
-                    {{ nota.direccion|linebreaksbr }}
-                  {% elif nota.cliente.direccion_completa %}
-                    {{ nota.cliente.direccion_completa|linebreaksbr }}
-                  {% elif nota.cliente.direccion %}
-                    {{ nota.cliente.direccion|linebreaksbr }}
-                  {% else %}
-                    &nbsp;
-                  {% endif %}
-                </div>
+                <div class="value value-left value-wrap">{% if nota.cliente_direccion %}{{ nota.cliente_direccion }}{% elif nota.direccion %}{{ nota.direccion }}{% elif nota.cliente.direccion_completa %}{{ nota.cliente.direccion_completa }}{% elif nota.cliente.direccion %}{{ nota.cliente.direccion }}{% else %}&nbsp;{% endif %}</div>
               </div>
-              <div class="sale-note-field">
+              <div class="sale-note-field field-contact">
                 <div class="label">Contacto</div>
-                <div class="value">
-                  {% if nota.cliente_contacto %}
-                    {{ nota.cliente_contacto|linebreaksbr }}
-                  {% elif nota.contacto %}
-                    {{ nota.contacto|linebreaksbr }}
-                  {% elif nota.nombre_contacto %}
-                    {{ nota.nombre_contacto|linebreaksbr }}
-                  {% elif nota.cliente.contacto %}
-                    {{ nota.cliente.contacto|linebreaksbr }}
-                  {% else %}
-                    &nbsp;
-                  {% endif %}
-                </div>
+                <div class="value value-left value-wrap">{% if nota.cliente_contacto %}{{ nota.cliente_contacto }}{% elif nota.contacto %}{{ nota.contacto }}{% elif nota.nombre_contacto %}{{ nota.nombre_contacto }}{% elif nota.cliente.contacto %}{{ nota.cliente.contacto }}{% else %}&nbsp;{% endif %}</div>
               </div>
-              <div class="sale-note-field">
+              <div class="sale-note-field field-payment">
                 <div class="label">Forma de pago</div>
-                <div class="value text-center">Contado</div>
+                <div class="value value-center">{{ nota.get_forma_pago_venta_display|default:"Contado" }}</div>
               </div>
             </div>
 
@@ -195,7 +176,7 @@ Email: cpcalimentosbc@gmail.com</div>
                   <th style="width:12%;">Cantidad KG</th>
                   <th style="width:12%;">Cant. Cajas</th>
                   <th>Descripción</th>
-                  <th style="width:16%;">P. KG</th>
+                  <th style="width:16%;">Precio KG</th>
                   <th style="width:16%;">Importe</th>
                 </tr>
               </thead>
@@ -205,8 +186,8 @@ Email: cpcalimentosbc@gmail.com</div>
                     <td class="qty">{{ d.cantidad|floatformat:2 }}</td>
                     <td class="qty">{% if d.presentacion_nombre and d.presentacion_nombre != 'kg' and d.presentacion_nombre != 'KG' and d.presentacion_nombre != 'Kilos' and d.presentacion_nombre != 'Kilogramos' %}{{ d.cantidad_presentacion|floatformat:2 }}{% endif %}</td>
                     <td class="desc">{{ d.producto }}</td>
-                    <td class="price">$ {{ d.precio_unitario|floatformat:2 }}</td>
-                    <td class="amount">$ {{ d.importe|default:0|floatformat:2 }}</td>
+                    <td class="price">$ {{ d.precio_unitario|precio_entero }}</td>
+                    <td class="amount">$ {{ d.importe|default:0|dinero_decimal }}</td>
                   </tr>
                 {% empty %}
                   <tr>
@@ -218,7 +199,7 @@ Email: cpcalimentosbc@gmail.com</div>
                   <td></td>
                   <td class="text-end">TOTAL</td>
                   <td></td>
-                  <td class="amount">$ {{ nota.total_importe|default:0|floatformat:2 }}</td>
+                  <td class="amount">$ {{ nota.total_importe|default:0|dinero_decimal }}</td>
                 </tr>
               </tbody>
             </table>
@@ -227,7 +208,7 @@ Email: cpcalimentosbc@gmail.com</div>
               <h6>PAGARÉ</h6>
               <p>Por este pagaré me comprometo a pagar a la orden de: Jaime Parada Villarreal en la Ciudad de Mexicali, Baja California, México.</p>
               <p>En caso de no cumplir con el pago en la fecha acordada, se generará un interés moratorio del 5% mensual.</p>
-              <p>Deudor: <strong>{{ nota.cliente|default:'MOSTRADOR' }}</strong></p>
+              <p>Deudor: <strong class="js-client-name">{% firstof nota.cliente.nombre_fiscal nota.cliente_nombre nota.nombre_cliente nota.cliente "MOSTRADOR" %}</strong></p>
             </div>
 
             {% if nota.estado == 'CAN' %}
@@ -254,6 +235,60 @@ Email: cpcalimentosbc@gmail.com</div>
 
   <script>
     (function(){
+
+      function cleanClientName(text){
+        text = String(text || '').trim();
+        text = text.replace(/\s*\([A-ZÑ&]{3,4}\d{6}[A-Z0-9]{3}\)\s*$/i, '').trim();
+        text = text.replace(/\s*\([^)]*\)\s*$/, '').trim();
+        return text || 'MOSTRADOR';
+      }
+
+      function normalizeFilenamePart(text){
+        return String(text || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9_-]+/g, '_')
+          .replace(/_+/g, '_')
+          .replace(/^_+|_+$/g, '');
+      }
+
+      function getSuggestedFilename(){
+        var firstNote = document.querySelector('.sale-note-copy:not(.is-copy)') || document.querySelector('.sale-note-copy');
+        if (!firstNote) return 'nota_de_venta';
+
+        var folioEl = firstNote.querySelector('.js-note-folio');
+        var clientEl = firstNote.querySelector('.js-client-name');
+        var folio = normalizeFilenamePart(folioEl ? folioEl.textContent : 'nota');
+        var cliente = normalizeFilenamePart(cleanClientName(clientEl ? clientEl.textContent : 'MOSTRADOR'));
+
+        return [folio || 'nota', cliente || 'MOSTRADOR'].join('_');
+      }
+
+      function setSuggestedPrintFilename(){
+        stripRfcFromClientNames();
+        document.title = getSuggestedFilename();
+      }
+
+      window.printSaleNote = function(){
+        setSuggestedPrintFilename();
+        window.print();
+      };
+
+      function stripRfcFromClientNames(){
+        document.querySelectorAll('.js-client-name').forEach(function(el){
+          var text = (el.textContent || '').trim();
+          /*
+            En salida_venta_form.html la vista previa limpia el valor con getClienteNombre().
+            En cambio, esta pantalla imprime lo guardado en SalidaInventario.cliente.
+            Ese campo es CharField y al seleccionar cliente desde catálogo se guarda como:
+            "NOMBRE FISCAL (RFC)", porque Cliente.__str__ devuelve nombre + RFC.
+            Por eso aquí se limpia el último paréntesis antes de imprimir/mostrar.
+          */
+          text = cleanClientName(text);
+          if (text){ el.textContent = text; }
+        });
+      }
+
       function fitPagesToOneSheet(){
         document.querySelectorAll('.page').forEach(function(page){
           var grid = page.querySelector('.sale-note-grid');
@@ -278,7 +313,7 @@ Email: cpcalimentosbc@gmail.com</div>
         });
       }
 
-      window.addEventListener('load', fitPagesToOneSheet);
+      window.addEventListener('load', function(){ setSuggestedPrintFilename(); fitPagesToOneSheet(); });
       window.addEventListener('resize', fitPagesToOneSheet);
       if (window.matchMedia){
         var mediaQueryList = window.matchMedia('print');
@@ -286,7 +321,7 @@ Email: cpcalimentosbc@gmail.com</div>
           mediaQueryList.addEventListener('change', function(){ fitPagesToOneSheet(); });
         }
       }
-      window.addEventListener('beforeprint', fitPagesToOneSheet);
+      window.addEventListener('beforeprint', function(){ setSuggestedPrintFilename(); fitPagesToOneSheet(); });
     })();
   </script>
 </body>

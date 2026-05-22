@@ -1,7 +1,7 @@
 # inventarios/models.py
 from django.db import models
 from django.utils import timezone
-from catalogos.models import Producto, Proveedor, Proyecto, Almacen
+from catalogos.models import Producto, Proveedor, Proyecto, Almacen, Cliente
 from django.core.exceptions import ValidationError
 
 
@@ -133,7 +133,7 @@ class EntradaInventarioDetalle(models.Model):
     )
     cantidad_presentacion = models.DecimalField(
         "Cantidad capturada en presentación",
-        max_digits=12,
+        max_digits=14,
         decimal_places=2,
         null=True,
         blank=True,
@@ -142,7 +142,7 @@ class EntradaInventarioDetalle(models.Model):
     presentacion_factor_conversion = models.DecimalField(
         "Factor de conversión a métrica base",
         max_digits=12,
-        decimal_places=4,
+        decimal_places=2,
         null=True,
         blank=True,
         help_text="Cantidad de métrica base que entra por cada unidad de presentación. Ej: 20 kg por caja.",
@@ -161,11 +161,37 @@ class EntradaInventarioDetalle(models.Model):
     )
     cantidad = models.DecimalField(
         "Cantidad agregada al inventario",
-        max_digits=12,
+        max_digits=14,
         decimal_places=2,
         help_text="Cantidad ya convertida a la métrica base del inventario.",
     )
     costo_unitario = models.DecimalField("Costo unitario", max_digits=12, decimal_places=2)
+    es_peso_variable = models.BooleanField(
+        "Entrada con peso variable",
+        default=False,
+        help_text="Indica que la cantidad de inventario se capturó con kilos reales y cajas informativas.",
+    )
+    cantidad_cajas = models.DecimalField(
+        "Cantidad de cajas",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        help_text="Número de cajas recibidas para productos con peso variable.",
+    )
+    kilos_reales = models.DecimalField(
+        "Kilos reales",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        help_text="Kilos reales recibidos para productos con peso variable.",
+    )
+    costo_total = models.DecimalField(
+        "Costo total",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        help_text="Costo total de la línea al momento de capturar la entrada.",
+    )
 
     class Meta:
         verbose_name = "Detalle de entrada"
@@ -200,6 +226,26 @@ class SalidaInventario(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.PROTECT, null=True, blank=True, related_name="salidas_inventario",)    
 
     cliente = models.CharField("Cliente", max_length=200, blank=True)
+    cliente_ref = models.ForeignKey(
+        Cliente,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ventas_inventario",
+        help_text="Cliente del catálogo usado para historial de precios.",
+    )
+    FORMA_PAGO_CONTADO = "CONTADO"
+    FORMA_PAGO_CREDITO = "CREDITO"
+    FORMA_PAGO_CHOICES = [
+        (FORMA_PAGO_CONTADO, "Contado"),
+        (FORMA_PAGO_CREDITO, "Crédito"),
+    ]
+    forma_pago_venta = models.CharField(
+        "Forma de pago de venta",
+        max_length=10,
+        choices=FORMA_PAGO_CHOICES,
+        default=FORMA_PAGO_CONTADO,
+    )
     cliente_direccion = models.TextField("Dirección del cliente para esta venta", blank=True)
     cliente_contacto = models.CharField("Contacto del cliente para esta venta", max_length=200, blank=True)
     proveedor = models.CharField("Proveedor", max_length=200, blank=True) 
@@ -281,7 +327,7 @@ class SalidaInventarioDetalle(models.Model):
     )
     cantidad_presentacion = models.DecimalField(
         "Cantidad vendida en presentación",
-        max_digits=12,
+        max_digits=14,
         decimal_places=2,
         null=True,
         blank=True,
@@ -290,7 +336,7 @@ class SalidaInventarioDetalle(models.Model):
     presentacion_factor_conversion = models.DecimalField(
         "Factor de conversión a métrica base",
         max_digits=12,
-        decimal_places=4,
+        decimal_places=2,
         null=True,
         blank=True,
         help_text="Cantidad de métrica base que descuenta cada unidad de presentación. Ej: 20 kg por caja.",
@@ -309,11 +355,18 @@ class SalidaInventarioDetalle(models.Model):
     )
     cantidad = models.DecimalField(
         "Cantidad descontada de inventario",
-        max_digits=12,
+        max_digits=14,
         decimal_places=2,
         help_text="Cantidad ya convertida a la métrica base del inventario.",
     )
     precio_unitario = models.DecimalField("Precio unitario", max_digits=12, decimal_places=2, default=0)
+    costo_unitario_aplicado = models.DecimalField(
+        "Costo unitario aplicado",
+        max_digits=12,
+        decimal_places=2,
+        default=0,
+        help_text="Costo promedio guardado al momento de vender para conservar margen histórico.",
+    )
 
     class Meta:
         verbose_name = "Detalle de salida"
@@ -338,7 +391,7 @@ class SalidaInventarioDetalleAlmacen(models.Model):
         on_delete=models.PROTECT,
         related_name="salidas_asignadas",
     )
-    cantidad = models.DecimalField("Cantidad", max_digits=12, decimal_places=2)
+    cantidad = models.DecimalField("Cantidad", max_digits=14, decimal_places=2)
 
     class Meta:
         verbose_name = "Asignación de salida por almacén"
@@ -361,8 +414,15 @@ class InventarioStock(models.Model):
 
     cantidad = models.DecimalField(
         max_digits=14,
-        decimal_places=4,
+        decimal_places=2,
         default=0
+    )
+    costo_promedio = models.DecimalField(
+        "Costo promedio",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        help_text="Costo promedio ponderado del producto en este almacén.",
     )
 
     class Meta:

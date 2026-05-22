@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% load formatos %}
+
+{% block title %}Lista maestra de precios | CPC Alimentos{% endblock %}
+{% block active_productos %}active{% endblock %}
+{% block catalogos_show %}show{% endblock %}
+{% block page_title %}Lista maestra de precios{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h5 class="mb-1 fw-bold">
+            <i class="bi bi-currency-dollar me-2"></i>
+            Lista maestra de precios
+          </h5>
+          <p class="text-muted mb-0 small">
+            Edita únicamente el precio de venta y el precio mínimo. Los costos se calculan desde inventario.
+          </p>
+        </div>
+        <a href="{% url 'productos_list' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-box2-heart me-1"></i>
+          Ver productos
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th>Unidad</th>
+                <th class="text-end">Stock</th>
+                <th class="text-end">Último costo</th>
+                <th class="text-end">Costo promedio</th>
+                <th class="text-end">Precio venta</th>
+                <th class="text-end">Precio mínimo</th>
+                <th class="text-end">Margen</th>
+                <th class="text-end">Margen %</th>
+                <th>Última compra</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for producto in productos %}
+                <tr>
+                  <td class="fw-semibold">{{ producto.nombre }}</td>
+                  <td>{{ producto.metrica }}</td>
+                  <td class="text-end">{{ producto.stock }}</td>
+                  <td class="text-end">${{ producto.ultimo_costo_compra|precio_entero }}</td>
+                  <td class="text-end">${{ producto.costo_promedio|precio_entero }}</td>
+                  <td class="text-end" style="min-width: 130px;">
+                    <form method="post" class="d-flex gap-2 justify-content-end align-items-center">
+                      {% csrf_token %}
+                      <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                      <input type="number" name="precio" value="{{ producto.precio|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end" style="max-width: 110px;">
+                  </td>
+                  <td class="text-end" style="min-width: 130px;">
+                      <input type="number" name="precio_minimo" value="{{ producto.precio_minimo|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end" style="max-width: 110px;">
+                  </td>
+                  <td class="text-end">
+                    {% if producto.margen_estimado < 0 %}
+                      <span class="badge text-bg-danger">${{ producto.margen_estimado|dinero_decimal }}</span>
+                    {% elif producto.margen_estimado == 0 %}
+                      <span class="badge text-bg-secondary">${{ producto.margen_estimado|dinero_decimal }}</span>
+                    {% else %}
+                      <span class="badge text-bg-success">${{ producto.margen_estimado|dinero_decimal }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">{{ producto.margen_porcentaje|floatformat:2 }}%</td>
+                  <td>{{ producto.fecha_ultima_compra|default:"—" }}</td>
+                  <td class="text-end text-nowrap">
+                      <button type="submit" class="btn btn-sm btn-primary" title="Guardar precio">
+                        <i class="bi bi-check2"></i>
+                      </button>
+                    </form>
+                    <a href="{% url 'producto_precio_bitacora' producto.id %}" class="btn btn-sm btn-outline-secondary mt-1" title="Ver bitácora">
+                      <i class="bi bi-clock-history"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="11" class="text-center text-muted">No hay productos registrados.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

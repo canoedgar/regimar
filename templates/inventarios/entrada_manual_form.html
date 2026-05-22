@@ -299,7 +299,7 @@
     if (!lineas.length) {
       tabla.innerHTML = '<tr id="filaVacia"><td colspan="8" class="text-center text-muted py-4">Aún no has agregado productos.</td></tr>';
       totalLineas.textContent = "0";
-      granTotal.textContent = "0.00";
+      granTotal.textContent = "0";
       return;
     }
 
@@ -319,8 +319,8 @@
         <td class="text-end">${decimal(l.cantidad_original || l.cantidad, 0)}</td>
         <td class="text-end">${decimal(l.cantidad_convertida || l.cantidad, 0)} ${l.metrica_base}</td>
         <td>${l.almacen_nombre}</td>
-        <td class="text-end">${decimal(l.costo_unitario, 2)}</td>
-        <td class="text-end">${decimal(importe, 2)}</td>
+        <td class="text-end">${decimal(l.costo_unitario, 0)}</td>
+        <td class="text-end">${decimal(importe, 0)}</td>
         <td class="text-end">
           <button type="button" class="btn btn-sm btn-outline-danger" data-index="${idx}">
             <i class="bi bi-trash"></i>
@@ -332,7 +332,7 @@
     });
 
     totalLineas.textContent = String(lineas.length);
-    granTotal.textContent = decimal(total, 2);
+    granTotal.textContent = decimal(total, 0);
   }
 
   btnAgregarLinea.addEventListener("click", function () {

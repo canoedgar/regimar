@@ -3,12 +3,13 @@ from django.urls import path
 import proyectos
 from .views import (
     productos_list, productos_create, productos_create_from_xml, productos_edit, productos_delete,
+    precios_productos_list, producto_precio_bitacora,
     proveedores_list, proveedores_create, proveedores_edit,
     categorias_list, categorias_create, categorias_edit, 
     proyectos_list, proyectos_create, proyectos_edit,
     clientes_list, cliente_create, cliente_edit,
     almacenes_list, almacenes_create, almacenes_edit, almacenes_confirm_delete,
-    importar_clientes, importar_productos, importar_proveedores
+    importar_clientes, importar_productos, importar_proveedores, parametros_sistema_list, parametros_sistema_create, parametros_sistema_edit, precios_clientes_list, precio_cliente_edit
 )
 
 urlpatterns = [
@@ -17,6 +18,13 @@ urlpatterns = [
     path("productos/nuevo/", productos_create, name="productos_form"),
     path("productos/<int:pk>/editar", productos_edit, name="productos_edit"),
     path("productos/<int:pk>/eliminar/", productos_delete, name="productos_delete"),
+    path("productos/precios/", precios_productos_list, name="precios_productos_list"),
+    path("productos/<int:pk>/precios/bitacora/", producto_precio_bitacora, name="producto_precio_bitacora"),
+    path("configuracion/parametros/", parametros_sistema_list, name="parametros_sistema_list"),
+    path("configuracion/parametros/nuevo/", parametros_sistema_create, name="parametros_sistema_create"),
+    path("configuracion/parametros/<int:pk>/editar/", parametros_sistema_edit, name="parametros_sistema_edit"),
+    path("clientes/precios/", precios_clientes_list, name="precios_clientes_list"),
+    path("clientes/precios/<int:pk>/editar/", precio_cliente_edit, name="precio_cliente_edit"),
     path("catalogos/productos/nuevo-desde-xml/", productos_create_from_xml, name="productos_create_from_xml"),
 
     # Proveedores

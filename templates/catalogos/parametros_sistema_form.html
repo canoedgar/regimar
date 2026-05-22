@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{% if modo == 'crear' %}Nuevo parámetro{% else %}Editar parámetro{% endif %}{% endblock %}
+{% block page_title %}{% if modo == 'crear' %}Nuevo parámetro{% else %}Editar parámetro{% endif %}{% endblock %}
+{% block active_config %}active{% endblock %}
+{% block content %}
+<div class="row justify-content-center"><div class="col-lg-7">
+  <div class="card border-0 shadow-sm"><div class="card-body">
+    <form method="post" novalidate>{% csrf_token %}
+      {{ form.non_field_errors }}
+      <div class="mb-3"><label class="form-label fw-semibold">Clave</label>{{ form.clave }}<div class="text-danger small">{{ form.clave.errors }}</div></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Nombre</label>{{ form.nombre }}<div class="text-danger small">{{ form.nombre.errors }}</div></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Valor</label>{{ form.valor }}<div class="text-danger small">{{ form.valor.errors }}</div></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Descripción</label>{{ form.descripcion }}</div>
+      <div class="form-check mb-3">{{ form.activo }} <label class="form-check-label">Activo</label></div>
+      <div class="d-flex justify-content-between"><a class="btn btn-outline-secondary" href="{% url 'parametros_sistema_list' %}">Volver</a><button class="btn btn-primary">Guardar</button></div>
+    </form>
+  </div></div>
+</div></div>
+{% endblock %}

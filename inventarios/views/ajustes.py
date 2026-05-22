@@ -12,7 +12,7 @@ from ..models import (
 )
 
 from ..utils import get_almacen_default
-from ..services.stock import aplicar_movimiento_stock
+from ..services.stock import aplicar_movimiento_stock, aplicar_entrada_con_costo, recalcular_costo_promedio_producto
 from ..services.folios import next_folio_movimiento
 from ..forms import AjusteInventarioForm
 
@@ -58,6 +58,7 @@ def ajuste_inventario(request):
     fecha = timezone.localdate()
     producto = form.cleaned_data["producto"]
     cantidad = form.cleaned_data["cantidad"]
+    precio_unitario = form.cleaned_data["precio_unitario"]
     tipo_ajuste = form.cleaned_data["tipo_ajuste"]
     motivo = (form.cleaned_data.get("motivo") or "").strip()
     observaciones = (form.cleaned_data.get("observaciones") or "").strip()
@@ -99,13 +100,16 @@ def ajuste_inventario(request):
                 producto=producto,
                 almacen=almacen,
                 cantidad=cantidad,
-                costo_unitario=0,
+                costo_unitario=precio_unitario,
             )
             
-            aplicar_movimiento_stock(
+            aplicar_entrada_con_costo(
                 producto_id=producto.pk,
                 almacen_id=almacen.id,
-                delta=cantidad, 
+                cantidad=cantidad,
+                costo_unitario=precio_unitario,
+                usuario=request.user,
+                motivo_bitacora="Ajuste positivo de inventario",
             )
 
             messages.success(request, f"Ajuste positivo aplicado en {almacen}. Folio: {folio}")
@@ -142,8 +146,10 @@ def ajuste_inventario(request):
         SalidaInventarioDetalle.objects.create(
             salida=salida,
             producto=producto,
+            almacen=almacen,
             cantidad=cantidad,
-            precio_unitario=0,
+            precio_unitario=precio_unitario,
+            costo_unitario_aplicado=getattr(producto, "costo_promedio", 0) or 0,
         )
         
         aplicar_movimiento_stock(
@@ -151,6 +157,18 @@ def ajuste_inventario(request):
             almacen_id=almacen.id,
             delta=-cantidad
         )
+        recalcular_costo_promedio_producto(producto.pk)
+
+        try:
+            producto.refresh_from_db()
+            from catalogos.services.precios import registrar_bitacora_precio_producto
+            registrar_bitacora_precio_producto(
+                producto,
+                usuario=request.user,
+                motivo="Ajuste negativo de inventario",
+            )
+        except Exception:
+            pass
 
         messages.success(request, f"Ajuste negativo aplicado en {almacen}. Folio: {folio}")
         return redirect("inventario_actual")

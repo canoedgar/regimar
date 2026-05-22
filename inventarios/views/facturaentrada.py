@@ -11,7 +11,7 @@ from ..utils import get_almacen_default
 
 from ..services.folios import next_folio_movimiento
 from ..services.cfdi import parse_cfdi_header, parse_cfdi_xml
-from ..services.stock import aplicar_movimientos_entrada
+from ..services.stock import aplicar_entrada_con_costo
 
 from datetime import datetime
 
@@ -398,9 +398,7 @@ def entrada_ocf_create(request):
                 almacen=almacen,
             )
 
-            # --- 1) Crear detalles y agrupar cantidades ---
-            requeridos = {}
-
+            # --- 1) Crear detalles y actualizar inventario/costos ---
             for f in formset:
                 cd = f.cleaned_data
 
@@ -426,13 +424,14 @@ def entrada_ocf_create(request):
                     costo_unitario=costo_unitario,
                 )
 
-                # Agrupar por producto (estructura limpia)
-                requeridos[producto.id] = requeridos.get(producto.id, Decimal("0")) + cantidad                    
-
-            aplicar_movimientos_entrada(
-                almacen_id=almacen.id,
-                agregados=requeridos,
-            )
+                aplicar_entrada_con_costo(
+                    producto_id=producto.id,
+                    almacen_id=almacen.id,
+                    cantidad=cantidad,
+                    costo_unitario=costo_unitario,
+                    usuario=request.user,
+                    motivo_bitacora="Entrada desde factura XML",
+                )
 
         except IntegrityError as e:
             if "inventarios_entradainventario.folio" in str(e):

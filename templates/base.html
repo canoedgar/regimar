@@ -13,28 +13,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
   <link rel="stylesheet" href="{% static 'css/base.css' %}">
-
-  {% block extra_css %}
-  <style>
-    .theme-switcher-wrap {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .theme-switcher-label {
-      font-size: 0.8rem;
-      color: var(--color-text-soft, #5b6472);
-      margin-bottom: 0;
-    }
-
-    @media (max-width: 767.98px) {
-      .theme-switcher-wrap {
-        display: none;
-      }
-    }
-  </style>
-  {% endblock %}
+  {% block extra_css %}{% endblock %}
 </head>
 
 <body class="{% block body_class %}bg-solar-main{% endblock %}">
@@ -225,6 +204,13 @@
               Clientes
             </a>
 
+            {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
+            <a href="{% url 'precios_clientes_list' %}" class="nav-link">
+              <i class="bi bi-currency-dollar me-1"></i>
+              Precios por cliente
+            </a>
+            {% endif %}
+
             <a href="{% url 'categorias_list' %}" class="nav-link {% block active_categorias %}{% endblock %}">
               <i class="bi bi-tag me-1"></i>
               Categorías
@@ -287,6 +273,10 @@
               <i class="bi bi-people-fill me-1"></i>
               Usuarios
             </a>
+            <a href="{% url 'parametros_sistema_list' %}" class="nav-link">
+              <i class="bi bi-sliders me-1"></i>
+              Parámetros de sistema
+            </a>
           </nav>
         </div>
       {% endif %}
@@ -313,12 +303,21 @@
       </h2>
 
       <div class="d-flex align-items-center gap-2">
-        <div class="theme-switcher-wrap">
-          <label class="theme-switcher-label" for="themeSwitcher">Tema</label>
-          <select id="themeSwitcher" class="form-select form-select-sm theme-switcher">
-            <option value="light">Claro</option>
-            <option value="dark">Oscuro</option>
-          </select>
+        <div class="theme-switcher-wrap" aria-label="Cambiar tema">
+          <span class="theme-switcher-icon theme-switcher-sun" aria-hidden="true">
+            <i class="bi bi-sun-fill"></i>
+          </span>
+          <button type="button"
+                  id="themeSwitcher"
+                  class="theme-switcher-toggle"
+                  role="switch"
+                  aria-checked="false"
+                  aria-label="Cambiar entre tema claro y oscuro">
+            <span class="theme-switcher-thumb"></span>
+          </button>
+          <span class="theme-switcher-icon theme-switcher-moon" aria-hidden="true">
+            <i class="bi bi-moon-stars-fill"></i>
+          </span>
         </div>
         <span class="solar-badge-user">
           👤 
@@ -346,176 +345,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
-  function toggleSidebar() {
-    const sidebar = document.getElementById('solarSidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const isOpen = sidebar.classList.toggle('show');
-
-    if (overlay) {
-      if (isOpen) overlay.classList.add('show');
-      else overlay.classList.remove('show');
-    }
-  }
-
-  function closeSidebar() {
-    document.getElementById('solarSidebar')?.classList.remove('show');
-    document.getElementById('sidebarOverlay')?.classList.remove('show');
-  }
-</script>
-
-<script>
-  (function () {
-    const input = document.getElementById("menuSearch");
-    if (!input) return;
-
-    const rootNav = document.querySelector("#solarSidebar nav.nav");
-    const allLinks = rootNav.querySelectorAll("a.nav-link");
-    const subtitles = rootNav.querySelectorAll(".nav-subtitle");
-    const inventarioSubmenu = document.getElementById("inventarioSubmenu");
-    const inventarioToggle = rootNav.querySelector('a[href="#inventarioSubmenu"]');
-
-    function norm(s) {
-      return (s || "")
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")   // quita acentos
-        .trim();
-    }
-
-    function setShown(el, show) {
-      el.classList.toggle("d-none", !show);
-    }
-
-    function filterMenu() {
-      const q = norm(input.value);
-
-      // reset si está vacío
-      if (!q) {
-        allLinks.forEach(a => a.classList.remove("d-none"));
-        subtitles.forEach(s => s.classList.remove("d-none"));
-        // no forces el collapse aquí, respeta el estado actual
-        return;
-      }
-
-      // filtra links por texto visible
-      allLinks.forEach(a => {
-        const txt = norm(a.textContent);
-        setShown(a, txt.includes(q));
-      });
-
-      // oculta subtítulos si debajo no queda nada visible
-      subtitles.forEach(sub => {
-        const sectionLinks = [];
-        let node = sub.nextElementSibling;
-        while (node && !node.classList.contains("nav-subtitle")) {
-          if (node.matches?.("a.nav-link")) sectionLinks.push(node);
-          node = node.nextElementSibling;
-        }
-        const anyVisible = sectionLinks.some(a => !a.classList.contains("d-none"));
-        setShown(sub, anyVisible);
-      });
-
-      // Si hay match dentro de Inventario, abre el collapse para que se vea
-      if (inventarioSubmenu && inventarioToggle) {
-        const anyInvVisible = inventarioSubmenu.querySelectorAll("a.nav-link:not(.d-none)").length > 0;
-        if (anyInvVisible) {
-          inventarioSubmenu.classList.add("show");
-        }
-      }
-    }
-
-    input.addEventListener("input", filterMenu);
-
-    // Opcional: tecla ESC limpia búsqueda
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
-        input.value = "";
-        filterMenu();
-      }
-    });
-  })();
-</script>
-
-
-<script>
-  (function () {
-    const rootNav = document.querySelector("#solarSidebar nav.nav");
-    if (!rootNav) return;
-
-    const currentPath = window.location.pathname.replace(/\/+$/, ""); // sin trailing slash
-    const allLinks = rootNav.querySelectorAll("a.nav-link[href]");
-
-    // 1) Marca el link activo
-    let activeLink = null;
-    allLinks.forEach(a => {
-      const href = a.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("javascript:")) return;
-
-      // Normaliza para comparar
-      const linkPath = new URL(href, window.location.origin).pathname.replace(/\/+$/, "");
-      if (linkPath === currentPath) {
-        activeLink = a;
-      }
-    });
-
-    if (activeLink) {
-      activeLink.classList.add("active", "is-active");
-    }
-
-    // 2) Si el activo está dentro del submenu de inventario, abre y marca el padre
-    const inventarioSubmenu = document.getElementById("inventarioSubmenu");
-    const inventarioToggle = rootNav.querySelector('a[href="#inventarioSubmenu"]');
-
-    if (inventarioSubmenu && inventarioToggle && activeLink) {
-      const isInsideInventario = inventarioSubmenu.contains(activeLink);
-
-      if (isInsideInventario) {
-        inventarioSubmenu.classList.add("show");
-        inventarioToggle.classList.add("active", "is-active");
-        inventarioToggle.setAttribute("aria-expanded", "true");
-      }
-    }
-
-    // 3) Si el activo está dentro del submenu de catálogos, abrirlo
-    const catalogosSubmenu = document.getElementById("catalogosSubmenu");
-    const catalogosToggle = rootNav.querySelector('a[href="#catalogosSubmenu"]');
-
-    if (catalogosSubmenu && catalogosToggle && activeLink) {
-      const isInsideCatalogos = catalogosSubmenu.contains(activeLink);
-
-      if (isInsideCatalogos) {
-        catalogosSubmenu.classList.add("show");
-        catalogosToggle.classList.add("active", "is-active");
-        catalogosToggle.setAttribute("aria-expanded", "true");
-      }
-}
-  })();
-</script>
-
-
-<script>
-  (function () {
-    const root = document.documentElement;
-    const body = document.body;
-    const switcher = document.getElementById("themeSwitcher");
-    const saved = localStorage.getItem("sg-theme") || "light";
-
-    function applyTheme(theme) {
-      root.setAttribute("data-theme", theme);
-      body?.setAttribute("data-theme", theme);
-      root.style.colorScheme = theme === "dark" ? "dark" : "light";
-      localStorage.setItem("sg-theme", theme);
-      if (switcher) switcher.value = theme;
-    }
-
-    applyTheme(saved);
-
-    switcher?.addEventListener("change", function (e) {
-      applyTheme(e.target.value);
-    });
-  })();
-</script>
+<script src="{% static 'js/base.js' %}"></script>
 
 {% block extra_js %}{% endblock %}
 

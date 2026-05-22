@@ -11,10 +11,8 @@ urlpatterns = [
     path("ajustes/nuevo/", v_ajustes.ajuste_inventario, name="ajuste_inventario"),
     path("entradas/<int:pk>/", v_entradas.entrada_detalle, name="entrada_detalle"),
     path("salidas/", v_salidas.salidas_list, name="salidas_list"),
-    path("salidas/proyecto/nueva/", v_salidas.salida_proyecto_create, name="salida_proyecto_create"),
     path("kardex/", v_kardex.kardex, name="kardex"),
     path("kardex_export/", v_kardex.kardex_export, name="kardex_export"),    
-    path("salidas/venta/nueva/", v_salidas.salida_venta_create, name="salida_venta_create"),
     path("api/clientes/quick-create/", cliente_quick_create, name="cliente_quick_create"),
     path("salidas/<int:pk>/", v_salidas.salida_detalle, name="salida_detalle"),
 
@@ -23,5 +21,8 @@ urlpatterns = [
     path("ventas/notas/imprimir/", v_ventas.nota_venta_print, name="notas_venta_print_bulk"),
     path("ventas/notas/<int:pk>/imprimir/", v_ventas.nota_venta_print, name="nota_venta_print"),
     path("ventas/notas/<int:pk>/cancelar/", v_ventas.cancelar_nota_venta, name="cancelar_nota_venta"),
+    path("salidas/venta/nueva/", v_salidas.salida_venta_create, name="salida_venta_create"),
+    path("salidas/venta/precios-cliente/", v_salidas.precios_cliente_api, name="precios_cliente_api"),
+    path("salidas/venta/autorizar-precio/<uuid:token>/", v_salidas.autorizar_precio_minimo, name="autorizar_precio_minimo"),
 
 ]

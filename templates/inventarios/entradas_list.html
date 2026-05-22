@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static formatos %}
 
 {% block title %}Entradas de inventario | Sistema de Gestión{% endblock %}
 {% block page_title %}Entradas de inventario{% endblock %}
@@ -157,7 +157,7 @@
                     {{ entrada.total_productos|default:"0" }}
                   </td>
                   <td class="text-end">
-                    $ {{ entrada.total_importe|default:"0.00"|floatformat:2 }}
+                    $ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}
                   </td>
                   <td class="text-end">
                     <a href="{% url 'entrada_detalle' entrada.id %}" class="btn btn-sm btn-outline-secondary">

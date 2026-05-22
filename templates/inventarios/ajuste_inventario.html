@@ -70,6 +70,13 @@
               {% for e in form.cantidad.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
             </div>
 
+            <div class="col-md-6">
+              <label class="form-label fw-semibold" id="precioUnitarioLabel">Precio / costo unitario</label>
+              {{ form.precio_unitario }}
+              <div class="form-text" id="precioUnitarioHelp">Para ajuste positivo será costo de entrada; para ajuste negativo será precio de salida/referencia.</div>
+              {% for e in form.precio_unitario.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+            </div>
+
             <div class="col-12">
               <label class="form-label fw-semibold">Motivo (opcional)</label>
               {{ form.motivo }}
@@ -112,7 +119,7 @@
     }
 
     // --- Dar clases Bootstrap a los widgets sin widget_tweaks ---
-    const ids = ["id_folio", "id_fecha", "id_producto", "id_tipo_ajuste", "id_cantidad", "id_motivo", "id_observaciones"];
+    const ids = ["id_folio", "id_fecha", "id_producto", "id_tipo_ajuste", "id_cantidad", "id_precio_unitario", "id_motivo", "id_observaciones"];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -120,6 +127,27 @@
       else if (el.tagName === "TEXTAREA") el.classList.add("form-control");
       else el.classList.add("form-control");
     });
+
+    const tipoAjuste = document.getElementById("id_tipo_ajuste");
+    const precioLabel = document.getElementById("precioUnitarioLabel");
+    const precioHelp = document.getElementById("precioUnitarioHelp");
+
+    function actualizarTextoPrecio() {
+      if (!tipoAjuste || !precioLabel || !precioHelp) return;
+
+      if (tipoAjuste.value === "POS") {
+        precioLabel.textContent = "Costo unitario de entrada";
+        precioHelp.textContent = "Costo por unidad base que se usará para recalcular el costo promedio del inventario.";
+      } else {
+        precioLabel.textContent = "Precio unitario de salida";
+        precioHelp.textContent = "Precio de referencia de la salida. El costo aplicado para margen se conservará desde el costo promedio actual.";
+      }
+    }
+
+    if (tipoAjuste) {
+      tipoAjuste.addEventListener("change", actualizarTextoPrecio);
+      actualizarTextoPrecio();
+    }
   });
 </script>
 {% endblock %}

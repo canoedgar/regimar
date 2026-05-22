@@ -4,18 +4,28 @@ from urllib.parse import urlencode
 
 from decimal import Decimal, InvalidOperation
 
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 
 from django.core.exceptions import ValidationError
 
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen
-from .forms import ProductoForm, CategoriaForm, ProveedorForm, ProyectoForm, ClienteForm, AlmacenForm, ProductoMetricaConversionFormSet
+from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ParametroSistema, ClienteProductoPrecio
+from .forms import ProductoForm, CategoriaForm, ProveedorForm, ProyectoForm, ClienteForm, AlmacenForm, ProductoMetricaConversionFormSet, ParametroSistemaForm, ClienteProductoPrecioForm
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test
 
 from django.db.models import Q
 from django.db import IntegrityError
 from django.views.decorators.http import require_POST
+
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils import timezone
+
+from catalogos.services.precios import (
+    registrar_bitacora_precio_producto,
+    registrar_historial_precio_producto,
+)
 
 # Inicio Categorías
 
@@ -96,6 +106,11 @@ def productos_create(request):
             for eliminado in formset.deleted_objects:
                 if eliminado.pk:
                     eliminado.delete()
+            registrar_bitacora_precio_producto(
+                producto,
+                usuario=request.user,
+                motivo="Alta de producto",
+            )
             messages.success(request, "Producto creado correctamente.")
             return redirect("productos_list")
     else:
@@ -141,6 +156,12 @@ def productos_create_from_xml(request):
                 if eliminado.pk:
                     eliminado.delete()
 
+            registrar_bitacora_precio_producto(
+                producto,
+                usuario=request.user,
+                motivo="Alta de producto desde XML",
+            )
+
             # 🔑 Guardamos el producto creado para esa línea
             request.session["ocf_producto_creado"] = {
                 "idx": idx,
@@ -165,10 +186,34 @@ def productos_edit(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 
     if request.method == "POST":
+        precio_anterior = producto.precio
+        precio_minimo_anterior = producto.precio_minimo
+
         form = ProductoForm(request.POST, request.FILES, instance=producto)
         formset = _build_conversion_formset(request, producto)
         if form.is_valid() and formset.is_valid():
-            producto = form.save()
+            producto = form.save(commit=False)
+
+            if producto.precio != precio_anterior:
+                producto.fecha_ultima_actualizacion_precio = timezone.now()
+
+            producto.save()
+
+            registrar_historial_precio_producto(
+                producto=producto,
+                precio_anterior=precio_anterior,
+                precio_nuevo=producto.precio,
+                precio_minimo_anterior=precio_minimo_anterior,
+                precio_minimo_nuevo=producto.precio_minimo,
+                usuario=request.user,
+                motivo="Actualización desde catálogo de productos",
+            )
+            registrar_bitacora_precio_producto(
+                producto,
+                usuario=request.user,
+                motivo="Actualización desde catálogo de productos",
+            )
+
             formset.instance = producto
             conversiones = formset.save(commit=False)
             for conversion in conversiones:
@@ -192,7 +237,7 @@ def productos_edit(request, pk):
 def productos_delete(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 
-    if producto.stock == 0:
+    if producto.stock != 0:
         messages.error(request, f"No se puede eliminar un producto '{producto.nombre}' porque su stock es {producto.stock}.")
         return redirect("productos_list")
 
@@ -206,6 +251,147 @@ def productos_delete(request, pk):
         "producto": producto,        
     })
 
+
+
+
+def precios_productos_list(request):
+    productos = Producto.objects.all().order_by("nombre")
+
+    if request.method == "POST":
+        producto_id = request.POST.get("producto_id")
+        producto = get_object_or_404(Producto, pk=producto_id)
+
+        precio_anterior = producto.precio
+        precio_minimo_anterior = producto.precio_minimo
+
+        try:
+            nuevo_precio = Decimal(str(request.POST.get("precio", "0") or "0"))
+            nuevo_precio_minimo = Decimal(str(request.POST.get("precio_minimo", "0") or "0"))
+        except (InvalidOperation, ValueError, TypeError):
+            messages.error(request, "Precio inválido.")
+            return redirect("precios_productos_list")
+
+        if nuevo_precio < 0 or nuevo_precio_minimo < 0:
+            messages.error(request, "Los precios no pueden ser negativos.")
+            return redirect("precios_productos_list")
+
+        producto.precio = nuevo_precio
+        producto.precio_minimo = nuevo_precio_minimo
+        producto.fecha_ultima_actualizacion_precio = timezone.now()
+        producto.save(update_fields=["precio", "precio_minimo", "fecha_ultima_actualizacion_precio"])
+
+        registrar_historial_precio_producto(
+            producto=producto,
+            precio_anterior=precio_anterior,
+            precio_nuevo=producto.precio,
+            precio_minimo_anterior=precio_minimo_anterior,
+            precio_minimo_nuevo=producto.precio_minimo,
+            usuario=request.user,
+            motivo="Actualización desde lista maestra de precios",
+        )
+        registrar_bitacora_precio_producto(
+            producto,
+            usuario=request.user,
+            motivo="Actualización desde lista maestra de precios",
+        )
+
+        messages.success(request, f"Precio de {producto.nombre} actualizado correctamente.")
+        return redirect("precios_productos_list")
+
+    return render(request, "catalogos/precios_productos_list.html", {
+        "productos": productos,
+    })
+
+
+def producto_precio_bitacora(request, pk):
+    producto = get_object_or_404(Producto, pk=pk)
+    bitacora = producto.bitacora_precios.all()[:60]
+    historial = producto.historial_precios.all()[:60]
+
+    return render(request, "catalogos/producto_precio_bitacora.html", {
+        "producto": producto,
+        "bitacora": bitacora,
+        "historial": historial,
+    })
+
+
+# --- Parámetros de sistema ---
+
+def _es_admin(user):
+    return user.is_authenticated and (user.is_superuser or user.groups.filter(name="Administrador").exists())
+
+
+def _asegurar_parametros_base():
+    ParametroSistema.objects.get_or_create(
+        clave="PRECIO_VIGENCIA_DIAS",
+        defaults={
+            "nombre": "Días máximos de vigencia del último precio por cliente",
+            "valor": "30",
+            "descripcion": "Regla general para advertir cuando un cliente lleva demasiados días sin comprar un producto al último precio otorgado.",
+            "activo": True,
+        },
+    )
+
+
+@user_passes_test(_es_admin)
+def parametros_sistema_list(request):
+    _asegurar_parametros_base()
+    parametros = ParametroSistema.objects.all().order_by("clave")
+    return render(request, "catalogos/parametros_sistema_list.html", {"parametros": parametros})
+
+
+@user_passes_test(_es_admin)
+def parametros_sistema_create(request):
+    form = ParametroSistemaForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Parámetro creado correctamente.")
+        return redirect("parametros_sistema_list")
+    return render(request, "catalogos/parametros_sistema_form.html", {"form": form, "modo": "crear"})
+
+
+@user_passes_test(_es_admin)
+def parametros_sistema_edit(request, pk):
+    parametro = get_object_or_404(ParametroSistema, pk=pk)
+    form = ParametroSistemaForm(request.POST or None, instance=parametro)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Parámetro actualizado correctamente.")
+        return redirect("parametros_sistema_list")
+    return render(request, "catalogos/parametros_sistema_form.html", {"form": form, "parametro": parametro, "modo": "editar"})
+
+
+@user_passes_test(_es_admin)
+def precios_clientes_list(request):
+    precios = (
+        ClienteProductoPrecio.objects
+        .select_related("cliente", "producto", "actualizado_por")
+        .order_by("cliente__nombre_fiscal", "producto__nombre")
+    )
+    q = (request.GET.get("q") or "").strip()
+    if q:
+        precios = precios.filter(
+            Q(cliente__nombre_fiscal__icontains=q) |
+            Q(cliente__nombre_comercial__icontains=q) |
+            Q(producto__nombre__icontains=q)
+        )
+    return render(request, "catalogos/precios_clientes_list.html", {"precios": precios, "q": q})
+
+
+@user_passes_test(_es_admin)
+def precio_cliente_edit(request, pk):
+    precio_cliente = get_object_or_404(ClienteProductoPrecio.objects.select_related("cliente", "producto"), pk=pk)
+    precio_anterior = precio_cliente.ultimo_precio
+    form = ClienteProductoPrecioForm(request.POST or None, instance=precio_cliente)
+    if request.method == "POST" and form.is_valid():
+        obj = form.save(commit=False)
+        obj.precio_anterior = precio_anterior
+        obj.actualizado_por = request.user
+        obj.fecha_ultimo_precio = timezone.now()
+        obj.save()
+        messages.success(request, "Último precio del cliente actualizado correctamente.")
+        return redirect("precios_clientes_list")
+    return render(request, "catalogos/precio_cliente_form.html", {"form": form, "precio_cliente": precio_cliente})
 
 # Fin Productos
 
@@ -311,6 +497,18 @@ def proyectos_edit(request, pk):
 
 # --- Inicio Clientes ---
 
+def _get_safe_next_url(request, default_url_name="clientes_list"):
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure()
+    ):
+        return next_url
+
+    return reverse(default_url_name)
+
 def clientes_list(request):
     q = (request.GET.get("q") or "").strip()
 
@@ -331,15 +529,16 @@ def clientes_list(request):
 
 
 def cliente_create(request):
+    next_url = _get_safe_next_url(request)
+
     if request.method == "POST":
         form = ClienteForm(request.POST)
         if form.is_valid():
             try:
                 form.save()
                 messages.success(request, "Cliente creado correctamente.")
-                return redirect("clientes_list")
+                return redirect(next_url)
             except IntegrityError:
-                # Por unique en RFC o nombre_normalizado (si aplica)
                 form.add_error("rfc", "Ya existe un cliente con ese RFC.")
     else:
         form = ClienteForm()
@@ -347,8 +546,8 @@ def cliente_create(request):
     return render(request, "catalogos/cliente_form.html", {
         "form": form,
         "modo": "crear",
+        "next_url": next_url,
     })
-
 
 def cliente_edit(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)

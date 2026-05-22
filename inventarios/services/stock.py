@@ -141,3 +141,79 @@ def aplicar_movimientos_entrada(*, almacen_id: int, agregados: Dict[int, Decimal
         qty = _to_decimal(qty)
         if qty > 0:
             aplicar_movimiento_stock(producto_id=pid, almacen_id=almacen_id, delta=qty)
+
+
+def recalcular_costo_promedio_producto(producto_id: int):
+    """
+    Recalcula el costo promedio general del producto usando los stocks por almacén.
+    El promedio del producto se usa como referencia comercial y de margen.
+    """
+    rows = InventarioStock.objects.filter(producto_id=producto_id)
+
+    cantidad_total = Decimal("0")
+    valor_total = Decimal("0")
+
+    for row in rows:
+        cantidad = _to_decimal(row.cantidad)
+        costo = _to_decimal(getattr(row, "costo_promedio", Decimal("0")))
+        if cantidad > 0:
+            cantidad_total += cantidad
+            valor_total += cantidad * costo
+
+    nuevo_promedio = Decimal("0")
+    if cantidad_total > 0:
+        nuevo_promedio = valor_total / cantidad_total
+
+    Producto.objects.filter(pk=producto_id).update(costo_promedio=nuevo_promedio)
+    return nuevo_promedio
+
+
+def aplicar_entrada_con_costo(*, producto_id: int, almacen_id: int, cantidad, costo_unitario, usuario=None, motivo_bitacora="Entrada de inventario"):
+    """
+    Suma inventario y recalcula costo promedio ponderado por almacén.
+    costo_unitario debe venir expresado en la métrica base del producto.
+    """
+    cantidad = _to_decimal(cantidad)
+    costo_unitario = _to_decimal(costo_unitario)
+
+    if cantidad <= 0:
+        return
+
+    stock_row, _ = InventarioStock.objects.select_for_update().get_or_create(
+        producto_id=producto_id,
+        almacen_id=almacen_id,
+        defaults={"cantidad": Decimal("0"), "costo_promedio": Decimal("0")},
+    )
+
+    cantidad_actual = _to_decimal(stock_row.cantidad)
+    costo_actual = _to_decimal(getattr(stock_row, "costo_promedio", Decimal("0")))
+
+    valor_actual = cantidad_actual * costo_actual
+    valor_entrada = cantidad * costo_unitario
+    nueva_cantidad = cantidad_actual + cantidad
+
+    nuevo_costo_promedio = Decimal("0")
+    if nueva_cantidad > 0:
+        nuevo_costo_promedio = (valor_actual + valor_entrada) / nueva_cantidad
+
+    stock_row.cantidad = nueva_cantidad
+    stock_row.costo_promedio = nuevo_costo_promedio
+    stock_row.save(update_fields=["cantidad", "costo_promedio"])
+
+    from django.utils import timezone
+    Producto.objects.filter(pk=producto_id).update(
+        stock=F("stock") + cantidad,
+        ultimo_costo_compra=costo_unitario,
+        fecha_ultima_compra=timezone.localdate(),
+    )
+
+    recalcular_costo_promedio_producto(producto_id)
+
+    try:
+        from catalogos.models import Producto as ProductoModel
+        from catalogos.services.precios import registrar_bitacora_precio_producto
+        producto = ProductoModel.objects.get(pk=producto_id)
+        registrar_bitacora_precio_producto(producto, usuario=usuario, motivo=motivo_bitacora)
+    except Exception:
+        # La bitácora no debe impedir registrar inventario.
+        pass
