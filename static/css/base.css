@@ -429,8 +429,8 @@ a:hover {
   width: auto;
   object-fit: contain;
   padding: 0.35rem;
-  /*border-radius: 0.85rem;*/
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: 0.85rem;
+  background: rgb(255, 255, 255);
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.35));
 }
 
@@ -1351,51 +1351,12 @@ form.sg-filter-bar {
   color: var(--color-text-soft) !important;
 }
 
-/* Acciones de tabla:
-   No se debe convertir el <td> en flex porque rompe el layout nativo
-   de la tabla y puede provocar botones desalineados o apilados. */
 .sg-table-actions {
-  display: inline-flex;
+  display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 0.4rem;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-.sg-table td.sg-table-actions,
-.sg-table th.sg-table-actions,
-td.sg-table-actions,
-th.sg-table-actions {
-  display: table-cell;
-  text-align: right;
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.sg-table td.sg-table-actions > a,
-.sg-table td.sg-table-actions > button,
-.sg-table td.sg-table-actions > form,
-td.sg-table-actions > a,
-td.sg-table-actions > button,
-td.sg-table-actions > form {
-  display: inline-flex;
-  vertical-align: middle;
-  margin-left: 0.35rem;
-}
-
-.sg-table td.sg-table-actions > a:first-child,
-.sg-table td.sg-table-actions > button:first-child,
-.sg-table td.sg-table-actions > form:first-child,
-td.sg-table-actions > a:first-child,
-td.sg-table-actions > button:first-child,
-td.sg-table-actions > form:first-child {
-  margin-left: 0;
-}
-
-.sg-table td.sg-table-actions form,
-td.sg-table-actions form {
-  margin-bottom: 0;
+  flex-wrap: wrap;
 }
 
 .sg-empty-state {
@@ -1433,385 +1394,276 @@ td.sg-table-actions form {
 
 
 /* ==========================================================
-   FIX UI/UX — estandarización real de listados Fase 4
+   FIX UI/UX — estabilidad del sidebar en interacción/responsive
    ========================================================== */
 
-/* Permite usar sg-page-header como tarjeta de encabezado completa */
-.sg-page-header.sg-table-card,
-.sg-toolbar.sg-table-card {
-  padding: 1rem;
-  margin-bottom: 1rem;
+/*
+  El menú no debe cambiar proporciones al abrir/cerrar módulos, buscar,
+  cambiar de tema o pasar entre desktop/tablet/móvil.
+*/
+:root {
+  --sidebar-width: 260px;
+  --sidebar-width-mobile: min(86vw, 300px);
 }
 
-.sg-page-header-title {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  margin: 0;
-  color: var(--color-text);
-  font-weight: 700;
+.solar-layout {
+  width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
 
-.sg-page-header-subtitle {
-  margin: 0.25rem 0 0;
-  color: var(--color-text-soft);
-  font-size: 0.88rem;
+.solar-main {
+  min-width: 0;
+  width: calc(100% - var(--sidebar-width));
 }
 
-/* Evita que los formularios de búsqueda parezcan tarjetas independientes cuando van dentro de sg-toolbar */
-.sg-filter-bar.sg-filter-bar-inline,
-form.sg-filter-bar.sg-filter-bar-inline {
-  flex: 1 1 420px;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.sg-filter-bar.sg-filter-bar-inline .form-control,
-.sg-filter-bar.sg-filter-bar-inline .form-select {
-  min-width: 260px;
-}
-
-/* Toolbar: filtros a la izquierda, acciones/botones a la derecha */
-.sg-toolbar {
-  align-items: center;
-}
-
-.sg-toolbar .sg-toolbar-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-/* Cards de tabla consistentes: contenido con respiración y sin duplicar bordes */
-.sg-table-card .card-body {
-  padding: 1rem;
-}
-
-.sg-table-card .table-responsive {
-  border-radius: 0.85rem;
-  overflow: auto;
-}
-
-.sg-table-card .sg-table {
-  background: var(--color-surface);
-}
-
-/* Evita líneas visuales extrañas al final de acciones en tablas */
-.sg-table td.sg-table-actions,
-.sg-table th.sg-table-actions {
-  width: 1%;
-  white-space: nowrap;
-}
-
-/* Badges Bootstrap claros deben verse bien en ambos temas */
-.badge.text-bg-light,
-.sg-table .badge.text-bg-light {
-  background-color: var(--color-surface-soft) !important;
-  color: var(--color-text) !important;
-  border: 1px solid var(--color-border) !important;
-}
-
-/* Botones de dropdown dentro del sistema SG */
-.btn-group > .sg-btn-primary.dropdown-toggle,
-.btn-group > .sg-btn-secondary.dropdown-toggle,
-.btn-group > .sg-btn-outline.dropdown-toggle {
-  border-radius: 0.65rem;
-}
-
-/* Corrección para icon buttons dentro de barras de filtro */
-.sg-filter-bar .sg-btn-icon {
-  flex: 0 0 auto;
-}
-
-/* Tema oscuro: refuerzo de contraste en toolbars y tablas */
-html[data-theme="dark"] .sg-page-header.sg-table-card,
-html[data-theme="dark"] .sg-toolbar.sg-table-card,
-html[data-theme="dark"] .sg-table-card {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text) !important;
-}
-
-html[data-theme="dark"] .sg-toolbar {
-  background-color: var(--color-surface) !important;
-}
-
-html[data-theme="dark"] .sg-table thead,
-html[data-theme="dark"] .sg-table thead.table-light,
-html[data-theme="dark"] .sg-table th {
-  background-color: var(--color-table-head-bg) !important;
-  color: var(--color-text) !important;
-}
-
-@media (max-width: 767.98px) {
-  .sg-page-header.sg-table-card,
-  .sg-toolbar.sg-table-card {
-    padding: 0.85rem;
-  }
-
-  .sg-filter-bar.sg-filter-bar-inline,
-  form.sg-filter-bar.sg-filter-bar-inline {
-    flex-basis: 100%;
-    width: 100%;
-  }
-
-  .sg-filter-bar.sg-filter-bar-inline .form-control,
-  .sg-filter-bar.sg-filter-bar-inline .form-select {
-    min-width: 0;
-    width: 100%;
-  }
-
-  .sg-toolbar .sg-toolbar-actions {
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .sg-toolbar .sg-toolbar-actions > a,
-  .sg-toolbar .sg-toolbar-actions > button {
-    flex: 1 1 auto;
-  }
-}
-
-/* ===============================
-   FASE 5 — SIDEBAR Y NAVEGACIÓN
-   =============================== */
-
-/* Estructura del menú lateral */
 .solar-sidebar {
-  height: 100vh;
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  max-width: var(--sidebar-width) !important;
+  flex: 0 0 var(--sidebar-width) !important;
+  overflow: hidden;
 }
 
+/* Header del sidebar estable */
 .solar-sidebar-brand {
-  flex: 0 0 auto;
+  width: 100%;
+  min-height: 96px;
+  gap: 0.65rem;
 }
 
-.solar-sidebar .brand {
-  padding: 1rem 0.85rem 0.85rem;
+.solar-sidebar-brand > a {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.solar-sidebar .brand-title {
-  color: var(--color-text-inverse);
+.solar-sidebar-brand .brand-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 130px;
+  white-space: normal;
+  overflow-wrap: anywhere;
   line-height: 1.15;
 }
 
+/* Logo estable: evita que el sidebar cambie de alto/ancho al cargar imagen */
+.solar-sidebar-brand .logo-sidebar,
 .logo-sidebar {
-  height: 72px;
-  max-width: 82px;
-  flex: 0 0 auto;
+  width: 64px !important;
+  height: 64px !important;
+  min-width: 64px !important;
+  max-width: 64px !important;
+  flex: 0 0 64px !important;
+  aspect-ratio: 1 / 1;
 }
 
-/* Búsqueda del menú */
+/* Buscador estable */
 .solar-menu-search {
-  flex: 0 0 auto;
+  width: 100%;
+  padding-inline: 0.65rem !important;
+  margin-top: 0.65rem !important;
 }
 
 .solar-menu-search .input-group {
-  border-radius: 0.65rem;
-  overflow: hidden;
-  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.10);
+  width: 100%;
+  min-width: 0;
 }
 
-.solar-menu-search .input-group-text,
 .solar-menu-search .form-control {
-  background-color: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-  color: var(--color-sidebar-text);
+  min-width: 0;
 }
 
-.solar-menu-search .form-control::placeholder {
-  color: var(--color-sidebar-muted);
-}
-
-.solar-menu-search .form-control:focus {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: var(--color-text-inverse);
-  border-color: rgba(255, 209, 102, 0.55);
-  box-shadow: 0 0 0 0.18rem rgba(255, 209, 102, 0.18);
-}
-
-.solar-menu-empty {
-  margin-top: 0.45rem;
-  padding: 0.45rem 0.55rem;
-  border: 1px dashed rgba(255, 255, 255, 0.22);
-  border-radius: 0.6rem;
-  color: var(--color-sidebar-muted);
-  font-size: 0.78rem;
-}
-
-/* Scroll interno del menú */
+/* Área navegable estable: el scroll vive aquí, no en todo el sidebar */
 .solar-sidebar-nav {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 0 0.45rem 1rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+  width: 100%;
+  min-width: 0;
+  margin-top: 0.75rem !important;
+  padding-inline: 0.55rem;
+  padding-bottom: 1rem;
 }
 
-.solar-sidebar-nav::-webkit-scrollbar {
-  width: 7px;
-}
-
-.solar-sidebar-nav::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.solar-sidebar-nav::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.28);
-  border-radius: 999px;
-}
-
-/* Títulos, submenús y estados */
-.solar-sidebar .nav-section-title {
-  padding: 0.95rem 0.7rem 0.35rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
+/* Links estables */
 .solar-sidebar .nav-link {
-  min-height: 2.25rem;
-  margin: 0.08rem 0;
-  padding: 0.58rem 0.7rem;
-  border-radius: 0.65rem;
-  line-height: 1.2;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: normal;
+  word-break: normal;
+}
+
+.solar-sidebar .nav-link > span,
+.solar-sidebar .nav-link > span:first-child {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .solar-sidebar .nav-link > span:first-child {
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .solar-sidebar .nav-link i {
   flex: 0 0 auto;
 }
 
-.solar-sidebar .nav-link:hover {
-  background: rgba(255, 255, 255, 0.10);
-  color: var(--color-text-inverse);
+.solar-sidebar .nav-link .bi-chevron-down {
+  margin-left: auto;
 }
 
-.solar-sidebar .nav-link.active,
-.solar-sidebar .nav-link.is-active {
-  background: rgba(255, 209, 102, 0.18);
-  color: var(--color-sidebar-active);
-  box-shadow: inset 3px 0 0 var(--color-sidebar-active);
+/* Submenús: no deben empujar el ancho del sidebar */
+.solar-sidebar .collapse,
+.solar-sidebar .collapsing,
+.nav-submenu {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
-.solar-sidebar .nav-link[data-bs-toggle="collapse"] .bi-chevron-down {
-  transition: transform 0.2s ease;
-}
-
-.solar-sidebar .nav-link[data-bs-toggle="collapse"][aria-expanded="true"] .bi-chevron-down {
-  transform: rotate(180deg);
+.solar-sidebar .collapsing {
+  overflow: hidden;
+  transition: height 0.22s ease;
 }
 
 .nav-submenu {
-  padding-left: 0.65rem;
-  margin: 0.15rem 0 0.35rem 0.35rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
+  padding-left: 0.55rem;
+  margin-left: 0.25rem;
 }
 
-.nav-subtitle {
-  display: block;
-  padding: 0.65rem 0.7rem 0.25rem;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--color-sidebar-muted);
+.nav-submenu .nav-link {
+  padding-left: 0.6rem;
 }
 
-/* Botones móviles del sidebar */
-.sidebar-toggle-btn,
-.sidebar-close-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 2.25rem;
-  height: 2.25rem;
-  border: 1px solid var(--color-border-strong);
-  border-radius: 0.65rem;
-  background: var(--color-surface);
-  color: var(--color-primary);
-  font-weight: 700;
-  box-shadow: 0 0.35rem 0.85rem rgba(15, 23, 42, 0.12);
+/* Evita que textos largos ensanchen el menú en pantallas pequeñas */
+.nav-subtitle,
+.solar-sidebar .nav-section-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.sidebar-close-btn {
-  background: rgba(255, 255, 255, 0.10);
-  color: var(--color-text-inverse);
-  border-color: rgba(255, 255, 255, 0.22);
-  box-shadow: none;
-}
-
-.sidebar-toggle-btn:hover,
-.sidebar-close-btn:hover {
-  filter: brightness(1.04);
-}
-
-/* Navegación móvil / tablet */
+/* Estado móvil controlado exclusivamente por .show */
 @media (max-width: 991.98px) {
+  .solar-main {
+    width: 100%;
+  }
+
   .solar-sidebar {
-    position: fixed;
+    width: var(--sidebar-width-mobile) !important;
+    min-width: var(--sidebar-width-mobile) !important;
+    max-width: var(--sidebar-width-mobile) !important;
+    flex-basis: var(--sidebar-width-mobile) !important;
+    position: fixed !important;
+    inset: 0 auto 0 0;
     height: 100dvh;
     max-height: 100dvh;
-    display: flex;
-    flex-direction: column;
+    transform: translateX(-105%);
+    will-change: transform;
   }
 
-  .solar-sidebar .brand {
-    padding: 0.85rem;
+  .solar-sidebar.show {
+    transform: translateX(0);
   }
 
+  .solar-sidebar-brand {
+    min-height: 82px;
+  }
+
+  .solar-sidebar-brand .logo-sidebar,
   .logo-sidebar {
-    height: 58px;
-    max-width: 68px;
+    width: 54px !important;
+    height: 54px !important;
+    min-width: 54px !important;
+    max-width: 54px !important;
+    flex-basis: 54px !important;
   }
 
-  .solar-sidebar .brand-title {
-    font-size: 1rem;
+  .solar-sidebar-brand .brand-title {
+    max-width: 150px;
+    font-size: 0.98rem;
   }
 
   .solar-sidebar .nav-link {
-    min-height: 2.55rem;
-    font-size: 0.93rem;
+    min-height: 2.45rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .solar-sidebar {
+    transform: none !important;
   }
 
-  .solar-sidebar-nav {
-    padding-bottom: 1.25rem;
-  }
-
-  .sidebar-overlay.show {
-    opacity: 1;
-    visibility: visible;
-    backdrop-filter: blur(2px);
+  .sidebar-overlay {
+    display: none !important;
   }
 
   body.sidebar-open {
-    overflow: hidden;
+    overflow: auto;
   }
 }
 
 @media (max-width: 575.98px) {
-  .solar-sidebar {
-    width: min(86vw, 300px);
+  .solar-sidebar-brand .brand-title {
+    max-width: 120px;
   }
 
-  .solar-main-header {
-    padding: 0.65rem 0.85rem;
+  .solar-menu-search {
+    padding-inline: 0.55rem !important;
   }
 
-  .solar-main-header-title {
-    font-size: 1rem;
+  .solar-sidebar-nav {
+    padding-inline: 0.45rem;
   }
 }
 
+/* ==========================================================
+   Compactación global de cards y espaciado del sistema
+   ========================================================== */
+.card,
+.sg-form-card,
+.sg-table-card {
+  border-radius: 0.85rem;
+  box-shadow: 0 0.45rem 1.15rem rgba(15, 23, 42, 0.06);
+}
+
+.card-body {
+  padding: 0.9rem;
+}
+
+.sg-form-card .card-body,
+.sg-table-card .card-body {
+  padding: 0.9rem;
+}
+
+.sg-form-section,
+.sg-form-card .card-header,
+.sg-toolbar,
+.sg-filter-bar {
+  padding: 0.75rem;
+}
+
+.sg-page-header {
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+}
+
+.sg-form-grid,
+.row.g-3 {
+  --bs-gutter-x: 0.75rem;
+  --bs-gutter-y: 0.75rem;
+}
+
+.sg-form-help,
+.form-text {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+}
+
+@media (max-width: 767.98px) {
+  .card-body,
+  .sg-form-card .card-body,
+  .sg-table-card .card-body {
+    padding: 0.75rem;
+  }
+}

@@ -170,6 +170,7 @@ Email: cpcalimentosbc@gmail.com</div>
               </div>
             </div>
 
+
             <table class="sale-note-table">
               <thead>
                 <tr>
@@ -184,7 +185,7 @@ Email: cpcalimentosbc@gmail.com</div>
                 {% for d in nota.detalles.all %}
                   <tr>
                     <td class="qty">{{ d.cantidad|floatformat:2 }}</td>
-                    <td class="qty">{% if d.presentacion_nombre and d.presentacion_nombre != 'kg' and d.presentacion_nombre != 'KG' and d.presentacion_nombre != 'Kilos' and d.presentacion_nombre != 'Kilogramos' %}{{ d.cantidad_presentacion|floatformat:2 }}{% endif %}</td>
+                    <td class="qty">{% if d.cantidad_presentacion and d.cantidad_presentacion > 0 %}{% if d.producto.maneja_peso_variable or d.presentacion_nombre != 'kg' and d.presentacion_nombre != 'KG' and d.presentacion_nombre != 'Kilos' and d.presentacion_nombre != 'Kilogramos' %}{{ d.cantidad_presentacion|floatformat:2 }}{% endif %}{% endif %}</td>
                     <td class="desc">{{ d.producto }}</td>
                     <td class="price">$ {{ d.precio_unitario|precio_entero }}</td>
                     <td class="amount">$ {{ d.importe|default:0|dinero_decimal }}</td>

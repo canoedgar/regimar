@@ -1,5 +1,6 @@
 # inventarios/models.py
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from catalogos.models import Producto, Proveedor, Proyecto, Almacen, Cliente
 from django.core.exceptions import ValidationError
@@ -241,6 +242,22 @@ class SalidaInventario(models.Model):
         choices=FORMA_PAGO_CHOICES,
         default=FORMA_PAGO_CONTADO,
     )
+
+    ESTADO_PAGO_PAGADO = "PAG"
+    ESTADO_PAGO_PENDIENTE = "PEND"
+    ESTADO_PAGO_CHOICES = [
+        (ESTADO_PAGO_PAGADO, "Pagado"),
+        (ESTADO_PAGO_PENDIENTE, "Pendiente de pago"),
+    ]
+    estado_pago = models.CharField(
+        "Estado de pago",
+        max_length=4,
+        choices=ESTADO_PAGO_CHOICES,
+        default=ESTADO_PAGO_PENDIENTE,
+        db_index=True,
+        help_text="Estado administrativo de pago de la nota; no depende de la forma de pago.",
+    )
+
     cliente_direccion = models.TextField("Dirección del cliente para esta venta", blank=True)
     cliente_contacto = models.CharField("Contacto del cliente para esta venta", max_length=200, blank=True)
     proveedor = models.CharField("Proveedor", max_length=200, blank=True) 
@@ -275,6 +292,15 @@ class SalidaInventario(models.Model):
     )
     cancelada_en = models.DateTimeField("Cancelada en", null=True, blank=True)
     motivo_cancelacion = models.TextField("Motivo de cancelación", blank=True)
+
+    editada_en = models.DateTimeField("Editada en", null=True, blank=True)
+    editada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="notas_venta_editadas",
+    )
 
     class Meta:
         verbose_name = "Salida de inventario"

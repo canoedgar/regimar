@@ -14,7 +14,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-insegura")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.68.101").split(",")
 
 # =========================
 # APPS INSTALADAS
@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     # Apps creadas por el desarrollador
     "accounts",
     "catalogos",
+    "cotizaciones",
     "inventarios",
     "proyectos"
 ]

@@ -257,9 +257,11 @@ class VentaService:
                 meta.get("presentacion_id")
                 or "default"
             )
+            cantidad_presentacion = meta.get("cantidad_presentacion")
             detalle.cantidad_presentacion = (
-                meta.get("cantidad_presentacion")
-                or detalle.cantidad
+                cantidad_presentacion
+                if cantidad_presentacion is not None
+                else detalle.cantidad
             )
             detalle.presentacion_factor_conversion = (
                 meta.get("factor_conversion")

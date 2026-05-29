@@ -9,20 +9,23 @@
       .trim();
   }
 
-  window.toggleSidebar = function toggleSidebar() {
+  function setSidebarOpen(isOpen) {
     const sidebar = document.getElementById("solarSidebar");
     const overlay = document.getElementById("sidebarOverlay");
     if (!sidebar) return;
 
-    const isOpen = sidebar.classList.toggle("show");
+    sidebar.classList.toggle("show", isOpen);
     overlay?.classList.toggle("show", isOpen);
     document.body.classList.toggle("sidebar-open", isOpen);
+  }
+
+  window.toggleSidebar = function toggleSidebar() {
+    const sidebar = document.getElementById("solarSidebar");
+    setSidebarOpen(!sidebar?.classList.contains("show"));
   };
 
   window.closeSidebar = function closeSidebar() {
-    document.getElementById("solarSidebar")?.classList.remove("show");
-    document.getElementById("sidebarOverlay")?.classList.remove("show");
-    document.body.classList.remove("sidebar-open");
+    setSidebarOpen(false);
   };
 
   function setShown(element, shouldShow) {
@@ -37,6 +40,23 @@
         return target ? { toggle, target } : null;
       })
       .filter(Boolean);
+  }
+
+  function setCollapseState(target, toggle, shouldShow) {
+    if (!target) return;
+
+    target.classList.remove("collapsing");
+    target.style.height = "";
+    target.style.width = "";
+
+    if (window.bootstrap?.Collapse) {
+      const instance = window.bootstrap.Collapse.getOrCreateInstance(target, { toggle: false });
+      shouldShow ? instance.show() : instance.hide();
+    } else {
+      target.classList.toggle("show", shouldShow);
+    }
+
+    toggle?.setAttribute("aria-expanded", String(shouldShow));
   }
 
   function initMenuSearch() {
@@ -61,10 +81,9 @@
       subtitles.forEach((subtitle) => subtitle.classList.remove("d-none"));
       collapses.forEach(({ toggle, target }) => {
         const shouldShow = target.dataset.initialExpanded === "true";
-        target.classList.toggle("show", shouldShow);
+        setCollapseState(target, toggle, shouldShow);
         target.classList.remove("menu-search-open");
         toggle.classList.remove("d-none");
-        toggle.setAttribute("aria-expanded", String(shouldShow));
       });
       setShown(emptyState, false);
     }
@@ -112,9 +131,8 @@
         const shouldShow = toggleMatches || hasVisibleChildren;
 
         setShown(toggle, shouldShow);
-        target.classList.toggle("show", shouldShow);
+        setCollapseState(target, toggle, shouldShow);
         target.classList.toggle("menu-search-open", shouldShow);
-        toggle.setAttribute("aria-expanded", String(shouldShow));
       });
 
       subtitles.forEach((subtitle) => setShown(subtitle, subtitleHasVisibleLinks(subtitle)));
@@ -158,9 +176,8 @@
     if (!parentCollapse?.id) return;
 
     const parentToggle = rootNav.querySelector(`a[href="#${parentCollapse.id}"]`);
-    parentCollapse.classList.add("show");
+    setCollapseState(parentCollapse, parentToggle, true);
     parentToggle?.classList.add("active", "is-active");
-    parentToggle?.setAttribute("aria-expanded", "true");
   }
 
   function initThemeSwitcher() {
@@ -202,6 +219,12 @@
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
+      window.closeSidebar?.();
+    }
+  });
+
+  window.addEventListener("resize", () => {
+    if (window.innerWidth >= 992) {
       window.closeSidebar?.();
     }
   });

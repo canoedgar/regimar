@@ -1,0 +1,407 @@
+.cot-page-header,
+.sg-page-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+
+.cotizacion-wizard-card .wizard-steps,
+.cot-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+
+.cotizacion-wizard-card .wizard-step { border: 1px solid var(--bs-border-color); border-radius: 1rem; padding: .75rem; display: flex; align-items: center; gap: .6rem; background: var(--bs-body-bg); }
+.cotizacion-wizard-card .wizard-step .dot { width: 2rem; height: 2rem; border-radius: 999px; display: grid; place-items: center; background: var(--bs-tertiary-bg); font-weight: 700; }
+.cotizacion-wizard-card .wizard-step.active { border-color: var(--bs-primary); box-shadow: 0 0 0 .2rem rgba(13,110,253,.08); }
+.cotizacion-wizard-card .wizard-step.active .dot { background: var(--bs-primary); color: #fff; }
+
+.client-results,
+.cot-product-results { max-height: 320px; overflow: auto; border-radius: 1rem; }
+.client-result-item.active,
+.cot-product-item.active { background: var(--bs-primary); border-color: var(--bs-primary); color: #fff; }
+
+.cot-help-card,
+.cot-summary-card,
+.cot-kpi { border: 1px solid var(--bs-border-color); border-radius: 1rem; padding: 1rem; background: var(--bs-body-bg); }
+.cot-help-card p { color: var(--bs-secondary-color); font-size: .9rem; }
+.cot-summary-card span,
+.cot-kpi span { display: block; font-size: .78rem; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .04em; }
+.cot-summary-card strong,
+.cot-kpi strong { display: block; font-size: 1.1rem; margin-top: .25rem; }
+
+.cot-product-picker { position: sticky; top: 1rem; }
+.cot-selected-products { display: grid; gap: .75rem; }
+.cot-product-card { border: 1px solid var(--bs-border-color); border-radius: 1.15rem; background: var(--bs-body-bg); padding: .9rem; }
+.cot-product-card-header { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; margin-bottom: .75rem; }
+.cot-product-card-title { font-weight: 700; }
+.cot-ref-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-bottom: .75rem; }
+.cot-ref { border-radius: .85rem; padding: .55rem .7rem; background: var(--bs-tertiary-bg); }
+.cot-ref span { display: block; font-size: .72rem; color: var(--bs-secondary-color); }
+.cot-ref strong { display: block; font-size: .95rem; }
+.cot-edit-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6rem; align-items: end; }
+.cot-edit-grid-prices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cot-edit-grid label { font-size: .76rem; color: var(--bs-secondary-color); font-weight: 700; margin-bottom: .25rem; }
+.cot-edit-grid input { min-width: 0; }
+.cot-empty-state { border: 1px dashed var(--bs-border-color); border-radius: 1rem; padding: 1rem; color: var(--bs-secondary-color); text-align: center; }
+
+.cot-preview-wrap { overflow: auto; }
+.cot-preview-sheet { width: 100%; min-height: 560px; background: #fff; color: #1f2937; border-radius: .5rem; padding: 1.2rem; box-shadow: 0 10px 25px rgba(15, 23, 42, .12); font-size: .8rem; }
+.cot-preview-top { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 2px solid #1d4ed8; padding-bottom: .75rem; }
+.cot-preview-brand { display: flex; gap: .75rem; align-items: center; }
+.cot-preview-brand img { width: 70px; max-height: 56px; object-fit: contain; }
+.cot-preview-title { color: #1d4ed8; font-size: 1.35rem; letter-spacing: .12em; font-weight: 800; text-align: right; }
+.cot-preview-meta { text-align: right; line-height: 1.45; }
+.cot-preview-info { width: 100%; margin: 1rem 0; border-collapse: collapse; }
+.cot-preview-info th { text-align: left; width: 90px; padding: .35rem; }
+.cot-preview-info td { border-bottom: 1px solid #e5e7eb; padding: .35rem; }
+.cot-preview-table { width: 100%; border-collapse: collapse; }
+.cot-preview-table th { background: #1d4ed8; color: white; padding: .45rem; text-align: left; }
+.cot-preview-table td { padding: .45rem; border-bottom: 1px solid #e5e7eb; }
+.cot-preview-table .num { text-align: right; white-space: nowrap; }
+.cot-preview-note { margin-top: 1rem; color: #374151; font-size: .75rem; }
+.cot-preview-frame { width: 100%; height: 720px; border: 0; border-radius: 1rem; background: #fff; }
+
+@media (max-width: 992px) {
+  .cotizacion-wizard-card .wizard-steps,
+  .cot-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cot-product-picker { position: static; }
+  .cot-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cot-edit-grid .cot-wide { grid-column: 1 / -1; }
+}
+
+@media (max-width: 576px) {
+  .cot-page-header,
+  .sg-page-header { display: block; }
+  .cotizacion-wizard-card .wizard-steps,
+  .cot-steps { grid-template-columns: 1fr; }
+  .cot-ref-grid { grid-template-columns: 1fr; }
+  .cot-edit-grid { grid-template-columns: 1fr; }
+  .cot-preview-sheet { min-width: 620px; }
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .cotizaciones-list-responsive {
+    overflow: visible;
+  }
+
+  .cotizaciones-list-table,
+  .cotizaciones-list-table thead,
+  .cotizaciones-list-table tbody,
+  .cotizaciones-list-table tr,
+  .cotizaciones-list-table th,
+  .cotizaciones-list-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .cotizaciones-list-table thead {
+    display: none;
+  }
+
+  .cotizaciones-list-table tbody {
+    display: grid;
+    gap: .85rem;
+  }
+
+  .cotizaciones-list-table tbody tr {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1.15rem;
+    background: var(--bs-body-bg);
+    box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+    padding: .85rem;
+  }
+
+  .cotizaciones-list-table tbody tr:has(td[colspan]) {
+    box-shadow: none;
+  }
+
+  .cotizaciones-list-table tbody td {
+    border: 0;
+    padding: .45rem 0;
+    text-align: left !important;
+  }
+
+  .cotizaciones-list-table tbody td:not([colspan]) {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .cotizaciones-list-table tbody td::before {
+    content: attr(data-label);
+    flex: 0 0 42%;
+    color: var(--bs-secondary-color);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+  }
+
+  .cotizaciones-list-table tbody td:first-child {
+    padding-bottom: .65rem;
+    margin-bottom: .35rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    font-size: 1.05rem;
+  }
+
+  .cotizaciones-list-table tbody td:first-child::before {
+    color: var(--bs-primary);
+  }
+
+  .cotizaciones-list-table .cot-card-actions {
+    padding-top: .75rem;
+  }
+
+  .cotizaciones-list-table .cot-card-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Listado móvil de cotizaciones: se usa markup de cards independiente de la tabla
+   para evitar que el layout dependa de reglas responsive sobre <table>. */
+.cotizaciones-mobile-list {
+  display: grid;
+  gap: .85rem;
+}
+
+.cotizacion-mobile-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1.15rem;
+  background: var(--bs-body-bg);
+  box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+  padding: .9rem;
+}
+
+.cotizacion-mobile-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-bottom: .7rem;
+  margin-bottom: .7rem;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+
+.cotizacion-mobile-card__label {
+  display: block;
+  color: var(--bs-secondary-color);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.cotizacion-mobile-card__folio {
+  display: block;
+  color: var(--bs-primary);
+  font-size: 1rem;
+  line-height: 1.25;
+  margin-top: .15rem;
+  overflow-wrap: anywhere;
+}
+
+.cotizacion-mobile-card__client {
+  margin-bottom: .75rem;
+}
+
+.cotizacion-mobile-card__client strong {
+  display: block;
+  font-size: .95rem;
+  line-height: 1.35;
+  margin-top: .2rem;
+  overflow-wrap: anywhere;
+}
+
+.cotizacion-mobile-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+  margin-bottom: .85rem;
+}
+
+.cotizacion-mobile-card__grid > div {
+  border-radius: .85rem;
+  background: var(--bs-tertiary-bg);
+  padding: .65rem .7rem;
+}
+
+.cotizacion-mobile-card__grid > div:last-child {
+  grid-column: 1 / -1;
+}
+
+.cotizacion-mobile-card__grid strong {
+  display: block;
+  font-size: .92rem;
+  line-height: 1.25;
+  margin-top: .2rem;
+}
+
+.cotizacion-mobile-card__action {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 576px) {
+  .cotizaciones-mobile-list {
+    gap: .75rem;
+  }
+
+  .cotizacion-mobile-card {
+    padding: .85rem;
+  }
+
+  .cotizacion-mobile-card__header .badge {
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+/* Ajustes de contraste para modo oscuro en cotizaciones */
+html[data-theme="dark"] .cotizacion-wizard-card,
+html[data-theme="dark"] .cot-help-card,
+html[data-theme="dark"] .cot-summary-card,
+html[data-theme="dark"] .cot-kpi,
+html[data-theme="dark"] .cot-product-card,
+html[data-theme="dark"] .cotizacion-mobile-card,
+html[data-theme="dark"] .cot-detail-product-card {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .cot-ref,
+html[data-theme="dark"] .cotizacion-mobile-card__grid > div,
+html[data-theme="dark"] .cot-detail-product-card__grid > div {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+html[data-theme="dark"] .cot-product-card-title,
+html[data-theme="dark"] .cotizacion-mobile-card__client strong,
+html[data-theme="dark"] .cotizacion-mobile-card__grid strong,
+html[data-theme="dark"] .cot-detail-product-card__name,
+html[data-theme="dark"] .cot-detail-product-card__grid strong,
+html[data-theme="dark"] .cot-ref strong,
+html[data-theme="dark"] .cot-kpi strong,
+html[data-theme="dark"] .cot-summary-card strong {
+  color: var(--color-text);
+}
+
+html[data-theme="dark"] .cotizacion-mobile-card__label,
+html[data-theme="dark"] .cot-detail-product-card__grid span,
+html[data-theme="dark"] .cot-ref span,
+html[data-theme="dark"] .cot-summary-card span,
+html[data-theme="dark"] .cot-kpi span,
+html[data-theme="dark"] .cot-help-card p {
+  color: var(--color-text-soft);
+}
+
+html[data-theme="dark"] .badge.text-bg-light,
+html[data-theme="dark"] .text-bg-light {
+  background-color: var(--color-surface-soft) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+html[data-theme="dark"] .alert-info {
+  background-color: rgba(96, 165, 250, .14);
+  color: var(--color-text);
+  border-color: rgba(96, 165, 250, .24);
+}
+
+html[data-theme="dark"] .alert-warning,
+html[data-theme="dark"] .cot-price-warning {
+  background-color: var(--color-warning-soft);
+  color: var(--color-text);
+  border-color: rgba(251, 191, 36, .28);
+}
+
+html[data-theme="dark"] .client-result-item.active .text-muted,
+html[data-theme="dark"] .cot-product-item.active .text-muted {
+  color: rgba(255, 255, 255, .82) !important;
+}
+
+/* Vista previa: en celular se abre como documento imprimible en nueva pestaña. */
+.cot-mobile-preview-action {
+  display: none;
+}
+
+.cot-detail-products-grid {
+  display: grid;
+  gap: .85rem;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.cot-detail-product-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1.15rem;
+  background: var(--bs-body-bg);
+  box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+  padding: .9rem;
+}
+
+.cot-detail-product-card__name {
+  font-weight: 800;
+  line-height: 1.35;
+  margin-bottom: .75rem;
+  overflow-wrap: anywhere;
+}
+
+.cot-detail-product-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+}
+
+.cot-detail-product-card__grid > div {
+  border-radius: .85rem;
+  background: var(--bs-tertiary-bg);
+  padding: .65rem .7rem;
+}
+
+.cot-detail-product-card__grid span {
+  display: block;
+  color: var(--bs-secondary-color);
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.cot-detail-product-card__grid strong {
+  display: block;
+  font-size: .98rem;
+  line-height: 1.25;
+  margin-top: .2rem;
+}
+
+@media (max-width: 767.98px) {
+  .cot-preview-desktop-note,
+  .cot-preview-desktop-panel {
+    display: none !important;
+  }
+
+  .cot-mobile-preview-action {
+    display: block;
+  }
+
+  .cot-detail-kpis > .col-md-4 {
+    width: 100%;
+  }
+
+  .cot-detail-products-grid {
+    gap: .75rem;
+    grid-template-columns: 1fr;
+  }
+
+  .cot-help-card .d-flex > a#cotPdfLink {
+    display: none !important;
+  }
+
+  .cot-help-card .d-flex,
+  .cot-help-card .d-flex > button {
+    width: 100%;
+  }
+
+  .cotizacion-mobile-card__grid > div:last-child {
+    grid-column: auto;
+  }
+}

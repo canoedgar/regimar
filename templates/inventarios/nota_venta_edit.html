@@ -1,0 +1,812 @@
+{% extends "base.html" %}
+{% load static humanize formatos %}
+
+{% block title %}Editar nota {{ salida.folio }} | Sistema de Gestión{% endblock %}
+{% block page_title %}Editar nota de venta{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ventas.css' %}">
+<link rel="stylesheet" href="{% static 'css/ventas_list.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="ventas-list-page">
+  <section class="card border-0 shadow-sm mb-3 sg-form-card sg-table-card">
+    <div class="card-body sg-page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-pencil-square me-2"></i>
+          Editar nota {{ salida.folio }}
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Solo se permiten cambios administrativos y precio. No se pueden modificar productos, cantidades, presentaciones ni almacenes.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'ventas_list' %}" class="sg-btn-outline sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Volver
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <section class="card border-0 shadow-sm mb-3 sg-form-card">
+      <div class="card-body">
+        <div class="alert alert-warning mb-3">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          Si necesitas cambiar producto, cantidad o almacén, cancela la nota desde el listado para que el inventario se retorne correctamente.
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="sg-form-label">Folio</label>
+            <input type="text" class="form-control sg-form-control" value="{{ salida.folio }}" readonly>
+          </div>
+          <div class="col-md-3">
+            <label class="sg-form-label" for="{{ form.fecha.id_for_label }}">Fecha</label>
+            {{ form.fecha }}
+            {{ form.fecha.errors }}
+          </div>
+          <div class="col-md-3">
+            <label class="sg-form-label" for="{{ form.forma_pago_venta.id_for_label }}">Forma de pago</label>
+            {{ form.forma_pago_venta }}
+            {{ form.forma_pago_venta.errors }}
+          </div>
+          <div class="col-md-3">
+            <label class="sg-form-label" for="{{ form.estado_pago.id_for_label }}">Estado de pago</label>
+            {{ form.estado_pago }}
+            {{ form.estado_pago.errors }}
+          </div>
+
+          <div class="d-none">
+            {{ form.cliente_ref }}
+            {{ form.cliente }}
+          </div>
+
+          <div class="col-lg-4 col-md-6">
+            <label class="sg-form-label" for="clienteSearchEdit">Cliente</label>
+            <div class="input-group">
+              <input type="search" class="form-control sg-form-control" id="clienteSearchEdit" placeholder="Buscar cliente por nombre, RFC, contacto o teléfono…" autocomplete="off" value="{{ salida.cliente|default:'' }}">
+              <button type="button" class="sg-btn-outline" id="btnClearClienteEdit" title="Limpiar">
+                <i class="bi bi-x-lg"></i>
+              </button>
+              <a class="sg-btn-primary" href="{% url 'cliente_create' %}?next={{ request.get_full_path|urlencode }}" title="Nuevo cliente">
+                <i class="bi bi-person-plus"></i>
+              </a>
+            </div>
+            <div id="clientesResultsEdit" class="list-group mt-2 client-results d-none"></div>
+            <div class="small mt-2 text-muted">
+              <span class="badge text-bg-light border">Seleccionado</span>
+              <span id="clienteSelectedTextEdit" class="ms-1">{{ salida.cliente|default:'Sin cliente seleccionado' }}</span>
+            </div>
+            {{ form.cliente_ref.errors }}
+            {{ form.cliente.errors }}
+          </div>
+
+          <script type="application/json" id="clientes-data-edit">[{% for c in clientes %}{"id":"{{ c.id }}","value":"{{ c.nombre_fiscal|escapejs }}","nombre":"{{ c.nombre_fiscal|escapejs }}","rfc":"{{ c.rfc|escapejs }}","telefono":"{{ c.telefono|escapejs }}","contacto":"{{ c.contacto|escapejs }}","email":"{{ c.email_cfdi|escapejs }}","direccion":"{{ c.calle|escapejs }}{% if c.num_ext %} {{ c.num_ext|escapejs }}{% endif %}{% if c.num_int %} Int. {{ c.num_int|escapejs }}{% endif %}{% if c.colonia %}, {{ c.colonia|escapejs }}{% endif %}{% if c.localidad %}, {{ c.localidad|escapejs }}{% endif %}{% if c.municipio %}, {{ c.municipio|escapejs }}{% endif %}{% if c.estado %}, {{ c.estado|escapejs }}{% endif %}{% if c.cp %}, CP {{ c.cp|escapejs }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
+
+          <div class="col-lg-5 col-md-6">
+            <label class="sg-form-label" for="{{ form.cliente_direccion.id_for_label }}">Dirección para esta nota</label>
+            {{ form.cliente_direccion }}
+            {{ form.cliente_direccion.errors }}
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <label class="sg-form-label" for="{{ form.cliente_contacto.id_for_label }}">Contacto</label>
+            {{ form.cliente_contacto }}
+            {{ form.cliente_contacto.errors }}
+          </div>
+
+          <div class="col-12">
+            <label class="sg-form-label" for="{{ form.observaciones.id_for_label }}">Observaciones</label>
+            {{ form.observaciones }}
+            {{ form.observaciones.errors }}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sg-table-card mb-3">
+      <div class="table-responsive">
+        {{ formset.management_form }}
+        <table class="table table-sm align-middle mb-0 sg-table ventas-compact-table">
+          <thead class="table-light">
+            <tr>
+              <th>Producto</th>
+              <th class="text-end">Cantidad KG</th>
+              <th class="text-end">Cant. presentación</th>
+              <th>Presentación</th>
+              <th class="text-end">Precio KG</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for detalle_form in formset %}
+              <tr class="edit-existing-price-row" data-producto-id="{{ detalle_form.instance.producto_id }}" data-producto-nombre="{{ detalle_form.instance.producto|escape }}">
+                <td>
+                  {{ detalle_form.id }}
+                  <strong>{{ detalle_form.instance.producto }}</strong>
+                  <div class="small text-muted">Almacén: {{ detalle_form.instance.almacen|default:salida.almacen }}</div>
+                </td>
+                <td class="text-end">{{ detalle_form.instance.cantidad|floatformat:2 }}</td>
+                <td class="text-end">{{ detalle_form.instance.cantidad_presentacion|default:""|floatformat:2 }}</td>
+                <td>{{ detalle_form.instance.presentacion_nombre|default:"Kilos" }}</td>
+                <td class="text-end">
+                  {{ detalle_form.precio_unitario }}
+                  {{ detalle_form.precio_unitario.errors }}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="sg-empty-state">La nota no tiene productos.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mb-3 sg-form-card venta-pos-step">
+      <div class="card-body">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+          <div>
+            <h6 class="fw-bold mb-1">
+              <i class="bi bi-plus-circle me-2"></i>
+              Agregar productos a la nota
+            </h6>
+            <p class="sg-form-help mb-0">
+              Los productos agregados descuentan inventario usando el mismo proceso de la salida por venta.
+            </p>
+          </div>
+        </div>
+
+        <div class="d-none">
+          {{ nuevos_formset.management_form }}
+          <table>
+            <tbody id="editHiddenNewTbody"></tbody>
+          </table>
+          <template id="editHiddenNewRowTemplate">
+            <tr class="hidden-row">
+              <td>{{ nuevos_formset.empty_form.producto }}</td>
+              <td>{{ nuevos_formset.empty_form.cantidad }}</td>
+              <td>{{ nuevos_formset.empty_form.precio_unitario }}</td>
+              <td>{% if nuevos_formset.empty_form.DELETE %}{{ nuevos_formset.empty_form.DELETE }}{% endif %}</td>
+            </tr>
+          </template>
+          <div id="editAllocationsPayload"></div>
+        </div>
+
+        <div class="row g-3 align-items-start">
+          <div class="col-xl-7 col-lg-7">
+            <div class="step3-panel-card h-100">
+              <label class="sg-form-label" for="editProductoSearch">Buscar producto</label>
+              <div class="input-group input-group-lg mb-2">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" id="editProductoSearch" placeholder="Buscar producto..." autocomplete="off">
+              </div>
+              <div class="border rounded-3 overflow-hidden">
+                <div class="px-3 py-2 border-bottom bg-body-tertiary d-flex justify-content-between align-items-center">
+                  <div class="fw-semibold">Productos disponibles</div>
+                  <div class="small text-muted">Selecciona un producto para agregarlo a la nota.</div>
+                </div>
+                <div id="editProductosEmptyState" class="p-4 text-center text-muted d-none">
+                  <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                  No hay productos que coincidan con la búsqueda.
+                </div>
+                <div id="editProductosResults" class="list-group list-group-flush product-results product-results-desktop"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-5 col-lg-5">
+            <div class="step3-sidebar-stack">
+              <div class="step3-panel-card" id="editProductoSelectedBox">
+                <div class="small text-muted mb-1">Producto seleccionado</div>
+                <div class="fw-semibold fs-5" id="editSelectedProductoNombre">Ninguno</div>
+
+                <div class="row g-2 mt-3">
+                  <div class="col-md-6">
+                    <label class="sg-form-label" for="editProductoPresentacionSelect">Presentación</label>
+                    <select class="form-select" id="editProductoPresentacionSelect" disabled></select>
+                    <div class="form-text" id="editSelectedPresentacionInfo">—</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="sg-form-label" for="editProductoAlmacenSelect">Almacén</label>
+                    <select class="form-select" id="editProductoAlmacenSelect" disabled></select>
+                    <div class="form-text" id="editProductoAlmacenStockText">Disponible: —</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="sg-form-label" for="editProductoQty">Cantidad</label>
+                    <input type="number" min="0.01" step="0.01" class="form-control" id="editProductoQty" value="1" disabled>
+                    <div class="form-text" id="editProductoQtyHelp">Selecciona producto y almacén.</div>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="sg-form-label" for="editProductoPrecio">Precio por KG</label>
+                    <input type="number" min="0.01" step="0.01" class="form-control" id="editProductoPrecio" disabled>
+                  </div>
+                </div>
+
+                <button type="button" class="sg-btn-success sg-btn-md w-100 mt-3" id="editBtnAddProducto" disabled>
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Agregar producto
+                </button>
+              </div>
+
+              <div class="step3-panel-card mt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold mb-0"><i class="bi bi-basket me-2"></i>Productos nuevos</h6>
+                  <div class="small text-muted"><span id="editCartCount">0</span> prod. · <span id="editCartTotal">$0.00</span></div>
+                </div>
+                <div id="editCartEmpty" class="text-muted small border rounded-3 p-3 text-center">
+                  Aún no agregas productos nuevos.
+                </div>
+                <div id="editCartList" class="d-none"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+      <a href="{% url 'ventas_list' %}" class="sg-btn-secondary sg-btn-md">
+        Cancelar
+      </a>
+      <button type="submit" class="sg-btn-success sg-btn-md">
+        <i class="bi bi-check2-circle me-1"></i>
+        Guardar edición
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ productos_ui|json_script:"edit-productos-data" }}
+{{ productos_existentes_ids|json_script:"edit-productos-existentes-ids" }}
+<script>
+(function(){
+  const dataEl = document.getElementById('clientes-data-edit');
+  const search = document.getElementById('clienteSearchEdit');
+  const results = document.getElementById('clientesResultsEdit');
+  const clearBtn = document.getElementById('btnClearClienteEdit');
+  const selectedText = document.getElementById('clienteSelectedTextEdit');
+  const clienteRef = document.getElementById('id_cliente_ref');
+  const clienteNombre = document.getElementById('id_cliente');
+  const clienteDireccion = document.getElementById('id_cliente_direccion');
+  const clienteContacto = document.getElementById('id_cliente_contacto');
+  if (!dataEl || !search || !results || !clienteRef || !clienteNombre) return;
+
+  let clientes = [];
+  let matches = [];
+  let activeIndex = -1;
+  try { clientes = JSON.parse(dataEl.textContent || '[]'); } catch(e) { clientes = []; }
+
+  function norm(value){
+    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+
+  function escapeHtml(value){
+    return String(value || '').replace(/[&<>"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch];
+    });
+  }
+
+  function setActive(index){
+    activeIndex = index;
+    Array.from(results.querySelectorAll('.client-result-item')).forEach(function(el, idx){
+      el.classList.toggle('active', idx === activeIndex);
+    });
+  }
+
+  function selectCliente(cliente){
+    const nombre = cliente ? (cliente.value || cliente.nombre || '') : '';
+    clienteRef.value = cliente ? String(cliente.id || '') : '';
+    clienteNombre.value = nombre;
+    search.value = nombre;
+    if (selectedText) selectedText.textContent = nombre || 'Sin cliente seleccionado';
+    if (clienteDireccion) clienteDireccion.value = cliente ? (cliente.direccion || '') : '';
+    if (clienteContacto) clienteContacto.value = cliente ? (cliente.contacto || '') : '';
+    document.dispatchEvent(new CustomEvent('venta-edit-cliente-change', {
+      detail: {
+        clienteId: cliente ? String(cliente.id || '') : '',
+        clienteNombre: nombre
+      }
+    }));
+    results.classList.add('d-none');
+    search.classList.remove('is-invalid');
+  }
+
+  function render(query){
+    const q = norm(query);
+    results.innerHTML = '';
+    matches = [];
+    activeIndex = -1;
+    if (!q) { results.classList.add('d-none'); return; }
+    matches = clientes.filter(function(c){
+      return norm((c.nombre || '') + ' ' + (c.rfc || '') + ' ' + (c.telefono || '') + ' ' + (c.contacto || '') + ' ' + (c.email || '')).includes(q);
+    }).slice(0, 12);
+    if (!matches.length) {
+      results.innerHTML = '<div class="list-group-item text-muted small">Sin coincidencias. Selecciona un cliente existente o da de alta uno nuevo.</div>';
+      results.classList.remove('d-none');
+      return;
+    }
+    matches.forEach(function(c, idx){
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action client-result-item';
+      btn.innerHTML = '<div class="fw-semibold">' + escapeHtml(c.nombre) + '</div><div class="small">RFC: ' + escapeHtml(c.rfc || 'N/A') + (c.contacto ? ' · Contacto: ' + escapeHtml(c.contacto) : '') + (c.telefono ? ' · Tel: ' + escapeHtml(c.telefono) : '') + '</div>';
+      btn.addEventListener('click', function(){ selectCliente(c); });
+      results.appendChild(btn);
+    });
+    setActive(0);
+    results.classList.remove('d-none');
+  }
+
+  search.addEventListener('input', function(){
+    clienteRef.value = '';
+    clienteNombre.value = search.value.trim();
+    if (selectedText) selectedText.textContent = 'Sin cliente seleccionado';
+    render(search.value);
+  });
+
+  search.addEventListener('keydown', function(e){
+    if (results.classList.contains('d-none')) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setActive(activeIndex + 1 >= matches.length ? 0 : activeIndex + 1); }
+    if (e.key === 'ArrowUp') { e.preventDefault(); setActive(activeIndex <= 0 ? matches.length - 1 : activeIndex - 1); }
+    if (e.key === 'Enter') {
+      if (activeIndex >= 0 && matches[activeIndex]) { e.preventDefault(); selectCliente(matches[activeIndex]); }
+    }
+  });
+
+  clearBtn && clearBtn.addEventListener('click', function(){
+    selectCliente(null);
+    if (clienteDireccion) clienteDireccion.value = '';
+    if (clienteContacto) clienteContacto.value = '';
+    search.focus();
+  });
+
+  document.addEventListener('click', function(e){
+    if (!results.contains(e.target) && e.target !== search) results.classList.add('d-none');
+  });
+
+  const inicial = clientes.find(function(c){ return String(c.id) === String(clienteRef.value || ''); });
+  if (inicial && !search.value) selectCliente(inicial);
+})();
+</script>
+
+<script>
+(function(){
+  const dataEl = document.getElementById('edit-productos-data');
+  const existentesEl = document.getElementById('edit-productos-existentes-ids');
+  const form = document.querySelector('form[method="post"]');
+  const search = document.getElementById('editProductoSearch');
+  const results = document.getElementById('editProductosResults');
+  const emptyState = document.getElementById('editProductosEmptyState');
+  const selectedName = document.getElementById('editSelectedProductoNombre');
+  const presentacionSelect = document.getElementById('editProductoPresentacionSelect');
+  const presentacionInfo = document.getElementById('editSelectedPresentacionInfo');
+  const almacenSelect = document.getElementById('editProductoAlmacenSelect');
+  const almacenStockText = document.getElementById('editProductoAlmacenStockText');
+  const qtyInput = document.getElementById('editProductoQty');
+  const qtyHelp = document.getElementById('editProductoQtyHelp');
+  const precioInput = document.getElementById('editProductoPrecio');
+  const btnAdd = document.getElementById('editBtnAddProducto');
+  const cartList = document.getElementById('editCartList');
+  const cartEmpty = document.getElementById('editCartEmpty');
+  const cartCount = document.getElementById('editCartCount');
+  const cartTotal = document.getElementById('editCartTotal');
+  const hiddenTbody = document.getElementById('editHiddenNewTbody');
+  const hiddenTpl = document.getElementById('editHiddenNewRowTemplate');
+  const allocationsPayload = document.getElementById('editAllocationsPayload');
+  const totalForms = document.querySelector('input[name="nuevos-TOTAL_FORMS"]');
+  const initialForms = document.querySelector('input[name="nuevos-INITIAL_FORMS"]');
+  const clienteRef = document.getElementById('id_cliente_ref');
+
+  if (!dataEl || !form || !search || !results || !hiddenTpl || !totalForms) return;
+
+  let productos = [];
+  let productosExistentesIds = new Set();
+  let filtered = [];
+  let activeIndex = -1;
+  let selectedProducto = null;
+  const cart = new Map();
+
+  try { productos = JSON.parse(dataEl.textContent || '[]'); } catch(e) { productos = []; }
+  try {
+    productosExistentesIds = new Set((JSON.parse(existentesEl ? existentesEl.textContent || '[]' : '[]') || []).map(String));
+  } catch(e) {
+    productosExistentesIds = new Set();
+  }
+
+  function norm(value){
+    return String(value || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  }
+  function escapeHtml(value){
+    return String(value || '').replace(/[&<>"']/g, function(ch){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[ch];
+    });
+  }
+  function decimal(value){
+    const n = Number(value || 0);
+    return Number.isFinite(n) ? n : 0;
+  }
+  function money(value){
+    return decimal(value).toLocaleString('es-MX', {style:'currency', currency:'MXN', minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function numberText(value, maxDecimals){
+    return decimal(value).toLocaleString('es-MX', {minimumFractionDigits:0, maximumFractionDigits:maxDecimals || 2});
+  }
+  function getPresentaciones(producto){
+    return producto && Array.isArray(producto.conversiones) ? producto.conversiones : [];
+  }
+  function selectedPresentacion(){
+    if (!selectedProducto || !presentacionSelect) return null;
+    return getPresentaciones(selectedProducto).find(function(p){ return String(p.id) === String(presentacionSelect.value); }) || null;
+  }
+  function getCartKey(productoId, presentacionId){
+    return String(productoId);
+  }
+  function getItems(){
+    return Array.from(cart.values()).sort(function(a,b){ return String(a.nombre).localeCompare(String(b.nombre), 'es'); });
+  }
+  function getTotal(){
+    return getItems().reduce(function(acc, item){ return acc + decimal(item.qty_kg) * decimal(item.precio); }, 0);
+  }
+  function usadoEnCarrito(productoId, almacenId){
+    let usado = 0;
+    cart.forEach(function(item){
+      if (String(item.producto_id) !== String(productoId)) return;
+      (item.allocations || []).forEach(function(a){
+        if (String(a.almacen_id) === String(almacenId)) usado += decimal(a.qty_kg);
+      });
+    });
+    return usado;
+  }
+  function disponibleKg(producto, almacenId){
+    const almacen = (producto.almacenes || []).find(function(a){ return String(a.id) === String(almacenId); });
+    if (!almacen) return 0;
+    return Math.max(0, decimal(almacen.stock) - usadoEnCarrito(producto.id, almacenId));
+  }
+  function buildTextoBusqueda(p){
+    return norm([p.nombre || '', p.codigo || '', p.clave_busqueda || ''].join(' '));
+  }
+  function getClienteIdActual(){
+    return clienteRef ? String(clienteRef.value || '') : '';
+  }
+  function getProductoById(productoId){
+    return productos.find(function(p){ return String(p.id) === String(productoId); }) || null;
+  }
+  function resolverPrecioProductoCliente(producto, clienteId){
+    const precioCliente = producto && producto.precios_clientes && clienteId
+      ? producto.precios_clientes[String(clienteId)]
+      : null;
+
+    if (precioCliente && precioCliente.vigente && decimal(precioCliente.precio) > 0) {
+      return {
+        precio: precioCliente.precio,
+        origen: 'cliente'
+      };
+    }
+
+    return {
+      precio: producto ? (producto.precio || 0) : 0,
+      origen: 'producto'
+    };
+  }
+  function aplicarPrecioProductoClienteAInput(input, producto, clienteId){
+    if (!input || !producto) return;
+    const resuelto = resolverPrecioProductoCliente(producto, clienteId);
+    input.value = String(resuelto.precio || 0);
+    input.dataset.precioOrigen = resuelto.origen;
+  }
+  function aplicarPreciosPorCliente(clienteId){
+    const clienteKey = String(clienteId || '');
+
+    document.querySelectorAll('.edit-existing-price-row').forEach(function(row){
+      const producto = getProductoById(row.dataset.productoId);
+      const input = row.querySelector('input[name$="-precio_unitario"]');
+      aplicarPrecioProductoClienteAInput(input, producto, clienteKey);
+    });
+
+    if (selectedProducto && precioInput) {
+      aplicarPrecioProductoClienteAInput(precioInput, selectedProducto, clienteKey);
+    }
+
+    let carritoActualizado = false;
+    cart.forEach(function(item){
+      const producto = getProductoById(item.producto_id);
+      if (!producto) return;
+      const resuelto = resolverPrecioProductoCliente(producto, clienteKey);
+      item.precio = decimal(resuelto.precio);
+      carritoActualizado = true;
+    });
+
+    if (carritoActualizado) {
+      updateCart();
+    }
+  }
+  function productoYaExisteEnNota(productoId){
+    return productosExistentesIds.has(String(productoId));
+  }
+  function productoYaEstaEnCarrito(productoId){
+    return getItems().some(function(item){ return String(item.producto_id) === String(productoId); });
+  }
+  function productoNoDisponibleParaAgregar(p){
+    return productoYaExisteEnNota(p.id) || productoYaEstaEnCarrito(p.id);
+  }
+
+  function renderProductos(){
+    const q = norm(search.value || '');
+    results.innerHTML = '';
+    filtered = productos.filter(function(p){
+      if (productoNoDisponibleParaAgregar(p)) return false;
+      return !q || buildTextoBusqueda(p).includes(q);
+    }).slice(0, 60);
+    activeIndex = filtered.length ? 0 : -1;
+    if (emptyState) emptyState.classList.toggle('d-none', filtered.length > 0);
+
+    filtered.forEach(function(p, idx){
+      const almacenesDisponibles = (p.almacenes || []).filter(function(a){ return disponibleKg(p, a.id) > 0; }).length;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'list-group-item list-group-item-action product-item';
+      if (idx === activeIndex) btn.classList.add('pos-focus');
+      if (selectedProducto && String(selectedProducto.id) === String(p.id)) btn.classList.add('active');
+      btn.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start gap-3">
+          <div class="text-start">
+            <div class="fw-semibold">${escapeHtml(p.nombre)}</div>
+            <div class="small text-muted">Stock total: <span class="product-stock-${decimal(p.stock) > 0 ? 'ok' : 'low'}">${escapeHtml(numberText(p.stock, 2))} kg</span> · Almacenes disponibles: <span class="fw-semibold">${almacenesDisponibles}</span></div>
+          </div>
+          <div class="text-end small text-muted">${money(p.precio || 0)}</div>
+        </div>`;
+      btn.addEventListener('click', function(){ selectProducto(p); });
+      results.appendChild(btn);
+    });
+  }
+
+  function selectProducto(producto){
+    if (producto && productoNoDisponibleParaAgregar(producto)) {
+      selectedProducto = null;
+      if (selectedName) selectedName.textContent = 'Ninguno';
+      return;
+    }
+    selectedProducto = producto;
+    if (selectedName) selectedName.textContent = producto ? producto.nombre : 'Ninguno';
+    presentacionSelect.innerHTML = '';
+    almacenSelect.innerHTML = '';
+
+    if (!producto){
+      [presentacionSelect, almacenSelect, qtyInput, precioInput, btnAdd].forEach(function(el){ if (el) el.disabled = true; });
+      return;
+    }
+
+    getPresentaciones(producto).forEach(function(p){
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.equivalencia_texto || p.unidad_origen || 'Kilos';
+      presentacionSelect.appendChild(opt);
+    });
+
+    (producto.almacenes || []).forEach(function(a){
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = (a.label || ((a.codigo || '') + ' - ' + (a.nombre || '')).trim()) + ' · Disponible: ' + numberText(disponibleKg(producto, a.id), 2) + ' kg';
+      opt.disabled = disponibleKg(producto, a.id) <= 0;
+      almacenSelect.appendChild(opt);
+    });
+
+    aplicarPrecioProductoClienteAInput(precioInput, producto, getClienteIdActual());
+    qtyInput.value = '1';
+    [presentacionSelect, almacenSelect, qtyInput, precioInput, btnAdd].forEach(function(el){ if (el) el.disabled = false; });
+    refreshSelectedInfo();
+    renderProductos();
+  }
+
+  function refreshSelectedInfo(){
+    const pres = selectedPresentacion();
+    const factor = pres ? decimal(pres.factor_conversion || 1) : 1;
+    if (presentacionInfo) presentacionInfo.textContent = pres ? (pres.equivalencia_texto || ('Descuenta ' + numberText(factor, 2) + ' kg')) : '—';
+    const aid = almacenSelect ? almacenSelect.value : '';
+    const disp = selectedProducto && aid ? disponibleKg(selectedProducto, aid) : 0;
+    if (almacenStockText) almacenStockText.textContent = selectedProducto && aid ? ('Disponible: ' + numberText(disp, 2) + ' kg') : 'Disponible: —';
+    const qty = decimal(qtyInput ? qtyInput.value : 0);
+    const kg = qty * factor;
+    if (qtyHelp) qtyHelp.textContent = pres ? ('Equivale a ' + numberText(kg, 2) + ' kg') : 'Selecciona presentación.';
+    if (btnAdd) btnAdd.disabled = !selectedProducto || !pres || !aid || !(qty > 0) || !(kg > 0) || kg > disp || !(decimal(precioInput.value) > 0);
+  }
+
+  function addProducto(){
+    if (!selectedProducto) return;
+    if (productoNoDisponibleParaAgregar(selectedProducto)) {
+      alert('Este producto ya existe en la nota o ya fue agregado en esta edición.');
+      selectedProducto = null;
+      if (selectedName) selectedName.textContent = 'Ninguno';
+      renderProductos();
+      return;
+    }
+    const pres = selectedPresentacion();
+    const aid = almacenSelect.value;
+    const almacen = (selectedProducto.almacenes || []).find(function(a){ return String(a.id) === String(aid); });
+    const qtyPresentacion = decimal(qtyInput.value);
+    const factor = decimal(pres ? pres.factor_conversion : 1);
+    const qtyKg = qtyPresentacion * factor;
+    const precio = decimal(precioInput.value);
+    const disp = disponibleKg(selectedProducto, aid);
+
+    if (!pres || !almacen || !(qtyPresentacion > 0) || !(qtyKg > 0) || qtyKg > disp || !(precio > 0)){
+      refreshSelectedInfo();
+      return;
+    }
+
+    const key = getCartKey(selectedProducto.id, pres.id);
+    let item = cart.get(key);
+    if (!item){
+      item = {
+        id: key,
+        producto_id: String(selectedProducto.id),
+        nombre: selectedProducto.nombre,
+        metrica_default: selectedProducto.metrica_default || 'kg',
+        precio: precio,
+        qty_presentacion: 0,
+        qty_kg: 0,
+        factor_conversion: factor,
+        presentacion_id: String(pres.id),
+        presentacion_nombre: pres.unidad_origen || selectedProducto.metrica_default || 'kg',
+        equivalencia_texto: pres.equivalencia_texto || '',
+        allocations: []
+      };
+      cart.set(key, item);
+    }
+
+    item.precio = precio;
+    const existing = item.allocations.find(function(a){ return String(a.almacen_id) === String(aid); });
+    if (existing){
+      existing.qty_presentacion += qtyPresentacion;
+      existing.qty_kg += qtyKg;
+    } else {
+      item.allocations.push({
+        almacen_id: String(almacen.id),
+        almacen_nombre: almacen.label || ((almacen.codigo || '') + ' - ' + (almacen.nombre || '')).trim(),
+        qty_presentacion: qtyPresentacion,
+        qty_kg: qtyKg
+      });
+    }
+    item.qty_presentacion = item.allocations.reduce(function(acc, a){ return acc + decimal(a.qty_presentacion); }, 0);
+    item.qty_kg = item.allocations.reduce(function(acc, a){ return acc + decimal(a.qty_kg); }, 0);
+
+    qtyInput.value = '1';
+    updateCart();
+    refreshSelectedInfo();
+    renderProductos();
+    search.focus();
+  }
+
+  function removeItem(key){
+    cart.delete(key);
+    updateCart();
+    refreshSelectedInfo();
+    renderProductos();
+  }
+
+  function renderAllocationChips(item){
+    return (item.allocations || []).map(function(a){
+      return `<span class="allocation-chip">${escapeHtml(a.almacen_nombre)} · ${escapeHtml(numberText(a.qty_kg, 2))} kg</span>`;
+    }).join('');
+  }
+
+  function updateCart(){
+    const items = getItems();
+    cartCount.textContent = String(items.length);
+    cartTotal.textContent = money(getTotal());
+    cartEmpty.classList.toggle('d-none', items.length > 0);
+    cartList.classList.toggle('d-none', items.length === 0);
+    cartList.innerHTML = '';
+
+    items.forEach(function(item){
+      const el = document.createElement('div');
+      el.className = 'cart-item';
+      el.innerHTML = `
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="flex-grow-1">
+            <div class="cart-name">${escapeHtml(item.nombre)}</div>
+            <div class="cart-meta">${escapeHtml(numberText(item.qty_kg, 2))} kg${decimal(item.qty_presentacion) !== decimal(item.qty_kg) ? ' · Presentación: <span class="fw-semibold">' + escapeHtml(numberText(item.qty_presentacion, 2)) + '</span>' : ''} · ${money(item.precio)}</div>
+            <div class="d-flex flex-wrap gap-2 mt-2 allocations-wrap">${renderAllocationChips(item)}</div>
+          </div>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-remove="${escapeHtml(item.id)}" title="Quitar producto"><i class="bi bi-trash"></i></button>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+          <span class="small text-muted">Subtotal</span>
+          <span class="fw-bold item-subtotal">${money(decimal(item.qty_kg) * decimal(item.precio))}</span>
+        </div>`;
+      cartList.appendChild(el);
+    });
+    syncHiddenPayload();
+  }
+
+  function syncHiddenPayload(){
+    hiddenTbody.innerHTML = '';
+    allocationsPayload.innerHTML = '';
+    const items = getItems();
+    totalForms.value = String(items.length);
+    if (initialForms) initialForms.value = '0';
+
+    items.forEach(function(item, idx){
+      const node = hiddenTpl.content.cloneNode(true);
+      const row = node.querySelector('tr');
+      row.querySelectorAll('input, select, textarea').forEach(function(el){
+        const name = el.getAttribute('name');
+        const id = el.getAttribute('id');
+        if (name) el.setAttribute('name', name.replaceAll('__prefix__', idx));
+        if (id) el.setAttribute('id', id.replaceAll('__prefix__', idx));
+      });
+      row.querySelector('select[name$="-producto"]').value = item.producto_id;
+      row.querySelector('input[name$="-cantidad"]').value = String(item.qty_kg);
+      row.querySelector('input[name$="-precio_unitario"]').value = String(item.precio);
+      hiddenTbody.appendChild(node);
+
+      [
+        ['detalle_producto_id', item.producto_id],
+        ['detalle_presentacion_id', item.presentacion_id],
+        ['detalle_cantidad_presentacion', item.qty_presentacion],
+        ['detalle_factor_conversion', item.factor_conversion],
+        ['detalle_presentacion_nombre', item.presentacion_nombre],
+        ['detalle_metrica_default', item.metrica_default],
+        ['detalle_equivalencia_texto', item.equivalencia_texto]
+      ].forEach(function(pair){
+        const input = document.createElement('input');
+        input.type = 'hidden'; input.name = pair[0]; input.value = pair[1];
+        allocationsPayload.appendChild(input);
+      });
+
+      (item.allocations || []).forEach(function(a){
+        [['linea_item_index', idx], ['linea_producto_id', item.producto_id], ['linea_almacen_id', a.almacen_id], ['linea_cantidad', a.qty_kg]].forEach(function(pair){
+          const input = document.createElement('input');
+          input.type = 'hidden'; input.name = pair[0]; input.value = pair[1];
+          allocationsPayload.appendChild(input);
+        });
+      });
+    });
+  }
+
+  function move(delta){
+    if (!filtered.length) return;
+    activeIndex += delta;
+    if (activeIndex < 0) activeIndex = filtered.length - 1;
+    if (activeIndex >= filtered.length) activeIndex = 0;
+    Array.from(results.querySelectorAll('.product-item')).forEach(function(el, idx){ el.classList.toggle('pos-focus', idx === activeIndex); });
+  }
+
+  search.addEventListener('input', renderProductos);
+  search.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowDown'){ e.preventDefault(); move(1); }
+    if (e.key === 'ArrowUp'){ e.preventDefault(); move(-1); }
+    if (e.key === 'Enter'){
+      e.preventDefault();
+      if (activeIndex >= 0 && filtered[activeIndex]) selectProducto(filtered[activeIndex]);
+    }
+  });
+  [presentacionSelect, almacenSelect, qtyInput, precioInput].forEach(function(el){
+    if (!el) return;
+    el.addEventListener('input', refreshSelectedInfo);
+    el.addEventListener('change', refreshSelectedInfo);
+  });
+  btnAdd && btnAdd.addEventListener('click', addProducto);
+  cartList && cartList.addEventListener('click', function(e){
+    const btn = e.target.closest('[data-remove]');
+    if (btn) removeItem(btn.dataset.remove);
+  });
+  document.addEventListener('venta-edit-cliente-change', function(e){
+    aplicarPreciosPorCliente(e.detail ? e.detail.clienteId : getClienteIdActual());
+    refreshSelectedInfo();
+  });
+  form.addEventListener('submit', syncHiddenPayload);
+
+  renderProductos();
+  updateCart();
+})();
+</script>
+{% endblock %}

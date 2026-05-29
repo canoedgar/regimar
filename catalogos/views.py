@@ -1,6 +1,6 @@
 # catalogos/views.py
 from openpyxl import load_workbook
-from urllib.parse import urlencode
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from decimal import Decimal, InvalidOperation
 
@@ -509,6 +509,20 @@ def _get_safe_next_url(request, default_url_name="clientes_list"):
 
     return reverse(default_url_name)
 
+
+def _add_cliente_to_next_url(next_url, cliente_id):
+    """Devuelve al flujo origen conservando querystring y marcando el cliente recién creado."""
+    parts = urlsplit(next_url)
+    query_params = dict(parse_qsl(parts.query, keep_blank_values=True))
+    query_params["cliente_id"] = str(cliente_id)
+    return urlunsplit((
+        parts.scheme,
+        parts.netloc,
+        parts.path,
+        urlencode(query_params),
+        parts.fragment,
+    ))
+
 def clientes_list(request):
     q = (request.GET.get("q") or "").strip()
 
@@ -535,9 +549,9 @@ def cliente_create(request):
         form = ClienteForm(request.POST)
         if form.is_valid():
             try:
-                form.save()
+                cliente = form.save()
                 messages.success(request, "Cliente creado correctamente.")
-                return redirect(next_url)
+                return redirect(_add_cliente_to_next_url(next_url, cliente.id))
             except IntegrityError:
                 form.add_error("rfc", "Ya existe un cliente con ese RFC.")
     else:

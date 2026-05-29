@@ -122,6 +122,7 @@ def build_productos_ui():
             "stock": 0.0,
             "precio": float(getattr(producto, "precio", 0) or 0),
             "precio_minimo": float(getattr(producto, "precio_minimo", 0) or 0),
+            "maneja_peso_variable": bool(getattr(producto, "maneja_peso_variable", False)),
             "costo_promedio": float(getattr(producto, "costo_promedio", 0) or 0),
             "ultimo_costo_compra": float(getattr(producto, "ultimo_costo_compra", 0) or 0),
             "codigo": getattr(producto, "codigo", "") or "",

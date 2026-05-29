@@ -1,0 +1,93 @@
+{% load static formatos %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ cotizacion.folio }} - Cotización</title>
+  <style>
+    @page { size: letter; margin: 12mm; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; color: #1f2937; font-size: 12px; margin: 0; background: #f3f4f6; }
+    .sheet { max-width: 780px; min-height: 960px; margin: 12px auto; background: #fff; padding: 24px; box-shadow: 0 10px 30px rgba(15, 23, 42, .12); }
+    .top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 2px solid #1d4ed8; padding-bottom: 12px; }
+    .brand { display: flex; gap: 12px; align-items: center; }
+    .logo { width: 86px; max-height: 70px; object-fit: contain; }
+    h1 { margin: 0; font-size: 25px; letter-spacing: 2px; color: #1d4ed8; }
+    h2 { margin: 0; font-size: 16px; }
+    .muted { color: #6b7280; white-space: pre-line; }
+    .meta { text-align: right; line-height: 1.6; }
+    .intro { margin: 22px 0 16px; line-height: 1.5; }
+    .info { width: 100%; border-collapse: collapse; margin-bottom: 18px; }
+    .info th { text-align: left; width: 90px; color: #374151; padding: 5px; vertical-align: top; }
+    .info td { border-bottom: 1px solid #e5e7eb; padding: 5px; }
+    .prices { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .prices th { background: #1d4ed8; color: white; text-align: left; padding: 8px; }
+    .prices td { padding: 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    .price, .qty, .amount { text-align: right; white-space: nowrap; }
+    .total-row td { border-top: 2px solid #1d4ed8; font-weight: bold; }
+    .note { margin-top: 18px; font-size: 11px; color: #374151; line-height: 1.5; }
+    .signature { margin-top: 50px; width: 260px; text-align: center; }
+    .line { border-top: 1px solid #111827; padding-top: 6px; }
+    .actions { max-width: 780px; margin: 14px auto; text-align: right; }
+    .actions button { padding: 8px 12px; border: 0; background: #1d4ed8; color: white; border-radius: 6px; cursor: pointer; }
+    @media print { .actions { display: none; } body { margin: 0; background: #fff; } .sheet { margin: 0; box-shadow: none; min-height: auto; } }
+  </style>
+</head>
+<body>
+  <div class="actions"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+  <div class="sheet">
+    <div class="top">
+      <div class="brand">
+        <img src="{% static 'resources/logo.png' %}" class="logo" alt="CPC Alimentos">
+        <div>
+          <h2>CPC Alimentos</h2>
+          <div class="muted">Jaime Parada Villarreal
+Cerrada Coba 3612 Cp. 21376
+Mayakhan Residencial Mexicali B.C
+Teléfono: 686 162 7239
+Email: cpcalimentosbc@gmail.com</div>
+        </div>
+      </div>
+      <div class="meta">
+        <h1>COTIZACIÓN</h1>
+        <div><strong>Folio:</strong> {{ cotizacion.folio }}</div>
+        <div><strong>Fecha:</strong> {{ cotizacion.fecha|date:"d/m/Y" }}</div>
+        <div><strong>Vigencia:</strong> {{ cotizacion.fecha_vigencia|date:"d/m/Y" }}</div>
+      </div>
+    </div>
+
+    <p class="intro">Atendiendo a su amable solicitud enviamos la cotización correspondiente quedando a sus órdenes.</p>
+
+    <table class="info">
+      <tr><th>Cliente</th><td>{{ cotizacion.nombre_cliente }}</td></tr>
+      <tr><th>Dirección</th><td>{{ cotizacion.direccion_cliente|default:"—" }}</td></tr>
+      <tr><th>Contacto</th><td>{{ cotizacion.contacto_cliente|default:"—" }}</td></tr>
+    </table>
+
+    <table class="prices">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="price">Precio de venta</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in cotizacion.detalles.all %}
+        <tr>
+          <td>{{ d.producto.nombre }}</td>
+          <td class="price">$ {{ d.precio_propuesto|precio_entero }} / {{ d.unidad_precio|default:"KG" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if cotizacion.observaciones %}
+      <div class="note"><strong>Observaciones:</strong> {{ cotizacion.observaciones }}</div>
+    {% endif %}
+    <div class="note">Los precios indicados respetan la vigencia de esta cotización. La presente cotización no representa apartado de producto ni compromiso de inventario.</div>
+
+    <div class="signature"><div class="line">Recibe: Nombre y firma</div></div>
+  </div>
+</body>
+</html>

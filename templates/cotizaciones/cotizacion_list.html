@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static formatos %}
+
+{% block title %}Cotizaciones | Sistema de Gestión{% endblock %}
+{% block active_cotizaciones %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cotizaciones.css' %}">{% endblock %}
+{% block page_title %}Cotizaciones{% endblock %}
+
+{% block content %}
+<div class="sg-page-card card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="sg-page-header d-flex flex-wrap gap-3 justify-content-between align-items-start mb-3">
+      <div>
+        <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-text me-2"></i>Cotizaciones</h5>
+        <p class="sg-form-help mb-0">Administra cotizaciones, aprobación de precios y vigencias.</p>
+      </div>
+      <a href="{% url 'cotizaciones:cotizacion_create' %}" class="sg-btn-primary sg-btn-md">
+        <i class="bi bi-plus-circle me-1"></i>Nueva cotización
+      </a>
+    </div>
+
+    <div class="table-responsive cotizaciones-list-responsive d-none d-md-block">
+      <table class="table align-middle sg-table mb-0 cotizaciones-list-table">
+        <thead>
+          <tr>
+            <th>Folio</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Vigencia</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cotizaciones %}
+            <tr>
+              <td class="fw-semibold">{{ c.folio }}</td>
+              <td>{{ c.nombre_cliente }}</td>
+              <td>{{ c.fecha|date:'d/m/Y' }}</td>
+              <td>{{ c.fecha_vigencia|date:'d/m/Y' }}</td>
+              <td>
+                <span class="badge {% if c.estatus == 'APROBADA' %}text-bg-success{% elif c.estatus == 'CANCELADA' %}text-bg-secondary{% elif c.estatus == 'VENCIDA' %}text-bg-danger{% else %}text-bg-warning{% endif %}">
+                  {{ c.get_estatus_display }}
+                </span>
+              </td>
+              <td class="text-end">
+                <a class="sg-btn-outline sg-btn-sm" href="{% url 'cotizaciones:cotizacion_detail' c.id %}">
+                  <i class="bi bi-eye me-1"></i>Ver
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">No hay cotizaciones registradas.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cotizaciones-mobile-list d-md-none">
+      {% for c in cotizaciones %}
+        <article class="cotizacion-mobile-card">
+          <div class="cotizacion-mobile-card__header">
+            <div>
+              <span class="cotizacion-mobile-card__label">Folio</span>
+              <strong class="cotizacion-mobile-card__folio">{{ c.folio }}</strong>
+            </div>
+            <span class="badge {% if c.estatus == 'APROBADA' %}text-bg-success{% elif c.estatus == 'CANCELADA' %}text-bg-secondary{% elif c.estatus == 'VENCIDA' %}text-bg-danger{% else %}text-bg-warning{% endif %}">
+              {{ c.get_estatus_display }}
+            </span>
+          </div>
+
+          <div class="cotizacion-mobile-card__client">
+            <span class="cotizacion-mobile-card__label">Cliente</span>
+            <strong>{{ c.nombre_cliente }}</strong>
+          </div>
+
+          <div class="cotizacion-mobile-card__grid">
+            <div>
+              <span class="cotizacion-mobile-card__label">Fecha</span>
+              <strong>{{ c.fecha|date:'d/m/Y' }}</strong>
+            </div>
+            <div>
+              <span class="cotizacion-mobile-card__label">Vigencia</span>
+              <strong>{{ c.fecha_vigencia|date:'d/m/Y' }}</strong>
+            </div>
+          </div>
+
+          <a class="sg-btn-outline sg-btn-sm cotizacion-mobile-card__action" href="{% url 'cotizaciones:cotizacion_detail' c.id %}">
+            <i class="bi bi-eye me-1"></i>Ver cotización
+          </a>
+        </article>
+      {% empty %}
+        <div class="cot-empty-state">No hay cotizaciones registradas.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

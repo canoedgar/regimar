@@ -67,24 +67,30 @@
 }
 
 .login-logo-wrap {
-  width: 210px;
-  max-width: 72%;
-  min-height: 120px;
+  width: 220px;
+  max-width: 78%;
+  min-height: 126px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 2rem;
+  margin: 0 auto 2rem;
+  padding: 1rem;
   border-radius: 1.25rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 251, 0.94));
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow:
+    0 1rem 2rem rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(15, 61, 145, 0.08);
 }
 
 .login-logo {
-  width: 170px;
-  max-width: 82%;
-  max-height: 110px;
+  width: 172px;
+  max-width: 100%;
+  max-height: 104px;
   object-fit: contain;
-  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.25));
+  display: block;
+  filter: drop-shadow(0 8px 14px rgba(15, 23, 42, 0.18));
 }
 
 .login-eyebrow {
@@ -271,6 +277,15 @@ html[data-theme="dark"] .login-form-icon {
   color: var(--color-primary-soft);
 }
 
+html[data-theme="dark"] .login-logo-wrap {
+  background:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.94));
+  border-color: rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 1rem 2rem rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(15, 61, 145, 0.12);
+}
+
 @media (max-width: 767.98px) {
   .login-page {
     place-items: center;
@@ -289,13 +304,14 @@ html[data-theme="dark"] .login-form-icon {
   }
 
   .login-logo-wrap {
-    width: 150px;
-    min-height: 86px;
-    margin-bottom: 1rem;
+    width: 160px;
+    min-height: 92px;
+    margin: 0 auto 1rem;
+    padding: 0.75rem;
   }
 
   .login-logo {
-    width: 120px;
+    width: 124px;
     max-height: 76px;
   }
 

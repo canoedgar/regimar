@@ -116,6 +116,12 @@ def limpiar_inventario():
         if campo_existe(Producto, "fecha_ultima_compra"):
             campos_producto["fecha_ultima_compra"] = None
 
+        if campo_existe(Producto, "precio"):            
+            campos_producto["precio"] = Decimal("0")
+
+        if campo_existe(Producto, "precio_minimo"):            
+            campos_producto["precio_minimo"] = Decimal("0")
+
         Producto.objects.all().update(**campos_producto)
         print("Stock y costos de Producto reiniciados.")
 

@@ -359,12 +359,13 @@ class SalidaInventarioDetalleForm(forms.ModelForm):
 class SalidaVentaForm(forms.ModelForm):
     class Meta:
         model = SalidaInventario
-        fields = ["folio", "fecha", "cliente_ref", "forma_pago_venta", "cliente", "cliente_direccion", "cliente_contacto", "documento_referencia", "motivo", "observaciones"]
+        fields = ["folio", "fecha", "cliente_ref", "forma_pago_venta", "estado_pago", "cliente", "cliente_direccion", "cliente_contacto", "documento_referencia", "motivo", "observaciones"]
         widgets = {
             "folio": forms.TextInput(attrs={"class": "form-control"}),
             "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
             "cliente_ref": forms.Select(attrs={"class": "form-select"}),
             "forma_pago_venta": forms.Select(attrs={"class": "form-select"}),
+            "estado_pago": forms.Select(attrs={"class": "form-select"}),
             "cliente": forms.TextInput(attrs={"class": "form-control"}),
             "cliente_direccion": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "cliente_contacto": forms.TextInput(attrs={"class": "form-control"}),
@@ -385,6 +386,11 @@ class SalidaVentaForm(forms.ModelForm):
         if not self.is_bound and "forma_pago_venta" not in self.initial:
             self.initial["forma_pago_venta"] = ""
 
+        self.fields["estado_pago"].required = True
+        self.fields["estado_pago"].choices = [("", "-- Selecciona --")] + list(SalidaInventario.ESTADO_PAGO_CHOICES)
+        if not self.is_bound and "estado_pago" not in self.initial:
+            self.initial["estado_pago"] = SalidaInventario.ESTADO_PAGO_PENDIENTE
+
         self.instance.tipo = SalidaInventario.TIPO_VENTA
 
     def clean(self):
@@ -396,6 +402,9 @@ class SalidaVentaForm(forms.ModelForm):
         if not cleaned.get("forma_pago_venta"):
             self.add_error("forma_pago_venta", "Selecciona la forma de pago.")
 
+        if not cleaned.get("estado_pago"):
+            self.add_error("estado_pago", "Selecciona el estado de pago.")
+
         return cleaned
 
     def save(self, commit=True):
@@ -406,3 +415,67 @@ class SalidaVentaForm(forms.ModelForm):
             obj.save()
         return obj
 
+
+
+class SalidaVentaEdicionForm(forms.ModelForm):
+    """
+    Edición administrativa de nota de venta.
+    No incluye campos que cambien inventario: productos, cantidades, presentaciones o almacenes.
+    """
+
+    class Meta:
+        model = SalidaInventario
+        fields = [
+            "fecha",
+            "cliente_ref",
+            "forma_pago_venta",
+            "estado_pago",
+            "cliente",
+            "cliente_direccion",
+            "cliente_contacto",
+            "observaciones",
+        ]
+        widgets = {
+            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "cliente_ref": forms.Select(attrs={"class": "form-select"}),
+            "forma_pago_venta": forms.Select(attrs={"class": "form-select"}),
+            "estado_pago": forms.Select(attrs={"class": "form-select"}),
+            "cliente": forms.TextInput(attrs={"class": "form-control"}),
+            "cliente_direccion": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            "cliente_contacto": forms.TextInput(attrs={"class": "form-control"}),
+            "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+        self.fields["cliente_ref"].queryset = Cliente.objects.filter(activo=True).order_by("nombre_fiscal", "nombre_comercial")
+        self.fields["cliente_ref"].required = True
+        self.fields["cliente_ref"].empty_label = "-- Selecciona un cliente --"
+        self.fields["forma_pago_venta"].required = True
+        self.fields["estado_pago"].required = True
+
+    def clean(self):
+        cleaned = super().clean()
+        if not cleaned.get("cliente_ref"):
+            self.add_error("cliente_ref", "Selecciona un cliente del catálogo.")
+        if not cleaned.get("forma_pago_venta"):
+            self.add_error("forma_pago_venta", "Selecciona la forma de pago.")
+        if not cleaned.get("estado_pago"):
+            self.add_error("estado_pago", "Selecciona el estado de pago.")
+        return cleaned
+
+
+class SalidaVentaDetallePrecioForm(forms.ModelForm):
+    class Meta:
+        model = SalidaInventarioDetalle
+        fields = ["precio_unitario"]
+        widgets = {
+            "precio_unitario": forms.NumberInput(attrs={"class": "form-control form-control-sm text-end", "step": "0.01", "min": "0.01"}),
+        }
+
+    def clean_precio_unitario(self):
+        precio = self.cleaned_data.get("precio_unitario")
+        if precio is None or precio <= 0:
+            raise forms.ValidationError("El precio debe ser mayor a 0.")
+        return precio

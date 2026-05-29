@@ -353,6 +353,14 @@ class ClienteForm(forms.ModelForm):
             "activo": forms.CheckboxInput(attrs={"class": "form-check-input"}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if not self.instance.pk:
+            self.fields["municipio"].initial = "Mexicali"
+            self.fields["estado"].initial = "B.C."
+            self.fields["pais"].initial = "México"
+
     def clean_rfc(self):
         rfc = (self.cleaned_data.get("rfc") or "").strip().upper()
         return rfc or None
@@ -377,7 +385,6 @@ class ClienteForm(forms.ModelForm):
         if not cleaned.get("nombre_fiscal"):
             cleaned["nombre_fiscal"] = cleaned.get("nombre_comercial") or "PÚBLICO GENERAL"
         return cleaned
-
 
 # --- Fin Clientes ---
 

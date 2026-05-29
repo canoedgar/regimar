@@ -202,6 +202,7 @@ def _get_form_venta_inicial():
         "folio": next_folio_movimiento(tipo="VTA", width=6),
         "fecha": timezone.localdate(),
         "forma_pago_venta": "",
+        "estado_pago": SalidaInventario.ESTADO_PAGO_PENDIENTE,
     })
 
 

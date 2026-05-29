@@ -23,6 +23,9 @@ urlpatterns = [
     # Inventarios
     path("inventarios/", include("inventarios.urls")),
 
+    # Cotizaciones
+    path("cotizaciones/", include("cotizaciones.urls")),
+
     # Proyectos
     path("proyectos/", include("proyectos.urls")),
 

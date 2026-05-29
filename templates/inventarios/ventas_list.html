@@ -1,51 +1,150 @@
 {% extends "base.html" %}
-{% load humanize formatos %}
+{% load static humanize formatos %}
 
 {% block title %}Notas de venta | Sistema de Gestión{% endblock %}
 {% block page_title %}Notas de venta{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ventas_list.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="ventas-caja-page">
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <div>
-      <h5 class="fw-bold mb-0"><i class="bi bi-receipt-cutoff me-2"></i>Notas de venta</h5>
-      <div class="sg-form-help">Listado compacto para operación de caja.</div>
-    </div>
-    <div class="d-flex gap-2 sg-page-actions">
-      <a href="{% url 'salida_venta_create' %}" class="sg-btn-primary sg-btn-sm"><i class="bi bi-plus-circle me-1"></i>Nueva venta</a>
-      <button class="sg-btn-outline sg-btn-sm" type="button" onclick="imprimirSeleccionadas()"><i class="bi bi-printer me-1"></i>Imprimir selección</button>
-    </div>
-  </div>
+<div class="ventas-list-page">
 
-  <div class="card border-0 shadow-sm mb-3 sg-form-card sg-table-card">
-    <div class="card-body py-3">
-      <form method="get" class="row g-2 align-items-end sg-form-grid">
-        <div class="col-6 col-md-2"><label class="sg-form-label small">Inicio</label><input type="date" name="fecha_inicio" value="{{ filtros.fecha_inicio }}" class="form-control form-control-sm sg-form-control"></div>
-        <div class="col-6 col-md-2"><label class="sg-form-label small">Fin</label><input type="date" name="fecha_fin" value="{{ filtros.fecha_fin }}" class="form-control form-control-sm sg-form-control"></div>
-        <div class="col-6 col-md-2"><label class="sg-form-label small">Folio</label><input type="text" name="folio" value="{{ filtros.folio }}" class="form-control form-control-sm sg-form-control" placeholder="VTA..."></div>
-        <div class="col-6 col-md-3"><label class="sg-form-label small">Cliente</label><input type="text" name="cliente" value="{{ filtros.cliente }}" class="form-control form-control-sm sg-form-control" placeholder="Cliente"></div>
-        <div class="col-6 col-md-2"><label class="sg-form-label small">Estado</label><select name="estado" class="form-select form-select-sm sg-form-control"><option value="">Todos</option>{% for value, label in estado_choices %}<option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-        <div class="col-6 col-md-1 d-grid"><button class="sg-btn-icon sg-btn-sm" type="submit"><i class="bi bi-search"></i></button></div>
-      </form>
+  <section class="card border-0 shadow-sm mb-3 sg-form-card sg-table-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-receipt-cutoff me-2"></i>
+          Notas de venta
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Listado compacto para operación de caja.
+        </p>
+      </div>
+
+      <div class="sg-page-actions">
+        <a href="{% url 'salida_venta_create' %}" class="sg-btn-primary sg-btn-md">
+          <i class="bi bi-plus-circle me-1"></i>
+          Nueva venta
+        </a>
+
+        <button
+          class="sg-btn-outline sg-btn-md"
+          type="button"
+          id="btnImprimirSeleccionadas"
+          data-print-url="{% url 'notas_venta_print_bulk' %}">
+          <i class="bi bi-printer me-1"></i>
+          Imprimir selección
+        </button>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <div class="row g-2 mb-3">
-    <div class="col-6 col-md-3"><div class="mini-summary"><span>Importe</span><strong>$ {{ total_notas|dinero_decimal }}</strong></div></div>
-    <div class="col-6 col-md-3"><div class="mini-summary"><span>Kg vendidos</span><strong>{{ total_cantidad|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-12 col-md-6 text-md-end small align-self-center sg-form-help">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</div>
-  </div>
+  <section class="sg-toolbar ventas-filter-toolbar" aria-label="Filtros de notas de venta">
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline ventas-filter-form">
+      <div class="ventas-filter-field">
+        <label class="sg-form-label small" for="fecha_inicio">Inicio</label>
+        <input
+          type="date"
+          id="fecha_inicio"
+          name="fecha_inicio"
+          value="{{ filtros.fecha_inicio }}"
+          class="form-control form-control-sm sg-form-control">
+      </div>
 
-  <div class="card border-0 shadow-sm sg-form-card sg-table-card">
+      <div class="ventas-filter-field">
+        <label class="sg-form-label small" for="fecha_fin">Fin</label>
+        <input
+          type="date"
+          id="fecha_fin"
+          name="fecha_fin"
+          value="{{ filtros.fecha_fin }}"
+          class="form-control form-control-sm sg-form-control">
+      </div>
+
+      <div class="ventas-filter-field">
+        <label class="sg-form-label small" for="folio">Folio</label>
+        <input
+          type="text"
+          id="folio"
+          name="folio"
+          value="{{ filtros.folio }}"
+          class="form-control form-control-sm sg-form-control"
+          placeholder="VTA...">
+      </div>
+
+      <div class="ventas-filter-field ventas-filter-field-lg">
+        <label class="sg-form-label small" for="cliente">Cliente</label>
+        <input
+          type="text"
+          id="cliente"
+          name="cliente"
+          value="{{ filtros.cliente }}"
+          class="form-control form-control-sm sg-form-control"
+          placeholder="Cliente">
+      </div>
+
+      <div class="ventas-filter-field">
+        <label class="sg-form-label small" for="estado">Estado</label>
+        <select id="estado" name="estado" class="form-select form-select-sm sg-form-control">
+          <option value="">Todos</option>
+          {% for value, label in estado_choices %}
+            <option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="ventas-filter-field">
+        <label class="sg-form-label small" for="estado_pago">Pago</label>
+        <select id="estado_pago" name="estado_pago" class="form-select form-select-sm sg-form-control">
+          <option value="">Todos</option>
+          {% for value, label in estado_pago_choices %}
+            <option value="{{ value }}" {% if filtros.estado_pago == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="ventas-filter-actions">
+        <button class="sg-btn-primary sg-btn-sm" type="submit">
+          <i class="bi bi-search me-1"></i>
+          Buscar
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="ventas-summary-grid" aria-label="Resumen de notas de venta">
+    <article class="ventas-summary-card">
+      <span class="ventas-summary-label">Importe</span>
+      <strong class="ventas-summary-value">$ {{ total_notas|dinero_decimal }}</strong>
+    </article>
+
+    <article class="ventas-summary-card">
+      <span class="ventas-summary-label">Kg vendidos</span>
+      <strong class="ventas-summary-value">{{ total_cantidad|floatformat:2|intcomma }}</strong>
+    </article>
+
+    <article class="ventas-summary-card ventas-summary-card-soft">
+      <span class="ventas-summary-label">Página</span>
+      <strong class="ventas-summary-value">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</strong>
+    </article>
+  </section>
+
+  <section class="sg-table-card">
     <div class="table-responsive">
       <table class="table table-sm align-middle mb-0 ventas-compact-table sg-table">
         <thead class="table-light">
           <tr>
-            <th style="width:34px;"></th>
+            <th class="ventas-select-col">
+              <span class="visually-hidden">Seleccionar</span>
+            </th>
             <th>Folio</th>
             <th>Fecha</th>
             <th>Cliente</th>
             <th class="text-center">Estado</th>
+            <th class="text-center">Pago</th>
+            <th class="text-center">Editada</th>
             <th class="text-end">Kg</th>
             <th class="text-end">Total</th>
             <th class="text-end">Acciones</th>
@@ -54,66 +153,122 @@
         <tbody>
           {% for venta in ventas %}
             <tr class="{% if venta.estado == 'CAN' %}table-danger-subtle{% endif %}">
-              <td><input class="form-check-input nota-check" type="checkbox" value="{{ venta.id }}" aria-label="Seleccionar {{ venta.folio }}"></td>
+              <td class="ventas-select-col">
+                <input
+                  class="form-check-input nota-check"
+                  type="checkbox"
+                  value="{{ venta.id }}"
+                  aria-label="Seleccionar {{ venta.folio }}">
+              </td>
               <td class="fw-bold">{{ venta.folio }}</td>
               <td>{{ venta.fecha|date:'d/m/Y' }}</td>
               <td>{{ venta.cliente|default:'MOSTRADOR' }}</td>
               <td class="text-center">
-                {% if venta.estado == 'CAN' %}<span class="badge text-bg-danger">Cancelada</span>{% else %}<span class="badge text-bg-success">Activa</span>{% endif %}
+                {% if venta.estado == 'CAN' %}
+                  <span class="badge text-bg-danger">Cancelada</span>
+                {% else %}
+                  <span class="badge text-bg-success">Activa</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if venta.estado_pago == 'PAG' %}
+                  <span class="badge text-bg-primary">Pagado</span>
+                {% else %}
+                  <span class="badge text-bg-warning">Pendiente</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if venta.editada_en %}
+                  <span class="small text-muted text-nowrap">{{ venta.editada_en|date:'d/m/Y H:i' }}</span>
+                {% else %}
+                  <span class="text-muted small">—</span>
+                {% endif %}
               </td>
               <td class="text-end">{{ venta.total_cantidad|default:0|floatformat:2 }}</td>
               <td class="text-end fw-semibold">$ {{ venta.total_importe|default:0|dinero_decimal }}</td>
               <td class="text-end sg-table-actions text-nowrap">
-                <a class="sg-btn-table sg-btn-sm" href="{% url 'salida_detalle' venta.id %}" title="Ver"><i class="bi bi-eye"></i></a>
-                <a class="sg-btn-table sg-btn-sm" target="_blank" href="{% url 'nota_venta_print' venta.id %}" title="Imprimir"><i class="bi bi-printer"></i></a>
-                {% if venta.estado != 'CAN' %}<button class="sg-btn-table sg-btn-danger sg-btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#cancelar-{{ venta.id }}" title="Cancelar"><i class="bi bi-ban"></i></button>{% endif %}
+                <a class="sg-btn-table sg-btn-sm" href="{% url 'salida_detalle' venta.id %}" title="Ver">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a class="sg-btn-table sg-btn-sm" target="_blank" href="{% url 'nota_venta_print' venta.id %}" title="Imprimir">
+                  <i class="bi bi-printer"></i>
+                </a>
+                {% if venta.estado != 'CAN' %}
+                  <a class="sg-btn-table sg-btn-sm" href="{% url 'nota_venta_acciones' venta.id %}" title="Acciones de nota">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+                  <button
+                    class="sg-btn-table sg-btn-danger sg-btn-sm"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#cancelar-{{ venta.id }}"
+                    title="Cancelar">
+                    <i class="bi bi-ban"></i>
+                  </button>
+                {% endif %}
               </td>
             </tr>
+
             {% if venta.estado != 'CAN' %}
-              <tr class="collapse" id="cancelar-{{ venta.id }}">
-                <td colspan="8" class="bg-light">
-                  <form method="post" action="{% url 'cancelar_nota_venta' venta.id %}" class="d-flex flex-wrap gap-2 align-items-center sg-form-actions sg-form-actions-compact">
+              <tr class="collapse ventas-cancel-row" id="cancelar-{{ venta.id }}">
+                <td colspan="10">
+                  <form
+                    method="post"
+                    action="{% url 'cancelar_nota_venta' venta.id %}"
+                    class="ventas-cancel-form"
+                    data-confirm-message="¿Cancelar la nota {{ venta.folio }} y retornar inventario?">
                     {% csrf_token %}
-                    <span class="small fw-semibold">Motivo:</span>
-                    <input class="form-control form-control-sm flex-grow-1 sg-form-control" name="motivo_cancelacion" required placeholder="Motivo de cancelación">
-                    <button class="sg-btn-danger sg-btn-sm" type="submit" onclick="return confirm('¿Cancelar la nota {{ venta.folio }} y retornar inventario?')">Confirmar</button>
+                    <label class="sg-form-label small mb-0" for="motivo_cancelacion_{{ venta.id }}">Motivo:</label>
+                    <input
+                      id="motivo_cancelacion_{{ venta.id }}"
+                      class="form-control form-control-sm sg-form-control"
+                      name="motivo_cancelacion"
+                      required
+                      placeholder="Motivo de cancelación">
+                    <button class="sg-btn-danger sg-btn-sm" type="submit">
+                      Confirmar cancelación
+                    </button>
                   </form>
                 </td>
               </tr>
             {% endif %}
           {% empty %}
-            <tr><td colspan="8" class="text-center py-4 sg-form-help sg-empty-state">No hay notas de venta con los filtros seleccionados.</td></tr>
+            <tr>
+              <td colspan="10" class="sg-empty-state">
+                No hay notas de venta con los filtros seleccionados.
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-  </div>
+  </section>
 
   {% if page_obj.has_other_pages %}
-    <nav class="mt-3"><ul class="pagination pagination-sm mb-0">
-      {% if page_obj.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Anterior</a></li>{% endif %}
-      <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-      {% if page_obj.has_next %}<li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Siguiente</a></li>{% endif %}
-    </ul></nav>
+    <nav class="ventas-pagination" aria-label="Paginación de notas de venta">
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ querystring }}">Anterior</a>
+          </li>
+        {% endif %}
+
+        <li class="page-item disabled">
+          <span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+        </li>
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ querystring }}">Siguiente</a>
+          </li>
+        {% endif %}
+      </ul>
+    </nav>
   {% endif %}
+
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-  .ventas-compact-table th{ font-size:.78rem; text-transform:uppercase; letter-spacing:.02em; }
-  .ventas-compact-table td{ font-size:.9rem; padding:.45rem .55rem; }
-  .mini-summary{ border:1px solid rgba(0,0,0,.08); background:#fff; border-radius:12px; padding:10px 12px; display:flex; justify-content:space-between; gap:10px; box-shadow:0 2px 8px rgba(0,0,0,.03); }
-  .mini-summary span{ color:#6c757d; font-size:.82rem; }
-</style>
-{% endblock %}
-
 {% block extra_js %}
-<script>
-function imprimirSeleccionadas(){
-  const ids = Array.from(document.querySelectorAll('.nota-check:checked')).map(x => x.value);
-  if(!ids.length){ alert('Selecciona al menos una nota.'); return; }
-  window.open("{% url 'notas_venta_print_bulk' %}" + "?ids=" + encodeURIComponent(ids.join(',')), '_blank');
-}
-</script>
+<script src="{% static 'js/ventas/ventas_list.js' %}"></script>
 {% endblock %}

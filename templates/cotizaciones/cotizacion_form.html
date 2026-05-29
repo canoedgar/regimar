@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Nueva cotización | Sistema de Gestión{% endblock %}
+{% block active_cotizaciones %}active{% endblock %}
+{% block page_title %}Nueva cotización{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-xl-11">
+    <div class="card border-0 shadow-sm sg-form-card cotizacion-wizard-card">
+      <div class="card-body">
+        <div class="sg-page-header cot-page-header">
+          <div>
+            <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-plus me-2"></i>Nueva cotización</h5>
+            <p class="sg-form-help mb-0">Selecciona cliente, vigencia y productos. Ajusta precio o margen y revisa la vista previa antes de guardar.</p>
+          </div>
+          <span class="badge text-bg-light border" id="cotStepBadge">Paso 1 de 4</span>
+        </div>
+
+        <div class="wizard-steps mb-4 cot-steps">
+          <div class="wizard-step active" data-step-indicator="1"><div class="dot">1</div><div class="label">Cliente</div></div>
+          <div class="wizard-step" data-step-indicator="2"><div class="dot">2</div><div class="label">Vigencia</div></div>
+          <div class="wizard-step" data-step-indicator="3"><div class="dot">3</div><div class="label">Productos</div></div>
+          <div class="wizard-step" data-step-indicator="4"><div class="dot">4</div><div class="label">Vista previa</div></div>
+        </div>
+
+        <form method="post" id="cotizacionForm" novalidate data-logo-url="{% static 'resources/logo.png' %}">
+          {% csrf_token %}
+          <div class="d-none">{{ form.cliente }}</div>
+          <input type="hidden" name="fecha" value="{{ fecha_actual_value }}">
+          <input type="hidden" name="detalles_json" id="detallesJson" value="[]">
+
+          <section class="wizard-panel" data-step="1">
+            <div class="row g-3 align-items-start">
+              <div class="col-lg-7">
+                <label class="form-label fw-semibold">Cliente</label>
+                <div class="input-group">
+                  <input type="search" class="form-control" id="clienteSearch" placeholder="Buscar cliente por nombre, RFC, contacto o teléfono…" autocomplete="off">
+                  <button type="button" class="sg-btn-outline" id="btnClearCliente" title="Limpiar"><i class="bi bi-x-lg"></i></button>
+                  <a class="sg-btn-primary" href="{{ cliente_create_url }}" title="Nuevo cliente"><i class="bi bi-person-plus"></i></a>
+                </div>
+                <div id="clientesResults" class="list-group mt-2 client-results d-none"></div>
+                <div class="small mt-2 text-muted"><span class="badge text-bg-light border">Seleccionado</span><span id="clienteSelectedText" class="ms-1">Sin cliente seleccionado</span></div>
+              </div>
+              <div class="col-lg-5">
+                <div class="cot-help-card">
+                  <strong>Regla del módulo</strong>
+                  <p class="mb-0">La cotización se liga a un cliente existente. Al aprobarse, los precios se guardan como último precio otorgado a ese cliente.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="2">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha</label>
+                <input type="date" class="form-control" id="fechaCotizacion" value="{{ fecha_actual_value }}" readonly>
+                <div class="form-text">Se toma la fecha actual.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha de vencimiento</label>
+                <input type="date" class="form-control" name="fecha_vigencia" id="id_fecha_vigencia" value="{{ fecha_vigencia_value }}">
+                <div class="form-text">Sugerida automáticamente por PRECIO_VIGENCIA_COTIZACIONES; puede modificarse.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Observaciones</label>
+                {{ form.observaciones }}
+              </div>
+            </div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="3">
+            <div class="row g-3">
+              <div class="col-lg-5">
+                <div class="cot-product-picker">
+                  <label class="form-label fw-semibold">Productos activos</label>
+                  <input type="search" class="form-control" id="productoSearch" placeholder="Buscar producto…" autocomplete="off">
+                  <div id="productosResults" class="list-group mt-2 cot-product-results"></div>
+                </div>
+              </div>
+              <div class="col-lg-7">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="fw-bold mb-0">Productos seleccionados</h6>
+                  <span class="badge text-bg-light border"><span id="itemsCount">0</span> productos</span>
+                </div>
+                <div id="selectedProducts" class="cot-selected-products"></div>
+                <div id="selectedEmpty" class="cot-empty-state">Selecciona productos para comenzar a ajustar precios y márgenes.</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="wizard-panel d-none" data-step="4">
+            <div class="row g-3">
+              <div class="col-lg-4">
+                <div class="cot-summary-card">
+                  <span>Cliente</span><strong id="previewCliente">—</strong>
+                </div>
+                <div class="cot-summary-card mt-2">
+                  <span>Productos</span><strong id="previewTotal">0 seleccionados</strong>
+                </div>
+                <div class="cot-summary-card mt-2">
+                  <span>Tipo de cotización</span><strong id="previewUtilidad">Lista de precios</strong>
+                </div>
+                <div class="alert alert-info small mt-3 mb-0 cot-preview-desktop-note">La vista previa usa la estructura visual de <strong>cotizacion_pdf.html</strong>. Al guardar podrás abrirla para imprimir o guardar PDF.</div>
+                <div class="cot-mobile-preview-action d-lg-none mt-3">
+                  <button type="button" class="sg-btn-primary sg-btn-md w-100" id="btnOpenPreviewPdf">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Abrir vista PDF
+                  </button>
+                  <p class="small text-muted mt-2 mb-0">En celular se abre la vista de impresión en una pestaña nueva para evitar una previsualización incómoda dentro del formulario.</p>
+                </div>
+              </div>
+              <div class="col-lg-8 cot-preview-desktop-panel">
+                <div class="border rounded-4 p-3 bg-body-tertiary cot-preview-wrap">
+                  <div id="cotizacionPreview" class="cot-preview-sheet"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <hr class="my-4">
+          <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center">
+            <a href="{% url 'cotizaciones:cotizacion_list' %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-arrow-left me-1"></i>Cancelar</a>
+            <div class="d-flex gap-2">
+              <button type="button" class="sg-btn-secondary sg-btn-md" id="btnPrev"><i class="bi bi-chevron-left me-1"></i>Atrás</button>
+              <button type="button" class="sg-btn-primary sg-btn-md" id="btnNext">Siguiente <i class="bi bi-chevron-right ms-1"></i></button>
+              <button type="submit" class="sg-btn-success sg-btn-md d-none" id="btnSubmit"><i class="bi bi-check2-circle me-1"></i>Guardar cotización</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="application/json" id="clientes-data">[{% for c in clientes %}{"id":"{{ c.id }}","nombre":"{{ c|escapejs }}","rfc":"{{ c.rfc|escapejs }}","telefono":"{{ c.telefono|escapejs }}","contacto":"{{ c.contacto|escapejs }}","email":"{{ c.email_cfdi|escapejs }}","direccion":"{{ c.calle|escapejs }}{% if c.num_ext %} {{ c.num_ext|escapejs }}{% endif %}{% if c.num_int %} Int. {{ c.num_int|escapejs }}{% endif %}{% if c.colonia %}, {{ c.colonia|escapejs }}{% endif %}{% if c.localidad %}, {{ c.localidad|escapejs }}{% endif %}{% if c.municipio %}, {{ c.municipio|escapejs }}{% endif %}{% if c.estado %}, {{ c.estado|escapejs }}{% endif %}{% if c.cp %}, CP {{ c.cp|escapejs }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
+{{ productos_ui|json_script:"productos-data" }}
+{% endblock %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cotizaciones.css' %}">{% endblock %}
+{% block extra_js %}<script src="{% static 'js/cotizaciones.js' %}"></script>{% endblock %}
