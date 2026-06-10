@@ -1,4 +1,6 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.db import transaction
 from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404, redirect, render
@@ -32,6 +34,7 @@ def _validar_editable(salida, request):
     return True
 
 
+@permiso_requerido("inventarios.view_salidainventario")
 def nota_venta_acciones(request, pk):
     salida = _get_nota(pk)
     detalles = salida.detalles.all()
@@ -41,6 +44,7 @@ def nota_venta_acciones(request, pk):
     })
 
 
+@permiso_requerido("inventarios.change_salidainventario")
 @transaction.atomic
 def nota_venta_editar_datos(request, pk):
     salida = _get_nota(pk, for_update=request.method == "POST")
@@ -65,6 +69,7 @@ def nota_venta_editar_datos(request, pk):
     })
 
 
+@permiso_requerido("inventarios.change_salidainventario")
 @transaction.atomic
 def nota_venta_ajustar_precios(request, pk):
     salida = _get_nota(pk, for_update=request.method == "POST")
@@ -103,6 +108,7 @@ def nota_venta_ajustar_precios(request, pk):
     })
 
 
+@permiso_requerido("inventarios.change_salidainventario")
 @transaction.atomic
 def nota_venta_agregar_productos(request, pk):
     salida = _get_nota(pk, for_update=request.method == "POST")

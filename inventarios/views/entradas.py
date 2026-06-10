@@ -1,5 +1,7 @@
 from django.db import transaction
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
@@ -71,6 +73,7 @@ def _render_entrada_manual(request, form, proveedores, almacenes, productos, det
     })
 
 
+@permiso_requerido("inventarios.add_entradainventario")
 @transaction.atomic
 def entrada_manual_create(request):
     proveedores = Proveedor.objects.filter(activo=True).order_by("nombre")
@@ -257,6 +260,7 @@ def entrada_manual_create(request):
     return redirect("entradas_list")
 
 
+@permiso_requerido("inventarios.view_entradainventario")
 def entradas_list(request):
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
     almacen_id = (request.GET.get("almacen") or "").strip()
@@ -297,6 +301,7 @@ def entradas_list(request):
     return render(request, "inventarios/entradas_list.html", context)
 
 
+@permiso_requerido("inventarios.view_entradainventario")
 def entrada_detalle(request, pk):
     entrada = get_object_or_404(
         EntradaInventario.objects

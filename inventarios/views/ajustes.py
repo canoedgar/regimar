@@ -1,5 +1,7 @@
 from django.db import transaction, IntegrityError
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.shortcuts import render, redirect
 from django.utils import timezone
 
@@ -17,6 +19,7 @@ from ..services.folios import next_folio_movimiento
 from ..forms import AjusteInventarioForm
 
 
+@permiso_requerido("inventarios.change_inventariostock")
 @transaction.atomic
 def ajuste_inventario(request):
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")

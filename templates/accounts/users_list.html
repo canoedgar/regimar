@@ -57,9 +57,12 @@
               <a href="{% url 'users_update' u.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
                 <i class="bi bi-pencil"></i>
               </a>
-              <a href="{% url 'users_toggle_active' u.pk %}" class="sg-btn-table sg-btn-warning sg-btn-sm" title="Cambiar estado">
-                <i class="bi bi-person-x"></i>
-              </a>
+              <form method="post" action="{% url 'users_toggle_active' u.pk %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="sg-btn-table sg-btn-warning sg-btn-sm" title="Cambiar estado">
+                  <i class="bi bi-person-x"></i>
+                </button>
+              </form>
             </td>
           </tr>
           {% empty %}
@@ -108,9 +111,12 @@
             <a href="{% url 'users_update' u.pk %}" class="sg-btn-secondary sg-btn-sm">
               <i class="bi bi-pencil"></i> Editar
             </a>
-            <a href="{% url 'users_toggle_active' u.pk %}" class="sg-btn-warning sg-btn-sm">
-              <i class="bi bi-person-x"></i> Cambiar estado
-            </a>
+            <form method="post" action="{% url 'users_toggle_active' u.pk %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="sg-btn-warning sg-btn-sm">
+                <i class="bi bi-person-x"></i> Cambiar estado
+              </button>
+            </form>
           </div>
         </article>
       {% empty %}

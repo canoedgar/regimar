@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
@@ -89,7 +90,7 @@ def _empresa_contexto():
     }
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
 def cartera_dashboard(request):
     query = (request.GET.get("q") or "").strip()
     estado_query = (request.GET.get("estado_q") or "").strip()
@@ -142,7 +143,7 @@ def cartera_dashboard(request):
     )
 
 
-@login_required
+@permiso_requerido("cartera.add_pagocliente")
 def pago_global_create(request):
     if not _puede_registrar_pagos(request.user):
         messages.error(request, "No tienes permiso para registrar pagos.")
@@ -216,7 +217,7 @@ def pago_global_create(request):
     )
 
 
-@login_required
+@permiso_requerido("cartera.add_pagocliente")
 def pago_nota_create(request, nota_id):
     if not _puede_registrar_pagos(request.user):
         messages.error(request, "No tienes permiso para registrar pagos.")
@@ -266,7 +267,7 @@ def pago_nota_create(request, nota_id):
     )
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente")
 def pago_detalle(request, pago_id):
     pago = get_object_or_404(
         PagoCliente.objects.select_related("cliente", "creado_por")
@@ -287,7 +288,7 @@ def pago_detalle(request, pago_id):
     )
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente")
 def pago_detalle_print(request, pago_id):
     pago = get_object_or_404(
         PagoCliente.objects.select_related("cliente")
@@ -303,7 +304,7 @@ def pago_detalle_print(request, pago_id):
     return render(request, "cartera/prints/pago_detalle_print.html", {"pago": pago, "total_aplicado": total_aplicado, "saldo_generado": saldo_generado, "notas_pendientes": notas_pendientes, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
 def estado_cuenta_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
     estado = get_estado_cuenta_cliente(cliente)
@@ -335,7 +336,7 @@ def estado_cuenta_cliente(request, cliente_id):
     )
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
 def estado_cuenta_cliente_print(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
     estado = get_estado_cuenta_cliente(cliente)
@@ -351,7 +352,7 @@ def estado_cuenta_cliente_print(request, cliente_id):
     return render(request, "cartera/prints/estado_cuenta_cliente_print.html", {"estado": estado, "cliente": cliente, "movimientos_saldo": movimientos_saldo, "empresa": _empresa_contexto(), "emitido_en": timezone.now(), "movimientos_opcion": movimientos_opcion})
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
 def reporte_cartera_general(request):
     query = (request.GET.get("q") or "").strip()
     estado_query = (request.GET.get("estado_q") or "").strip()
@@ -376,7 +377,7 @@ def reporte_cartera_general(request):
     return render(request, "cartera/reporte_cartera_general.html", {"query": query, "filas": filas, "total_general": total_general, "saldo_favor_general": saldo_favor_general})
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
 def reporte_cartera_general_print(request):
     query = (request.GET.get("q") or "").strip()
     estado_query = (request.GET.get("estado_q") or "").strip()
@@ -400,7 +401,7 @@ def reporte_cartera_general_print(request):
     return render(request, "cartera/prints/reporte_cartera_general_print.html", {"query": query, "filas": filas, "total_general": total_general, "saldo_favor_general": saldo_favor_general, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente")
 def reporte_pagos_dia(request):
     fecha_txt = request.GET.get("fecha") or timezone.localdate().isoformat()
     try:
@@ -412,7 +413,7 @@ def reporte_pagos_dia(request):
     return render(request, "cartera/reporte_pagos_dia.html", {"fecha": fecha, "pagos": pagos, "total_recibido": total_recibido})
 
 
-@login_required
+@permiso_requerido("cartera.view_pagocliente")
 def reporte_pagos_dia_print(request):
     fecha_txt = request.GET.get("fecha") or timezone.localdate().isoformat()
     try:
@@ -424,7 +425,7 @@ def reporte_pagos_dia_print(request):
     return render(request, "cartera/prints/reporte_pagos_dia_print.html", {"fecha": fecha, "pagos": pagos, "total_recibido": total_recibido, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
 
 
-@login_required
+@permiso_requerido("cartera.add_pagoaplicacionnota", "cartera.change_clientesaldofavormovimiento")
 def aplicar_saldo_favor(request, cliente_id):
     if not _puede_registrar_pagos(request.user):
         messages.error(request, "No tienes permiso para aplicar saldo a favor.")
@@ -504,7 +505,7 @@ def aplicar_saldo_favor(request, cliente_id):
     )
 
 
-@login_required
+@permiso_requerido("cartera.add_clientesaldofavormovimiento", "cartera.change_clientesaldofavormovimiento")
 def liquidar_saldo_favor(request, cliente_id):
     if not _puede_registrar_pagos(request.user):
         messages.error(request, "No tienes permiso para liquidar saldo a favor.")

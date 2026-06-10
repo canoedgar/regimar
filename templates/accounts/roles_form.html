@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Rol | Configuración{% endblock %}
+{% block active_config %}active{% endblock %}
+{% block config_show %}show{% endblock %}
+{% block active_roles %}active{% endblock %}
+{% block page_title %}
+  {% if modo == "create" %}Nuevo rol{% else %}Editar rol{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card border-0 shadow-sm sg-form-card">
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="row g-3 sg-form-grid">
+            <div class="col-md-6">
+              <label class="sg-form-label">Nombre del rol</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="sg-form-error">{{ form.name.errors }}</div>{% endif %}
+              <div class="sg-form-help mt-1">Ejemplos: Ventas, Inventarios, Cartera, Encargado ventas.</div>
+            </div>
+
+            <div class="col-md-12">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <label class="sg-form-label mb-0">Permisos CRUD</label>
+                  <div class="sg-form-help">Marca las operaciones permitidas para este rol.</div>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <button type="button" class="sg-btn-secondary sg-btn-sm" id="perms_select_all">Seleccionar todo</button>
+                  <button type="button" class="sg-btn-secondary sg-btn-sm" id="perms_clear_all">Ninguno</button>
+                </div>
+              </div>
+
+              <input type="text" class="form-control form-control-sm mt-2 sg-form-control" id="perms_search" placeholder="Buscar permiso, módulo o modelo…">
+
+              <div class="border rounded p-2 mt-2" style="max-height: 460px; overflow:auto;">
+                <div class="row g-2 sg-form-grid" id="perms_container">
+                  {% for checkbox in form.permissions %}
+                    <div class="col-md-6 permission-item">
+                      <div class="form-check">
+                        {{ checkbox.tag }}
+                        <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                          {{ checkbox.choice_label }}
+                        </label>
+                      </div>
+                    </div>
+                  {% empty %}
+                    <div class="sg-form-help">No hay permisos disponibles. Ejecuta migraciones para que Django genere los permisos.</div>
+                  {% endfor %}
+                </div>
+              </div>
+
+              {% if form.permissions.errors %}
+                <div class="sg-form-error mt-1">{{ form.permissions.errors }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mt-3">{{ form.non_field_errors }}</div>
+          {% endif %}
+
+          <div class="sg-form-actions">
+            <a href="{% url 'roles_list' %}" class="sg-btn-secondary sg-btn-md">Cancelar</a>
+            <button class="sg-btn-primary sg-btn-md" type="submit">Guardar rol</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const search = document.getElementById("perms_search");
+    const container = document.getElementById("perms_container");
+    const selectAllBtn = document.getElementById("perms_select_all");
+    const clearAllBtn = document.getElementById("perms_clear_all");
+
+    function getCheckboxes() {
+      return container ? container.querySelectorAll('input[type="checkbox"]') : [];
+    }
+
+    if (search && container) {
+      search.addEventListener("input", function () {
+        const q = this.value.toLowerCase().trim();
+        const items = container.querySelectorAll(".permission-item");
+        items.forEach(el => {
+          const text = el.innerText.toLowerCase();
+          el.style.display = text.includes(q) ? "" : "none";
+        });
+      });
+    }
+
+    if (selectAllBtn) {
+      selectAllBtn.addEventListener("click", function () {
+        getCheckboxes().forEach(cb => cb.checked = true);
+      });
+    }
+
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener("click", function () {
+        getCheckboxes().forEach(cb => cb.checked = false);
+      });
+    }
+  })();
+</script>
+{% endblock %}

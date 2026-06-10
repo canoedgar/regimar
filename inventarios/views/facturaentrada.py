@@ -1,5 +1,7 @@
 from django.db import transaction, IntegrityError
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.shortcuts import render, redirect
 
 from catalogos.models import Almacen, Proveedor, Producto
@@ -17,6 +19,7 @@ from datetime import datetime
 
 from decimal import Decimal
 
+@permiso_requerido("inventarios.add_entradainventario")
 @transaction.atomic
 def entrada_ocf_create(request):
     step = request.POST.get("step", "upload")

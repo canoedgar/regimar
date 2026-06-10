@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.http import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -11,7 +12,7 @@ from .services import aprobar_cotizacion, cancelar_cotizacion, fecha_vigencia_de
 from django.utils import timezone
 
 
-@login_required
+@permiso_requerido("cotizaciones.view_cotizacionprecio")
 def cotizacion_list(request):
     cotizaciones = list(cotizaciones_listado())
     for cotizacion in cotizaciones:
@@ -19,7 +20,7 @@ def cotizacion_list(request):
     return render(request, "cotizaciones/cotizacion_list.html", {"cotizaciones": cotizaciones})
 
 
-@login_required
+@permiso_requerido("cotizaciones.add_cotizacionprecio")
 def cotizacion_create(request):
     if request.method == "POST":
         form = CotizacionPrecioForm(request.POST)
@@ -43,21 +44,21 @@ def cotizacion_create(request):
     return render(request, "cotizaciones/cotizacion_form.html", _form_context(request, form=form))
 
 
-@login_required
+@permiso_requerido("cotizaciones.view_cotizacionprecio")
 def cotizacion_detail(request, pk):
     cotizacion = get_cotizacion_detalle(pk)
     cotizacion.marcar_vencida_si_aplica(guardar=True)
     return render(request, "cotizaciones/cotizacion_detail.html", {"cotizacion": cotizacion})
 
 
-@login_required
+@permiso_requerido("cotizaciones.view_cotizacionprecio")
 def cotizacion_pdf(request, pk):
     cotizacion = get_cotizacion_detalle(pk)
     cotizacion.marcar_vencida_si_aplica(guardar=True)
     return render(request, "cotizaciones/cotizacion_pdf.html", {"cotizacion": cotizacion})
 
 
-@login_required
+@permiso_requerido("cotizaciones.change_cotizacionprecio")
 def cotizacion_aprobar(request, pk):
     if request.method != "POST":
         return HttpResponseBadRequest("Método no permitido")
@@ -70,7 +71,7 @@ def cotizacion_aprobar(request, pk):
     return redirect("cotizaciones:cotizacion_detail", pk=pk)
 
 
-@login_required
+@permiso_requerido("cotizaciones.change_cotizacionprecio")
 def cotizacion_cancelar(request, pk):
     if request.method != "POST":
         return HttpResponseBadRequest("Método no permitido")

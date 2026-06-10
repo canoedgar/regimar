@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from django.shortcuts import redirect, render
@@ -204,6 +205,7 @@ def home(request):
     return render(request, "accounts/home.html", context)
 
 
+@login_required
 def logout_view(request):
     """
     Cierra la sesión del usuario y lo redirige a la pantalla de login.
@@ -212,9 +214,13 @@ def logout_view(request):
     return redirect("login")
 
 
+@grupos_requeridos("Catalogos", "Administrador")
+@login_required
 def productos_list(request):
     return render(request, 'catalogos/productos_list.html')
 
 
+@grupos_requeridos("Catalogos", "Administrador")
+@login_required
 def productos_form(request):
     return render(request, "catalogos/productos_form.html")

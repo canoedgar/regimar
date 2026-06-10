@@ -1,6 +1,8 @@
 from decimal import Decimal
 
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum
@@ -74,6 +76,7 @@ def _base_detalles_qs(request):
     return qs
 
 
+@permiso_requerido("inventarios.view_salidainventario")
 def ventas_list(request):
     """
     Vista especializada de notas de venta:
@@ -300,6 +303,7 @@ def _guardar_productos_agregados_a_nota(*, salida, detalles_validos, detalles_me
     return list(detalles_por_index.values())
 
 
+@permiso_requerido("inventarios.change_salidainventario")
 @transaction.atomic
 def editar_nota_venta(request, pk):
     """
@@ -437,6 +441,7 @@ def editar_nota_venta(request, pk):
         "almacenes": contexto_venta["almacenes_qs"],
     })
 
+@permiso_requerido("inventarios.view_salidainventario")
 def nota_venta_print(request, pk=None):
     """
     Formato imprimible para una o varias notas.
@@ -477,6 +482,7 @@ def nota_venta_print(request, pk=None):
     })
 
 
+@permiso_requerido("inventarios.change_salidainventario")
 @transaction.atomic
 @require_POST
 def cancelar_nota_venta(request, pk):

@@ -269,7 +269,7 @@
       {% endif %}
 
       <!-- SISTEMA -->
-      {% if request.user.is_superuser %}
+      {% if request.user.is_superuser or request.user|has_group:"Administrador" or perms.auth.change_user or perms.auth.change_group %}
         <div class="nav-section-title">Sistema</div>
 
         <a class="nav-link d-flex justify-content-between align-items-center {% block active_config %}{% endblock %}"
@@ -287,6 +287,10 @@
             <a href="{% url 'users_list' %}" class="nav-link {% block active_users %}{% endblock %}">
               <i class="bi bi-people-fill me-1"></i>
               Usuarios
+            </a>
+            <a href="{% url 'roles_list' %}" class="nav-link {% block active_roles %}{% endblock %}">
+              <i class="bi bi-shield-lock me-1"></i>
+              Roles y permisos
             </a>
             <a href="{% url 'parametros_sistema_list' %}" class="nav-link">
               <i class="bi bi-sliders me-1"></i>

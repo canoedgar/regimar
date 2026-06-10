@@ -2,6 +2,7 @@ from django import forms
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 
 class UserCreateForm(forms.ModelForm):
     password1 = forms.CharField(label="Contraseña", widget=forms.PasswordInput, required=True)
@@ -86,3 +87,60 @@ class UserUpdateForm(forms.ModelForm):
             user.save()
             self.save_m2m()
         return user
+
+
+class RoleForm(forms.ModelForm):
+    permissions = forms.ModelMultipleChoiceField(
+        label="Permisos CRUD",
+        queryset=None,
+        required=False,
+        widget=forms.CheckboxSelectMultiple(),
+    )
+
+    class Meta:
+        model = Group
+        fields = ["name", "permissions"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej. Ventas"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        apps_visibles = ["auth", "catalogos", "inventarios", "cartera", "cotizaciones", "accounts"]
+        acciones_crud = ["view", "add", "change", "delete"]
+
+        accion_filter = Q()
+        for accion in acciones_crud:
+            accion_filter |= Q(codename__startswith=f"{accion}_")
+
+        self.fields["permissions"].queryset = (
+            Permission.objects
+            .select_related("content_type")
+            .filter(content_type__app_label__in=apps_visibles)
+            .filter(accion_filter)
+            .order_by("content_type__app_label", "content_type__model", "codename")
+        )
+
+        accion_labels = {
+            "view": "Ver",
+            "add": "Agregar",
+            "change": "Modificar",
+            "delete": "Eliminar",
+        }
+
+        def _perm_label(perm):
+            accion = perm.codename.split("_", 1)[0]
+            accion_txt = accion_labels.get(accion, accion.capitalize())
+            modelo = perm.content_type.model.replace("_", " ").title()
+            modulo = perm.content_type.app_label.title()
+            return f"{modulo} / {modelo} / {accion_txt}"
+
+        self.fields["permissions"].label_from_instance = _perm_label
+
+        self.fields["permissions"].help_text = (
+            "Selecciona qué puede hacer este rol. "
+            "Ver = consultar, Agregar = crear, Modificar = editar/procesar, Eliminar = borrar/cancelar según el flujo."
+        )

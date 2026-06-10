@@ -12,7 +12,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ParametroSistema, ClienteProductoPrecio
 from .forms import ProductoForm, CategoriaForm, ProveedorForm, ProyectoForm, ClienteForm, AlmacenForm, ProductoMetricaConversionFormSet, ParametroSistemaForm, ClienteProductoPrecioForm
 from django.contrib import messages
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
+from accounts.decorators import administrador_requerido, grupos_requeridos, permiso_requerido
 
 from django.db.models import Q
 from django.db import IntegrityError
@@ -29,6 +30,7 @@ from catalogos.services.precios import (
 
 # Inicio Categorías
 
+@permiso_requerido("catalogos.view_categoria")
 def categorias_list(request):
     categorias = Categoria.objects.all().order_by("nombre")
     return render(request, "catalogos/categorias_list.html", {
@@ -36,6 +38,7 @@ def categorias_list(request):
     })
 
 
+@permiso_requerido("catalogos.add_categoria")
 def categorias_create(request):
     if request.method == "POST":
         form = CategoriaForm(request.POST)
@@ -51,6 +54,7 @@ def categorias_create(request):
     })
 
 
+@permiso_requerido("catalogos.change_categoria")
 def categorias_edit(request, pk):
     categoria = get_object_or_404(Categoria, pk=pk)
 
@@ -72,6 +76,7 @@ def categorias_edit(request, pk):
 
 # Inicio Productos
 
+@permiso_requerido("catalogos.view_producto")
 def productos_list(request):
     productos = Producto.objects.all().prefetch_related("conversiones_metricas").order_by("nombre")
     return render(request, "catalogos/productos_list.html", {
@@ -89,6 +94,7 @@ def _build_conversion_formset(request, producto=None):
     return formset
 
 
+@permiso_requerido("catalogos.add_producto")
 def productos_create(request):
     producto = Producto()
 
@@ -124,6 +130,7 @@ def productos_create(request):
     })
 
 
+@permiso_requerido("catalogos.add_producto")
 def productos_create_from_xml(request):
     idx = int(request.GET.get("i"))
     conceptos = request.session.get("ocf_xml_conceptos", [])
@@ -182,6 +189,7 @@ def productos_create_from_xml(request):
     })
 
 
+@permiso_requerido("catalogos.change_producto")
 def productos_edit(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 
@@ -234,6 +242,7 @@ def productos_edit(request, pk):
         "producto": producto,
     })
 
+@permiso_requerido("catalogos.delete_producto")
 def productos_delete(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 
@@ -254,6 +263,7 @@ def productos_delete(request, pk):
 
 
 
+@permiso_requerido("catalogos.view_producto", "catalogos.change_producto")
 def precios_productos_list(request):
     productos = Producto.objects.all().order_by("nombre")
 
@@ -303,6 +313,7 @@ def precios_productos_list(request):
     })
 
 
+@permiso_requerido("catalogos.view_producto")
 def producto_precio_bitacora(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     bitacora = producto.bitacora_precios.all()[:60]
@@ -333,14 +344,14 @@ def _asegurar_parametros_base():
     )
 
 
-@user_passes_test(_es_admin)
+@permiso_requerido("catalogos.view_parametrosistema")
 def parametros_sistema_list(request):
     _asegurar_parametros_base()
     parametros = ParametroSistema.objects.all().order_by("clave")
     return render(request, "catalogos/parametros_sistema_list.html", {"parametros": parametros})
 
 
-@user_passes_test(_es_admin)
+@permiso_requerido("catalogos.add_parametrosistema")
 def parametros_sistema_create(request):
     form = ParametroSistemaForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -350,7 +361,7 @@ def parametros_sistema_create(request):
     return render(request, "catalogos/parametros_sistema_form.html", {"form": form, "modo": "crear"})
 
 
-@user_passes_test(_es_admin)
+@permiso_requerido("catalogos.change_parametrosistema")
 def parametros_sistema_edit(request, pk):
     parametro = get_object_or_404(ParametroSistema, pk=pk)
     form = ParametroSistemaForm(request.POST or None, instance=parametro)
@@ -361,7 +372,7 @@ def parametros_sistema_edit(request, pk):
     return render(request, "catalogos/parametros_sistema_form.html", {"form": form, "parametro": parametro, "modo": "editar"})
 
 
-@user_passes_test(_es_admin)
+@permiso_requerido("catalogos.view_clienteproductoprecio")
 def precios_clientes_list(request):
     precios = (
         ClienteProductoPrecio.objects
@@ -378,7 +389,7 @@ def precios_clientes_list(request):
     return render(request, "catalogos/precios_clientes_list.html", {"precios": precios, "q": q})
 
 
-@user_passes_test(_es_admin)
+@permiso_requerido("catalogos.change_clienteproductoprecio")
 def precio_cliente_edit(request, pk):
     precio_cliente = get_object_or_404(ClienteProductoPrecio.objects.select_related("cliente", "producto"), pk=pk)
     precio_anterior = precio_cliente.ultimo_precio
@@ -398,12 +409,14 @@ def precio_cliente_edit(request, pk):
 
 # Inicio Proveedores
 
+@permiso_requerido("catalogos.view_proveedor")
 def proveedores_list(request):
     proveedores = Proveedor.objects.all().order_by("nombre")
     return render(request, "catalogos/proveedores_list.html", {
         "proveedores": proveedores
     })
 
+@permiso_requerido("catalogos.add_proveedor")
 def proveedores_create(request):
     next_url = (request.GET.get("next") or "").strip()
 
@@ -427,6 +440,7 @@ def proveedores_create(request):
         "next": next_url,  # para que el template pueda usarlo en Cancelar
     })
 
+@permiso_requerido("catalogos.change_proveedor")
 def proveedores_edit(request, pk):
     proveedor = get_object_or_404(Proveedor, pk=pk)
     if request.method == "POST":
@@ -446,6 +460,7 @@ def proveedores_edit(request, pk):
 
 # --- Proyectos ---
 
+@permiso_requerido("catalogos.view_proyecto")
 def proyectos_list(request):
     estado = request.GET.get("estado", "").strip()
     qs = Proyecto.objects.all().order_by("-fecha_actualizacion", "nombre")
@@ -459,6 +474,7 @@ def proyectos_list(request):
     })
 
 
+@permiso_requerido("catalogos.add_proyecto")
 def proyectos_create(request):
     if request.method == "POST":
         form = ProyectoForm(request.POST)
@@ -475,6 +491,7 @@ def proyectos_create(request):
     })
 
 
+@permiso_requerido("catalogos.change_proyecto")
 def proyectos_edit(request, pk):
     proyecto = get_object_or_404(Proyecto, pk=pk)
 
@@ -523,6 +540,7 @@ def _add_cliente_to_next_url(next_url, cliente_id):
         parts.fragment,
     ))
 
+@permiso_requerido("catalogos.view_cliente")
 def clientes_list(request):
     q = (request.GET.get("q") or "").strip()
 
@@ -542,6 +560,7 @@ def clientes_list(request):
     return render(request, "catalogos/clientes_list.html", context)
 
 
+@permiso_requerido("catalogos.add_cliente")
 def cliente_create(request):
     next_url = _get_safe_next_url(request)
 
@@ -563,6 +582,7 @@ def cliente_create(request):
         "next_url": next_url,
     })
 
+@permiso_requerido("catalogos.change_cliente")
 def cliente_edit(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
 
@@ -585,6 +605,7 @@ def cliente_edit(request, pk):
     })
 
 
+@permiso_requerido("catalogos.add_cliente")
 @require_POST
 def cliente_quick_create(request):
     try:
@@ -633,6 +654,7 @@ def cliente_quick_create(request):
 
 # --- Almacenes ---
 
+@permiso_requerido("catalogos.view_almacen")
 def almacenes_list(request):
     q = (request.GET.get("q") or "").strip()
 
@@ -651,6 +673,7 @@ def almacenes_list(request):
     })
 
 
+@permiso_requerido("catalogos.add_almacen")
 def almacenes_create(request):
     if request.method == "POST":
         form = AlmacenForm(request.POST)
@@ -667,6 +690,7 @@ def almacenes_create(request):
     })
 
 
+@permiso_requerido("catalogos.change_almacen")
 def almacenes_edit(request, pk):
     almacen = get_object_or_404(Almacen, pk=pk)
 
@@ -686,6 +710,7 @@ def almacenes_edit(request, pk):
     })
 
 
+@permiso_requerido("catalogos.delete_almacen")
 def almacenes_confirm_delete(request, pk):
     almacen = get_object_or_404(Almacen, pk=pk)
 
@@ -736,6 +761,7 @@ def _sheet_as_dict_rows(ws):
         rows.append(row)
     return headers, rows
 
+@permiso_requerido("catalogos.add_producto", "catalogos.change_producto")
 def importar_productos(request):
     if request.method == "POST" and request.FILES.get("archivo"):
         creados, actualizados, saltados = 0, 0, 0
@@ -810,6 +836,7 @@ def importar_productos(request):
 
     return render(request, "catalogos/importar_productos.html")
 
+@permiso_requerido("catalogos.add_proveedor", "catalogos.change_proveedor")
 def importar_proveedores(request):
     if request.method == "POST" and request.FILES.get("archivo"):
         creados, actualizados, saltados = 0, 0, 0
@@ -871,6 +898,7 @@ def importar_proveedores(request):
     return render(request, "catalogos/importar_proveedores.html")
 
 
+@permiso_requerido("catalogos.add_cliente", "catalogos.change_cliente")
 def importar_clientes(request):
     if request.method == "POST" and request.FILES.get("archivo"):
         creados, actualizados, saltados = 0, 0, 0

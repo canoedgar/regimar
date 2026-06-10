@@ -25,7 +25,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from catalogos.sat_catalogos import REGIMEN_FISCAL_CHOICES
 from django.http import JsonResponse, HttpResponseForbidden
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import user_passes_test, login_required
+from accounts.decorators import administrador_requerido, grupos_requeridos, permiso_requerido
 from catalogos.services.clientes_precios import registrar_ultimo_precio_cliente
 
 
@@ -33,6 +34,7 @@ def _es_admin(user):
     return user.is_authenticated and (user.is_superuser or user.groups.filter(name="Administrador").exists())
 
 
+@permiso_requerido("catalogos.view_clienteproductoprecio")
 def precios_cliente_api(request):
     cliente_id = (request.GET.get("cliente_id") or "").strip()
     producto_ids = request.GET.getlist("producto_id")
@@ -54,7 +56,7 @@ def precios_cliente_api(request):
     return JsonResponse({"precios": data, "vigencia_dias": ParametroSistema.get_int("PRECIO_VIGENCIA_DIAS", 0)})
 
 
-@user_passes_test(_es_admin)
+@permiso_requerido("catalogos.change_preciomenorminimoautorizacion")
 def autorizar_precio_minimo(request, token):
     autorizacion = get_object_or_404(PrecioMenorMinimoAutorizacion.objects.select_related("cliente", "producto"), token=token)
     if not autorizacion.puede_usarse():
@@ -121,6 +123,7 @@ def _get_nota_guardada_para_impresion(pk):
     )
 
 
+@permiso_requerido("inventarios.view_salidainventario")
 def salidas_list(request):
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
     almacen_id = (request.GET.get("almacen") or "").strip()
@@ -159,6 +162,7 @@ def salidas_list(request):
     return render(request, "inventarios/salidas_list.html", context)
 
 
+@permiso_requerido("inventarios.view_salidainventario")
 def salida_detalle(request, pk):
     salida = get_object_or_404(
         SalidaInventario.objects
@@ -251,6 +255,7 @@ def _render_salida_venta_desde_contexto(
     )
 
 
+@permiso_requerido("inventarios.add_salidainventario")
 @transaction.atomic
 def salida_venta_create(request):
     DetalleFormSet = _get_detalle_formset_factory(can_delete=True)

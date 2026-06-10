@@ -13,6 +13,8 @@ from decimal import Decimal
 from django.db.models import Q
 
 from django.http import HttpResponse
+from django.contrib.auth.decorators import login_required
+from accounts.decorators import grupos_requeridos, permiso_requerido
 
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
@@ -20,6 +22,7 @@ from openpyxl.utils import get_column_letter
 
 from io import BytesIO
 
+@permiso_requerido("inventarios.view_inventariostock")
 def inventario_actual(request):
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
     almacen = get_almacen_default()
@@ -70,6 +73,7 @@ def inventario_actual(request):
         "solo_bajos": solo_bajos,
     }) 
 
+@permiso_requerido("inventarios.view_inventariostock")
 def kardex(request):
     producto_id = (request.GET.get("producto") or "").strip()
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
@@ -245,6 +249,7 @@ def kardex(request):
         "tot_salidas": tot_salidas,
     })
 
+@permiso_requerido("inventarios.view_inventariostock")
 def kardex_export(request):
     producto_id = (request.GET.get("producto") or "").strip()
     almacenes_qs = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")

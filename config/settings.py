@@ -75,7 +75,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # =========================
-# BASE DE DATOS (PostgreSQL)
+# BASE DE DATOS (MySql)
 # =========================
 
 DATABASES = {
