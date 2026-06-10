@@ -66,8 +66,8 @@
   </section>
 
   <section class="sg-table-card mb-3">
-    <div class="table-responsive">
-      <table class="table table-sm align-middle mb-0 sg-table ventas-compact-table">
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-sm align-middle mb-0 sg-table ventas-compact-table sg-no-mobile-grid">
         <thead class="table-light">
           <tr><th>Producto</th><th class="text-end">Cantidad KG</th><th class="text-end">Cant. presentación</th><th>Presentación</th><th class="text-end">Precio KG</th><th class="text-end">Importe</th></tr>
         </thead>
@@ -86,6 +86,28 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+    <div class="sg-mobile-list d-md-none">
+      {% for d in detalles %}
+        <article class="sg-mobile-card">
+          <div class="sg-mobile-card-header">
+            <div>
+              <span class="sg-mobile-card-title">{{ d.producto }}</span>
+              <span class="sg-mobile-card-subtitle">Almacén: {{ d.almacen|default:salida.almacen }}</span>
+            </div>
+          </div>
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Cantidad KG</span><span class="sg-mobile-card-value">{{ d.cantidad|floatformat:2 }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Cant. presentación</span><span class="sg-mobile-card-value">{{ d.cantidad_presentacion|default:""|floatformat:2 }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Presentación</span><span class="sg-mobile-card-value">{{ d.presentacion_nombre|default:"Kilos" }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Precio KG</span><span class="sg-mobile-card-value">$ {{ d.precio_unitario|precio_entero }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Importe</span><span class="sg-mobile-card-value">$ {{ d.importe|default:0|dinero_decimal }}</span></div>
+          </div>
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">La nota no tiene productos.</div>
+      {% endfor %}
     </div>
   </section>
 </div>

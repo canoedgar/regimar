@@ -17,6 +17,9 @@ urlpatterns = [
     # Home
     path("", home, name="home"),
 
+    #Cartera
+    path("cartera/", include("cartera.urls")),
+
     # Catálogos
     path("catalogos/", include("catalogos.urls")),
 

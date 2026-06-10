@@ -131,7 +131,7 @@
             </div>
 
             <div class="table-responsive">
-              <table class="table align-middle table-hover sg-table">
+              <table class="table align-middle table-hover sg-table sg-editable-mobile-table sg-no-mobile-grid">
                 <thead class="table-light">
                   <tr>
                     <th>Producto</th>
@@ -146,13 +146,13 @@
                 </thead>
                 <tbody id="tabla">
                   <tr id="filaVacia">
-                    <td colspan="8" class="text-center py-4 sg-form-help sg-empty-state">Aún no has agregado productos.</td>
+                    <td colspan="8" data-label="" class="text-center py-4 sg-form-help sg-empty-state">Aún no has agregado productos.</td>
                   </tr>
                 </tbody>
                 <tfoot>
                   <tr>
-                    <th colspan="6" class="text-end">Total</th>
-                    <th class="text-end" id="granTotal">0.00</th>
+                    <th colspan="6" data-label="" class="text-end">Total</th>
+                    <th data-label="Total" class="text-end" id="granTotal">0.00</th>
                     <th></th>
                   </tr>
                 </tfoot>
@@ -302,7 +302,7 @@
     tabla.innerHTML = "";
 
     if (!lineas.length) {
-      tabla.innerHTML = '<tr id="filaVacia"><td colspan="8" class="text-center py-4 sg-form-help sg-empty-state">Aún no has agregado productos.</td></tr>';
+      tabla.innerHTML = '<tr id="filaVacia"><td colspan="8" data-label="" class="text-center py-4 sg-form-help sg-empty-state">Aún no has agregado productos.</td></tr>';
       totalLineas.textContent = "0";
       granTotal.textContent = "0";
       return;
@@ -316,17 +316,17 @@
       total += importe;
 
       tr.innerHTML = `
-        <td>
+        <td data-label="Producto">
           <div class="fw-semibold">${l.producto_nombre}</div>
           <div class="small sg-form-help">Métrica base: ${l.metrica_base}</div>
         </td>
-        <td>${l.conversion_texto || ('Base (' + l.metrica_base + ')')}</td>
-        <td class="text-end">${decimal(l.cantidad_original || l.cantidad, 0)}</td>
-        <td class="text-end">${decimal(l.cantidad_convertida || l.cantidad, 0)} ${l.metrica_base}</td>
-        <td>${l.almacen_nombre}</td>
-        <td class="text-end">${decimal(l.costo_unitario, 0)}</td>
-        <td class="text-end">${decimal(importe, 0)}</td>
-        <td class="text-end sg-table-actions">
+        <td data-label="Presentación">${l.conversion_texto || ('Base (' + l.metrica_base + ')')}</td>
+        <td data-label="Cantidad capturada" class="text-end">${decimal(l.cantidad_original || l.cantidad, 0)}</td>
+        <td data-label="Equivalencia" class="text-end">${decimal(l.cantidad_convertida || l.cantidad, 0)} ${l.metrica_base}</td>
+        <td data-label="Almacén">${l.almacen_nombre}</td>
+        <td data-label="Costo unitario" class="text-end">${decimal(l.costo_unitario, 0)}</td>
+        <td data-label="Importe" class="text-end">${decimal(importe, 0)}</td>
+        <td data-label="Acción" class="text-end sg-table-actions">
           <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" data-index="${idx}">
             <i class="bi bi-trash"></i>
           </button>

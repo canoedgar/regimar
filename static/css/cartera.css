@@ -1,0 +1,273 @@
+/* ===============================
+   CARTERA — Estándar SG
+   =============================== */
+.cartera-page,
+.cartera-form-page,
+.cartera-detail-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.cartera-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cartera-kpi-card {
+  min-height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 1rem;
+  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.08);
+}
+
+.cartera-kpi-title {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  margin-bottom: .5rem;
+  color: var(--color-text-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.cartera-kpi-value {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(1.45rem, 2.4vw, 2rem);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.cartera-kpi-help {
+  margin-top: .45rem;
+  color: var(--color-text-soft);
+  font-size: .84rem;
+}
+
+.cartera-grid-2 {
+  display: grid;
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr);
+  gap: 1rem;
+}
+
+.cartera-grid-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  gap: 1rem;
+}
+
+.cartera-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.cartera-info-card {
+  border: 1px solid var(--color-border);
+  border-radius: .85rem;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: 1rem;
+  min-height: 100%;
+}
+
+.cartera-info-label {
+  color: var(--color-text-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.cartera-info-value {
+  margin-top: .25rem;
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.cartera-form-card .card-header,
+.cartera-section-title {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.cartera-form-card .form-label,
+.cartera-form-card .sg-form-label {
+  color: var(--color-text) !important;
+  font-weight: 700;
+}
+
+.cartera-form-card .form-text,
+.cartera-form-card .text-muted,
+.cartera-muted {
+  color: var(--color-text-soft) !important;
+}
+
+.cartera-form-card .invalid-feedback,
+.cartera-form-card .sg-form-error {
+  color: var(--color-danger) !important;
+  font-weight: 700;
+}
+
+.cartera-form-card .input-group-text {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.cartera-form-card .form-control,
+.cartera-form-card .form-select,
+.cartera-form-card textarea,
+.cartera-form-card input,
+.cartera-form-card select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.cartera-list-group .list-group-item {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.cartera-list-group .list-group-item:hover {
+  background: var(--color-surface-soft);
+  color: var(--color-primary);
+}
+
+.cartera-table-card .table-responsive {
+  border-radius: .85rem;
+  overflow: auto;
+}
+
+.cartera-table-card .sg-table-actions {
+  white-space: nowrap;
+}
+
+.cartera-actions-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .4rem;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+.cartera-report-filter {
+  display: flex;
+  align-items: end;
+  gap: .65rem;
+  flex-wrap: wrap;
+}
+
+.cartera-report-filter .form-control,
+.cartera-report-filter .form-select {
+  min-width: 240px;
+}
+
+.cartera-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: .5rem;
+  border-radius: 1rem;
+  background: var(--color-surface-soft);
+  color: var(--color-primary);
+}
+
+@media (max-width: 1199.98px) {
+  .cartera-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cartera-grid-2,
+  .cartera-grid-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .cartera-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cartera-report-filter,
+  .cartera-report-filter .form-control,
+  .cartera-report-filter .form-select,
+  .cartera-report-filter button,
+  .cartera-report-filter a,
+  .cartera-actions-inline,
+  .cartera-actions-inline a,
+  .cartera-actions-inline button,
+  .sg-page-actions > a,
+  .sg-page-actions > button {
+    width: 100%;
+  }
+
+  .cartera-actions-inline {
+    display: grid;
+  }
+}
+
+/* Ajustes puntuales cartera */
+.cartera-form-card .input-group {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.cartera-form-card .input-group > .input-group-text {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 2.75rem;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.cartera-form-card .input-group > .form-control,
+.cartera-form-card .input-group > input,
+.cartera-form-card .input-group > select {
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+
+.cartera-estado-search .form-control {
+  min-width: min(100%, 280px);
+}
+
+.cartera-estado-search .form-select {
+  min-width: min(100%, 240px);
+}
+
+.cartera-movimientos-filter {
+  display: flex;
+  align-items: end;
+  gap: .65rem;
+  flex-wrap: wrap;
+}
+
+.cartera-movimientos-filter .form-select {
+  min-width: 190px;
+}
+
+@media (max-width: 767.98px) {
+  .cartera-estado-search,
+  .cartera-estado-search .form-control,
+  .cartera-estado-search .form-select,
+  .cartera-estado-search button,
+  .cartera-movimientos-filter,
+  .cartera-movimientos-filter .form-select,
+  .cartera-movimientos-filter button {
+    width: 100%;
+  }
+}

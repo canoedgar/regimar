@@ -132,8 +132,8 @@
   </section>
 
   <section class="sg-table-card">
-    <div class="table-responsive">
-      <table class="table table-sm align-middle mb-0 ventas-compact-table sg-table">
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-sm align-middle mb-0 ventas-compact-table sg-table sg-no-mobile-grid">
         <thead class="table-light">
           <tr>
             <th class="ventas-select-col">
@@ -241,6 +241,89 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+    <div class="sg-mobile-list d-md-none">
+      {% for venta in ventas %}
+        <article class="sg-mobile-card {% if venta.estado == 'CAN' %}border-danger{% endif %}">
+          <div class="sg-mobile-card-header">
+            <div>
+              <span class="sg-mobile-card-label">Folio</span>
+              <strong class="sg-mobile-card-title">{{ venta.folio }}</strong>
+              <span class="sg-mobile-card-subtitle">{{ venta.fecha|date:'d/m/Y' }} · {{ venta.cliente|default:'MOSTRADOR' }}</span>
+            </div>
+            <div class="d-flex flex-column align-items-end gap-1">
+              {% if venta.estado == 'CAN' %}
+                <span class="badge text-bg-danger">Cancelada</span>
+              {% else %}
+                <span class="badge text-bg-success">Activa</span>
+              {% endif %}
+              {% if venta.estado_pago == 'PAG' %}
+                <span class="badge text-bg-primary">Pagado</span>
+              {% else %}
+                <span class="badge text-bg-warning">Pendiente</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Seleccionar</span>
+              <span class="sg-mobile-card-value">
+                <input class="form-check-input nota-check" type="checkbox" value="{{ venta.id }}" aria-label="Seleccionar {{ venta.folio }}">
+              </span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Kg</span>
+              <span class="sg-mobile-card-value">{{ venta.total_cantidad|default:0|floatformat:2 }}</span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Total</span>
+              <span class="sg-mobile-card-value">$ {{ venta.total_importe|default:0|dinero_decimal }}</span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Editada</span>
+              <span class="sg-mobile-card-value">
+                {% if venta.editada_en %}{{ venta.editada_en|date:'d/m/Y H:i' }}{% else %}—{% endif %}
+              </span>
+            </div>
+          </div>
+
+          <div class="sg-mobile-card-actions">
+            <a class="sg-btn-outline sg-btn-sm" href="{% url 'salida_detalle' venta.id %}">
+              <i class="bi bi-eye"></i>
+              Ver
+            </a>
+            <a class="sg-btn-outline sg-btn-sm" target="_blank" href="{% url 'nota_venta_print' venta.id %}">
+              <i class="bi bi-printer"></i>
+              Imprimir
+            </a>
+            {% if venta.estado != 'CAN' %}
+              <a class="sg-btn-outline sg-btn-sm" href="{% url 'nota_venta_acciones' venta.id %}">
+                <i class="bi bi-pencil-square"></i>
+                Acciones
+              </a>
+              <button class="sg-btn-danger sg-btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#cancelar-mobile-{{ venta.id }}">
+                <i class="bi bi-ban"></i>
+                Cancelar
+              </button>
+            {% endif %}
+          </div>
+
+          {% if venta.estado != 'CAN' %}
+            <div class="collapse mt-3" id="cancelar-mobile-{{ venta.id }}">
+              <form method="post" action="{% url 'cancelar_nota_venta' venta.id %}" class="ventas-cancel-form" data-confirm-message="¿Cancelar la nota {{ venta.folio }} y retornar inventario?">
+                {% csrf_token %}
+                <label class="sg-form-label small" for="motivo_cancelacion_mobile_{{ venta.id }}">Motivo:</label>
+                <input id="motivo_cancelacion_mobile_{{ venta.id }}" class="form-control form-control-sm sg-form-control mb-2" name="motivo_cancelacion" required placeholder="Motivo de cancelación">
+                <button class="sg-btn-danger sg-btn-sm w-100" type="submit">Confirmar cancelación</button>
+              </form>
+            </div>
+          {% endif %}
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">No hay notas de venta con los filtros seleccionados.</div>
+      {% endfor %}
     </div>
   </section>
 

@@ -38,25 +38,25 @@
     <section class="sg-table-card mb-3">
       <div class="table-responsive">
         {{ formset.management_form }}
-        <table class="table table-sm align-middle mb-0 sg-table ventas-compact-table">
+        <table class="table table-sm align-middle mb-0 sg-table ventas-compact-table sg-editable-mobile-table sg-no-mobile-grid">
           <thead class="table-light">
             <tr><th>Producto</th><th class="text-end">Cantidad KG</th><th class="text-end">Cant. presentación</th><th>Presentación</th><th class="text-end">Precio KG</th><th class="text-end">Importe</th></tr>
           </thead>
           <tbody>
             {% for detalle_form in formset %}
               <tr class="precio-row" data-producto-id="{{ detalle_form.instance.producto_id }}" data-cantidad="{{ detalle_form.instance.cantidad }}" data-precio-minimo="{{ detalle_form.instance.producto.precio_minimo|default:0 }}">
-                <td>{{ detalle_form.id }}<strong>{{ detalle_form.instance.producto }}</strong><div class="small text-muted precio-source">Precio actual</div><div class="small text-danger d-none precio-minimo-alert">Menor al precio mínimo</div></td>
-                <td class="text-end">{{ detalle_form.instance.cantidad|floatformat:2 }}</td>
-                <td class="text-end">{{ detalle_form.instance.cantidad_presentacion|default:""|floatformat:2 }}</td>
-                <td>{{ detalle_form.instance.presentacion_nombre|default:"Kilos" }}</td>
-                <td class="text-end">{{ detalle_form.precio_unitario }}{{ detalle_form.precio_unitario.errors }}</td>
-                <td class="text-end fw-semibold precio-importe">$ 0.00</td>
+                <td data-label="Producto">{{ detalle_form.id }}<strong>{{ detalle_form.instance.producto }}</strong><div class="small text-muted precio-source">Precio actual</div><div class="small text-danger d-none precio-minimo-alert">Menor al precio mínimo</div></td>
+                <td data-label="Cantidad KG" class="text-end">{{ detalle_form.instance.cantidad|floatformat:2 }}</td>
+                <td data-label="Cant. presentación" class="text-end">{{ detalle_form.instance.cantidad_presentacion|default:""|floatformat:2 }}</td>
+                <td data-label="Presentación">{{ detalle_form.instance.presentacion_nombre|default:"Kilos" }}</td>
+                <td data-label="Precio KG" class="text-end">{{ detalle_form.precio_unitario }}{{ detalle_form.precio_unitario.errors }}</td>
+                <td data-label="Importe" class="text-end fw-semibold precio-importe">$ 0.00</td>
               </tr>
             {% empty %}
-              <tr><td colspan="6" class="sg-empty-state">La nota no tiene productos.</td></tr>
+              <tr><td colspan="6" data-label="" class="sg-empty-state">La nota no tiene productos.</td></tr>
             {% endfor %}
           </tbody>
-          <tfoot><tr><th colspan="5" class="text-end">TOTAL</th><th class="text-end" id="precioTotal">$ 0.00</th></tr></tfoot>
+          <tfoot><tr><th colspan="5" data-label="" class="text-end">TOTAL</th><th data-label="Total" class="text-end" id="precioTotal">$ 0.00</th></tr></tfoot>
         </table>
       </div>
     </section>

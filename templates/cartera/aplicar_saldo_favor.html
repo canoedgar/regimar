@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Aplicar saldo a favor{% endblock %}
+{% block page_title %}Aplicar saldo a favor a nota{% endblock %}
+{% block active_cartera %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cartera.css' %}">{% endblock %}
+
+{% block content %}
+<div class="cartera-form-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-body sg-page-header d-flex justify-content-between align-items-center"><div><h5 class="sg-page-header-title"><i class="bi bi-check2-circle"></i>Aplicar saldo a favor</h5><p class="sg-page-header-subtitle">El saldo a favor se aplica manualmente desde cartera contra una nota específica.</p></div><a href="{% url 'cartera:estado_cuenta_cliente' cliente.id %}" class="sg-btn-secondary sg-btn-md">Volver</a></div></section>
+  <div class="cartera-grid-main"><div class="cartera-stack"><section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-person"></i>Cliente</h5></div><div class="card-body"><div class="fw-semibold">{{ cliente.nombre_fiscal|default:cliente.nombre_comercial }}</div><div class="sg-form-help">RFC: {{ cliente.rfc|default:"—" }}</div><div class="alert alert-info mt-3 mb-0">Saldo a favor disponible: <strong>${{ saldo_favor|floatformat:2|intcomma }}</strong></div></div></section><section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-form-card"><div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-pencil-square"></i>Datos de aplicación</h5></div><div class="card-body">{% if form.non_field_errors %}<div class="alert alert-danger">{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}{% if nota_seleccionada %}<div class="alert alert-secondary"><div class="fw-semibold">Nota seleccionada: {{ nota_seleccionada.folio }}</div><div class="small">Fecha: {{ nota_seleccionada.fecha|date:"d/m/Y" }}</div><div class="small">Saldo pendiente actual: <strong>${{ nota_saldo_pendiente|floatformat:2|intcomma }}</strong></div></div>{% else %}<div class="alert alert-warning">Selecciona primero una nota pendiente del listado.</div>{% endif %}<form method="post" id="aplicarSaldoForm" novalidate>{% csrf_token %}{{ form.nota_id }}<div class="mb-3"><label class="sg-form-label" for="{{ form.fecha_pago.id_for_label }}">{{ form.fecha_pago.label }}</label>{{ form.fecha_pago }}{% if form.fecha_pago.help_text %}<div class="sg-form-help">{{ form.fecha_pago.help_text }}</div>{% endif %}{% if form.fecha_pago.errors %}<div class="sg-form-error">{{ form.fecha_pago.errors|striptags }}</div>{% endif %}</div><div class="mb-3"><label class="sg-form-label" for="{{ form.monto.id_for_label }}">{{ form.monto.label }}</label><div class="input-group"><span class="input-group-text">$</span>{{ form.monto }}</div>{% if form.monto.errors %}<div class="sg-form-error">{{ form.monto.errors|striptags }}</div>{% endif %}</div><div class="mb-3"><label class="sg-form-label" for="{{ form.referencia.id_for_label }}">{{ form.referencia.label }}</label>{{ form.referencia }}{% if form.referencia.errors %}<div class="sg-form-error">{{ form.referencia.errors|striptags }}</div>{% endif %}</div><div class="mb-3"><label class="sg-form-label" for="{{ form.observaciones.id_for_label }}">{{ form.observaciones.label }}</label>{{ form.observaciones }}{% if form.observaciones.errors %}<div class="sg-form-error">{{ form.observaciones.errors|striptags }}</div>{% endif %}</div></form></div><div class="card-footer sg-form-actions sg-form-actions-between"><a class="sg-btn-secondary sg-btn-form sg-btn-md" href="{% url 'cartera:estado_cuenta_cliente' cliente.id %}">Cancelar</a><button class="sg-btn-success sg-btn-form sg-btn-md" form="aplicarSaldoForm" {% if saldo_favor <= 0 or not nota_seleccionada %}disabled{% endif %}>Aplicar saldo</button></div></section></div>
+  <div class="cartera-stack">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
+    <div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-journal-check"></i>Notas pendientes</h5></div>
+    <div class="table-responsive d-none d-md-block sg-no-mobile-grid"><table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid"><thead class="table-light"><tr><th>Folio</th><th>Fecha</th><th class="text-end">Total</th><th class="text-end">Aplicado</th><th class="text-end">Saldo</th><th class="text-end">Acción</th></tr></thead><tbody>{% for nota in notas_pendientes %}<tr {% if nota_seleccionada and nota.id == nota_seleccionada.id %}class="table-primary"{% endif %}><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"d/m/Y" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}" title="Seleccionar"><i class="bi bi-check2"></i></a></td></tr>{% empty %}<tr><td colspan="6" class="sg-empty-state">El cliente no tiene notas pendientes.</td></tr>{% endfor %}</tbody></table></div>
+    <div class="sg-mobile-list d-md-none">
+      {% for nota in notas_pendientes %}
+        <article class="sg-mobile-card">
+          <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Folio</span><span class="sg-mobile-card-title">{{ nota.folio }}</span><span class="sg-mobile-card-subtitle">{{ nota.fecha|date:"d/m/Y" }}</span></div></div>
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Total</span><span class="sg-mobile-card-value">${{ nota.total_nota|floatformat:2|intcomma }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Aplicado</span><span class="sg-mobile-card-value">${{ nota.total_aplicado|floatformat:2|intcomma }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Saldo</span><span class="sg-mobile-card-value">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</span></div>
+          </div>
+          <div class="sg-mobile-card-actions"><a class="sg-btn-success sg-btn-sm" href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}"><i class="bi bi-check2"></i> Seleccionar</a></div>
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">El cliente no tiene notas pendientes.</div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
+    <div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-clock-history"></i>Últimos movimientos de saldo a favor</h5></div>
+    <div class="table-responsive d-none d-md-block sg-no-mobile-grid"><table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid"><thead class="table-light"><tr><th>Fecha</th><th>Tipo</th><th>Nota</th><th>Referencia</th><th class="text-end">Monto</th></tr></thead><tbody>{% for mov in movimientos %}<tr><td>{{ mov.fecha|date:"d/m/Y H:i" }}</td><td>{{ mov.get_tipo_display }}</td><td>{% if mov.nota_aplicada %}{{ mov.nota_aplicada.folio }}{% else %}—{% endif %}</td><td>{{ mov.referencia|default:"—" }}</td><td class="text-end fw-semibold">${{ mov.monto|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td colspan="5" class="sg-empty-state">Sin movimientos.</td></tr>{% endfor %}</tbody></table></div>
+    <div class="sg-mobile-list d-md-none">
+      {% for mov in movimientos %}
+        <article class="sg-mobile-card"><div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Movimiento</span><span class="sg-mobile-card-title">{{ mov.get_tipo_display }}</span><span class="sg-mobile-card-subtitle">{{ mov.fecha|date:"d/m/Y H:i" }}</span></div></div><div class="sg-mobile-card-grid"><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Nota</span><span class="sg-mobile-card-value">{% if mov.nota_aplicada %}{{ mov.nota_aplicada.folio }}{% else %}—{% endif %}</span></div><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Referencia</span><span class="sg-mobile-card-value">{{ mov.referencia|default:"—" }}</span></div><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Monto</span><span class="sg-mobile-card-value">${{ mov.monto|floatformat:2|intcomma }}</span></div></div></article>
+      {% empty %}<div class="sg-empty-state">Sin movimientos.</div>{% endfor %}
+    </div>
+  </section>
+</div></div>
+</div>
+{% endblock %}

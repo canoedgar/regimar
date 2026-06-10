@@ -21,8 +21,8 @@
 
 <div class="card border-0 shadow-sm sg-form-card sg-table-card">
   <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-sm align-middle sg-table">
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-sm align-middle sg-table sg-no-mobile-grid">
         <thead>
           <tr>
             <th>Usuario</th>
@@ -54,19 +54,68 @@
               {% endif %}
             </td>
             <td class="text-end sg-table-actions">
-              <a href="{% url 'users_update' u.pk %}" class="sg-btn-table sg-btn-sm">
+              <a href="{% url 'users_update' u.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
                 <i class="bi bi-pencil"></i>
               </a>
-              <a href="{% url 'users_toggle_active' u.pk %}" class="sg-btn-table sg-btn-warning sg-btn-sm">
+              <a href="{% url 'users_toggle_active' u.pk %}" class="sg-btn-table sg-btn-warning sg-btn-sm" title="Cambiar estado">
                 <i class="bi bi-person-x"></i>
               </a>
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" class="sg-form-help">No hay usuarios.</td></tr>
+          <tr><td colspan="6" class="sg-form-help sg-empty-state">No hay usuarios.</td></tr>
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+    <div class="sg-mobile-list d-md-none" aria-label="Usuarios en vista móvil">
+      {% for u in users %}
+        <article class="sg-mobile-card">
+          <div class="sg-mobile-card-header">
+            <div class="min-w-0">
+              <span class="sg-mobile-card-label">Usuario</span>
+              <strong class="sg-mobile-card-title">{{ u.username }}</strong>
+              <span class="sg-mobile-card-subtitle">{{ u.first_name }} {{ u.last_name }}</span>
+            </div>
+            <div>
+              {% if u.is_active %}
+                <span class="badge text-bg-success">Activo</span>
+              {% else %}
+                <span class="badge text-bg-danger">Inactivo</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Email</span>
+              <span class="sg-mobile-card-value">{{ u.email|default:"—" }}</span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Roles</span>
+              <span class="sg-mobile-card-value">
+                {% for g in u.groups.all %}
+                  <span class="badge text-bg-secondary">{{ g.name }}</span>
+                {% empty %}
+                  —
+                {% endfor %}
+              </span>
+            </div>
+          </div>
+
+          <div class="sg-mobile-card-actions">
+            <a href="{% url 'users_update' u.pk %}" class="sg-btn-secondary sg-btn-sm">
+              <i class="bi bi-pencil"></i> Editar
+            </a>
+            <a href="{% url 'users_toggle_active' u.pk %}" class="sg-btn-warning sg-btn-sm">
+              <i class="bi bi-person-x"></i> Cambiar estado
+            </a>
+          </div>
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">No hay usuarios.</div>
+      {% endfor %}
     </div>
   </div>
 </div>

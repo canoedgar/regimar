@@ -33,6 +33,7 @@ INSTALLED_APPS = [
 
     # Apps creadas por el desarrollador
     "accounts",
+    "cartera",
     "catalogos",
     "cotizaciones",
     "inventarios",

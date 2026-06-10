@@ -201,7 +201,7 @@
           {{ formset.management_form }}
 
           <div class="table-responsive">
-            <table class="table table-sm align-middle sg-table">
+            <table class="table table-sm align-middle sg-table sg-editable-mobile-table sg-no-mobile-grid">
               <thead class="table-light">
                 <tr>
                   <th style="width: 28%;">Clave SAT / Descripción CFDI</th>
@@ -216,7 +216,7 @@
               <tbody>
                 {% for f in formset %}
                   <tr>
-                    <td>
+                    <td data-label="CFDI">
                       {# campos hidden que se envían en POST #}
                       {{ f.clave_sat_xml }}
                       {{ f.descripcion_xml }}
@@ -239,28 +239,28 @@
                       {% endif %}
                     </td>
 
-                    <td class="text-end">
+                    <td data-label="Cantidad" class="text-end">
                       {{ f.cantidad_xml }}
                       {% if f.cantidad_xml.errors %}
                         <div class="sg-form-error sg-validation-message">{{ f.cantidad_xml.errors }}</div>
                       {% endif %}
                     </td>
 
-                    <td class="text-end">
+                    <td data-label="Costo unitario" class="text-end">
                       {{ f.valor_unitario_xml }}
                       {% if f.valor_unitario_xml.errors %}
                         <div class="sg-form-error sg-validation-message">{{ f.valor_unitario_xml.errors }}</div>
                       {% endif %}
                     </td>
 
-                    <td>
+                    <td data-label="Producto sistema">
                       {{ f.producto }}
                       {% if f.producto.errors %}
                         <div class="sg-form-error sg-validation-message">{{ f.producto.errors }}</div>
                       {% endif %}
                     </td>
 
-                    <td>                      
+                    <td data-label="Crear producto">                      
                       {% if f.excluir and f.excluir.value in "on True true 1" %}
                         <span class="badge bg-secondary">Excluido</span>
                                           
@@ -277,13 +277,13 @@
                         </a>
                       {% endif %}
                     </td>                                        
-                    <td class="text-center">
+                    <td data-label="Excluir" class="text-center">
                       <div class="form-check d-flex justify-content-center">
                         {{ f.excluir }}
                       </div>
                     </td>
                     
-                    <td>
+                    <td data-label="Motivo">
                       {{ f.motivo_exclusion }}
                       <div class="mt-1">
                         {{ f.motivo_exclusion_otro }}

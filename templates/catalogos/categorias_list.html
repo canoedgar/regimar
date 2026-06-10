@@ -14,10 +14,12 @@
           Categorías de productos
         </h5>
 
-        <a href="{% url 'categorias_form' %}" class="sg-btn-primary sg-btn-sm">
-          <i class="bi bi-plus-circle me-1"></i>
-          Nueva categoría
-        </a>
+        <div class="sg-page-actions">
+          <a href="{% url 'categorias_form' %}" class="sg-btn-primary sg-btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nueva categoría
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -25,45 +27,82 @@
   <div class="col-12 mt-3">
     <div class="card border-0 shadow-sm sg-table-card">
       <div class="card-body">
-        <table class="table table-hover align-middle sg-table">
-          <thead class="table-light">
-            <tr>
-              <th>Nombre</th>
-              <th>Productos asociados</th>
-              <th class="text-end">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for categoria in categorias %}
+        <div class="table-responsive d-none d-md-block">
+          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+            <thead class="table-light">
               <tr>
-                <td>{{ categoria.nombre }}</td>
-                <td>
-                  {% with total=categoria.productos.count %}
-                    {% if total %}
-                      <span class="badge bg-info-subtle text-info-emphasis">
+                <th>Nombre</th>
+                <th>Productos asociados</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for categoria in categorias %}
+                <tr>
+                  <td>{{ categoria.nombre }}</td>
+                  <td>
+                    {% with total=categoria.productos.count %}
+                      {% if total %}
+                        <span class="badge bg-info-subtle text-info-emphasis">
+                          {{ total }} producto{{ total|pluralize:"s" }}
+                        </span>
+                      {% else %}
+                        <span class="text-muted">Sin productos</span>
+                      {% endif %}
+                    {% endwith %}
+                  </td>
+                  <td class="text-end sg-table-actions">
+                    <a href="{% url 'categorias_edit' categoria.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center text-muted sg-empty-state">
+                    No hay categorías registradas aún.
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sg-mobile-list d-md-none" aria-label="Categorías en vista móvil">
+          {% for categoria in categorias %}
+            <article class="sg-mobile-card">
+              <div class="sg-mobile-card-header">
+                <div class="min-w-0">
+                  <span class="sg-mobile-card-label">Categoría</span>
+                  <strong class="sg-mobile-card-title">{{ categoria.nombre }}</strong>
+                </div>
+              </div>
+
+              <div class="sg-mobile-card-grid">
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Productos asociados</span>
+                  <span class="sg-mobile-card-value">
+                    {% with total=categoria.productos.count %}
+                      {% if total %}
                         {{ total }} producto{{ total|pluralize:"s" }}
-                      </span>
-                    {% else %}
-                      <span class="text-muted">Sin productos</span>
-                    {% endif %}
-                  {% endwith %}
-                </td>
-                <td class="text-end sg-table-actions">
-                  <a href="{% url 'categorias_edit' categoria.pk %}" class="sg-btn-table sg-btn-sm">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-                  {# Futuro: botón para eliminar o desactivar #}
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="3" class="text-center text-muted sg-empty-state">
-                  No hay categorías registradas aún.
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+                      {% else %}
+                        Sin productos
+                      {% endif %}
+                    {% endwith %}
+                  </span>
+                </div>
+              </div>
+
+              <div class="sg-mobile-card-actions">
+                <a href="{% url 'categorias_edit' categoria.pk %}" class="sg-btn-secondary sg-btn-sm">
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
+              </div>
+            </article>
+          {% empty %}
+            <div class="sg-empty-state">No hay categorías registradas aún.</div>
+          {% endfor %}
+        </div>
       </div>
     </div>
   </div>

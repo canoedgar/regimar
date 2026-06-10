@@ -90,8 +90,8 @@
   <div class="col-12">
     <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle sg-table">
+        <div class="table-responsive d-none d-md-block">
+          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
             <thead class="table-light">
               <tr>
                 <th>Folio</th>
@@ -160,6 +160,61 @@
               {% endfor %}
             </tbody>
           </table>
+        </div>
+
+        <div class="sg-mobile-list d-md-none">
+          {% for salida in salidas %}
+            <article class="sg-mobile-card">
+              <div class="sg-mobile-card-header">
+                <div>
+                  <span class="sg-mobile-card-label">Folio</span>
+                  <strong class="sg-mobile-card-title">{{ salida.folio }}</strong>
+                  <span class="sg-mobile-card-subtitle">{{ salida.fecha|date:"d/m/Y" }}</span>
+                </div>
+                <div>
+                  {% if salida.tipo == "AJN" %}
+                    <span class="badge text-bg-info text-dark">Ajuste</span>
+                  {% else %}
+                    <span class="badge text-bg-danger">{{ salida.get_tipo_display }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="sg-mobile-card-grid">
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Almacén</span>
+                  <span class="sg-mobile-card-value">
+                    {% if salida.almacen %}
+                      {{ salida.almacen.codigo }} - {{ salida.almacen.nombre }}
+                    {% else %}
+                      —
+                    {% endif %}
+                  </span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Cliente / Proveedor</span>
+                  <span class="sg-mobile-card-value">{{ salida.cliente|default:salida.proveedor|default:"—" }}</span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Productos</span>
+                  <span class="sg-mobile-card-value">{{ salida.total_productos|default:"0" }}</span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Importe total</span>
+                  <span class="sg-mobile-card-value">$ {{ salida.total_importe|default:"0.00"|dinero_decimal }}</span>
+                </div>
+              </div>
+
+              <div class="sg-mobile-card-actions">
+                <a href="{% url 'salida_detalle' salida.id %}" class="sg-btn-outline sg-btn-sm">
+                  <i class="bi bi-eye"></i>
+                  Ver detalle
+                </a>
+              </div>
+            </article>
+          {% empty %}
+            <div class="sg-empty-state">No hay salidas registradas.</div>
+          {% endfor %}
         </div>
 
       </div>

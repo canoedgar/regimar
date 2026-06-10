@@ -245,9 +245,11 @@ class SalidaInventario(models.Model):
 
     ESTADO_PAGO_PAGADO = "PAG"
     ESTADO_PAGO_PENDIENTE = "PEND"
+    ESTADO_PAGO_PARCIAL = "PARC"
     ESTADO_PAGO_CHOICES = [
         (ESTADO_PAGO_PAGADO, "Pagado"),
         (ESTADO_PAGO_PENDIENTE, "Pendiente de pago"),
+        (ESTADO_PAGO_PARCIAL, "Pago parcial"),
     ]
     estado_pago = models.CharField(
         "Estado de pago",

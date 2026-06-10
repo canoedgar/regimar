@@ -1,0 +1,13 @@
+{% load static humanize %}
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>Reporte general de cartera</title>{% include "cartera/prints/_print_styles.html" %}</head>
+<body>
+  <div class="toolbar"><div class="toolbar-title">Reporte general de cartera</div><div class="toolbar-actions"><button class="btn btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button><button class="btn" onclick="window.close()">Cerrar</button></div></div>
+  <main class="sheet">
+    <header class="doc-header"><div class="brand"><img src="{% static 'resources/logo.png' %}" class="logo" alt="Logo"><div><div class="brand-name">{{ empresa.nombre }}</div><div class="brand-owner">{{ empresa.propietario }}</div><div class="brand-data">{{ empresa.direccion }}<br>Tel. {{ empresa.telefono }}<br>{{ empresa.email }}</div></div></div><div class="doc-meta"><div class="doc-title">Reporte general</div><div class="doc-subtitle">Cartera de clientes</div><div class="small">Emitido: {{ emitido_en|date:"d/m/Y H:i" }}</div></div></header>
+    <section class="section grid avoid-break"><div class="box"><div class="label">Total cartera</div><div class="value fw">${{ total_general|floatformat:2|intcomma }}</div></div><div class="box"><div class="label">Saldo a favor</div><div class="value fw">${{ saldo_favor_general|floatformat:2|intcomma }}</div></div><div class="box" style="grid-column:span 2;"><div class="label">Filtro</div><div class="value">{{ query|default:"Todos los clientes con movimiento" }}</div></div></section>
+    <section class="section"><div class="section-title">Clientes</div><table><thead><tr><th>Cliente</th><th>RFC</th><th class="text-end">Notas pendientes</th><th class="text-end">Adeudo</th><th class="text-end">Saldo a favor</th></tr></thead><tbody>{% for item in filas %}<tr><td><span class="fw">{{ item.cliente.nombre_fiscal|default:item.cliente.nombre_comercial }}</span>{% if item.cliente.nombre_comercial %}<br><span class="muted small">{{ item.cliente.nombre_comercial }}</span>{% endif %}</td><td>{{ item.cliente.rfc|default:"—" }}</td><td class="text-end">{{ item.notas }}</td><td class="text-end fw">${{ item.adeudo|floatformat:2|intcomma }}</td><td class="text-end">${{ item.saldo_favor|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td colspan="5" class="text-center muted">No hay datos para mostrar.</td></tr>{% endfor %}</tbody></table></section>
+    <footer class="footer"><span>Reporte interno de cartera.</span><span>{{ empresa.nombre }}</span></footer>
+  </main>
+</body></html>

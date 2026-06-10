@@ -1,76 +1,319 @@
 .cot-page-header,
-.sg-page-header { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; }
+.sg-page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
 
 .cotizacion-wizard-card .wizard-steps,
-.cot-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+.cot-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .75rem;
+}
 
-.cotizacion-wizard-card .wizard-step { border: 1px solid var(--bs-border-color); border-radius: 1rem; padding: .75rem; display: flex; align-items: center; gap: .6rem; background: var(--bs-body-bg); }
-.cotizacion-wizard-card .wizard-step .dot { width: 2rem; height: 2rem; border-radius: 999px; display: grid; place-items: center; background: var(--bs-tertiary-bg); font-weight: 700; }
-.cotizacion-wizard-card .wizard-step.active { border-color: var(--bs-primary); box-shadow: 0 0 0 .2rem rgba(13,110,253,.08); }
-.cotizacion-wizard-card .wizard-step.active .dot { background: var(--bs-primary); color: #fff; }
+.cotizacion-wizard-card .wizard-step {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  padding: .75rem;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  background: var(--bs-body-bg);
+}
+
+.cotizacion-wizard-card .wizard-step .dot {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--bs-tertiary-bg);
+  font-weight: 700;
+}
+
+.cotizacion-wizard-card .wizard-step.active {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .08);
+}
+
+.cotizacion-wizard-card .wizard-step.active .dot {
+  background: var(--bs-primary);
+  color: #fff;
+}
 
 .client-results,
-.cot-product-results { max-height: 320px; overflow: auto; border-radius: 1rem; }
+.cot-product-results {
+  max-height: 320px;
+  overflow: auto;
+  border-radius: 1rem;
+}
+
 .client-result-item.active,
-.cot-product-item.active { background: var(--bs-primary); border-color: var(--bs-primary); color: #fff; }
+.cot-product-item.active {
+  background: var(--bs-primary);
+  border-color: var(--bs-primary);
+  color: #fff;
+}
 
 .cot-help-card,
 .cot-summary-card,
-.cot-kpi { border: 1px solid var(--bs-border-color); border-radius: 1rem; padding: 1rem; background: var(--bs-body-bg); }
-.cot-help-card p { color: var(--bs-secondary-color); font-size: .9rem; }
+.cot-kpi {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: var(--bs-body-bg);
+}
+
+.cot-help-card p {
+  color: var(--bs-secondary-color);
+  font-size: .9rem;
+}
+
 .cot-summary-card span,
-.cot-kpi span { display: block; font-size: .78rem; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .04em; }
+.cot-kpi span {
+  display: block;
+  font-size: .78rem;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
 .cot-summary-card strong,
-.cot-kpi strong { display: block; font-size: 1.1rem; margin-top: .25rem; }
+.cot-kpi strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-top: .25rem;
+}
 
-.cot-product-picker { position: sticky; top: 1rem; }
-.cot-selected-products { display: grid; gap: .75rem; }
-.cot-product-card { border: 1px solid var(--bs-border-color); border-radius: 1.15rem; background: var(--bs-body-bg); padding: .9rem; }
-.cot-product-card-header { display: flex; justify-content: space-between; gap: .75rem; align-items: flex-start; margin-bottom: .75rem; }
-.cot-product-card-title { font-weight: 700; }
-.cot-ref-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; margin-bottom: .75rem; }
-.cot-ref { border-radius: .85rem; padding: .55rem .7rem; background: var(--bs-tertiary-bg); }
-.cot-ref span { display: block; font-size: .72rem; color: var(--bs-secondary-color); }
-.cot-ref strong { display: block; font-size: .95rem; }
-.cot-edit-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .6rem; align-items: end; }
-.cot-edit-grid-prices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.cot-edit-grid label { font-size: .76rem; color: var(--bs-secondary-color); font-weight: 700; margin-bottom: .25rem; }
-.cot-edit-grid input { min-width: 0; }
-.cot-empty-state { border: 1px dashed var(--bs-border-color); border-radius: 1rem; padding: 1rem; color: var(--bs-secondary-color); text-align: center; }
+.cot-product-picker {
+  position: sticky;
+  top: 1rem;
+}
 
-.cot-preview-wrap { overflow: auto; }
-.cot-preview-sheet { width: 100%; min-height: 560px; background: #fff; color: #1f2937; border-radius: .5rem; padding: 1.2rem; box-shadow: 0 10px 25px rgba(15, 23, 42, .12); font-size: .8rem; }
-.cot-preview-top { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 2px solid #1d4ed8; padding-bottom: .75rem; }
-.cot-preview-brand { display: flex; gap: .75rem; align-items: center; }
-.cot-preview-brand img { width: 70px; max-height: 56px; object-fit: contain; }
-.cot-preview-title { color: #1d4ed8; font-size: 1.35rem; letter-spacing: .12em; font-weight: 800; text-align: right; }
-.cot-preview-meta { text-align: right; line-height: 1.45; }
-.cot-preview-info { width: 100%; margin: 1rem 0; border-collapse: collapse; }
-.cot-preview-info th { text-align: left; width: 90px; padding: .35rem; }
-.cot-preview-info td { border-bottom: 1px solid #e5e7eb; padding: .35rem; }
-.cot-preview-table { width: 100%; border-collapse: collapse; }
-.cot-preview-table th { background: #1d4ed8; color: white; padding: .45rem; text-align: left; }
-.cot-preview-table td { padding: .45rem; border-bottom: 1px solid #e5e7eb; }
-.cot-preview-table .num { text-align: right; white-space: nowrap; }
-.cot-preview-note { margin-top: 1rem; color: #374151; font-size: .75rem; }
-.cot-preview-frame { width: 100%; height: 720px; border: 0; border-radius: 1rem; background: #fff; }
+.cot-selected-products {
+  display: grid;
+  gap: .75rem;
+}
+
+.cot-product-card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1.15rem;
+  background: var(--bs-body-bg);
+  padding: .9rem;
+}
+
+.cot-product-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  align-items: flex-start;
+  margin-bottom: .75rem;
+}
+
+.cot-product-card-title {
+  font-weight: 700;
+}
+
+.cot-ref-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .5rem;
+  margin-bottom: .75rem;
+}
+
+.cot-ref {
+  border-radius: .85rem;
+  padding: .55rem .7rem;
+  background: var(--bs-tertiary-bg);
+}
+
+.cot-ref span {
+  display: block;
+  font-size: .72rem;
+  color: var(--bs-secondary-color);
+}
+
+.cot-ref strong {
+  display: block;
+  font-size: .95rem;
+}
+
+.cot-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: .6rem;
+  align-items: end;
+}
+
+.cot-edit-grid-prices {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.cot-edit-grid label {
+  font-size: .76rem;
+  color: var(--bs-secondary-color);
+  font-weight: 700;
+  margin-bottom: .25rem;
+}
+
+.cot-edit-grid input {
+  min-width: 0;
+}
+
+.cot-empty-state {
+  border: 1px dashed var(--bs-border-color);
+  border-radius: 1rem;
+  padding: 1rem;
+  color: var(--bs-secondary-color);
+  text-align: center;
+}
+
+.cot-preview-wrap {
+  overflow: auto;
+}
+
+.cot-preview-sheet {
+  width: 100%;
+  min-height: 560px;
+  background: #fff;
+  color: #1f2937;
+  border-radius: .5rem;
+  padding: 1.2rem;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
+  font-size: .8rem;
+}
+
+.cot-preview-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 2px solid #1d4ed8;
+  padding-bottom: .75rem;
+}
+
+.cot-preview-brand {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+}
+
+.cot-preview-brand img {
+  width: 70px;
+  max-height: 56px;
+  object-fit: contain;
+}
+
+.cot-preview-title {
+  color: #1d4ed8;
+  font-size: 1.35rem;
+  letter-spacing: .12em;
+  font-weight: 800;
+  text-align: right;
+}
+
+.cot-preview-meta {
+  text-align: right;
+  line-height: 1.45;
+}
+
+.cot-preview-info {
+  width: 100%;
+  margin: 1rem 0;
+  border-collapse: collapse;
+}
+
+.cot-preview-info th {
+  text-align: left;
+  width: 90px;
+  padding: .35rem;
+}
+
+.cot-preview-info td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: .35rem;
+}
+
+.cot-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cot-preview-table th {
+  background: #1d4ed8;
+  color: white;
+  padding: .45rem;
+  text-align: left;
+}
+
+.cot-preview-table td {
+  padding: .45rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cot-preview-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cot-preview-note {
+  margin-top: 1rem;
+  color: #374151;
+  font-size: .75rem;
+}
+
+.cot-preview-frame {
+  width: 100%;
+  height: 720px;
+  border: 0;
+  border-radius: 1rem;
+  background: #fff;
+}
 
 @media (max-width: 992px) {
+
   .cotizacion-wizard-card .wizard-steps,
-  .cot-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cot-product-picker { position: static; }
-  .cot-edit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .cot-edit-grid .cot-wide { grid-column: 1 / -1; }
+  .cot-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cot-product-picker {
+    position: static;
+  }
+
+  .cot-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cot-edit-grid .cot-wide {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 576px) {
+
   .cot-page-header,
-  .sg-page-header { display: block; }
+  .sg-page-header {
+    display: block;
+  }
+
   .cotizacion-wizard-card .wizard-steps,
-  .cot-steps { grid-template-columns: 1fr; }
-  .cot-ref-grid { grid-template-columns: 1fr; }
-  .cot-edit-grid { grid-template-columns: 1fr; }
-  .cot-preview-sheet { min-width: 620px; }
+  .cot-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .cot-ref-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cot-edit-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .cot-preview-sheet {
+    min-width: 620px;
+  }
 }
 
 @media (max-width: 768px) and (orientation: portrait) {
@@ -216,13 +459,13 @@
   margin-bottom: .85rem;
 }
 
-.cotizacion-mobile-card__grid > div {
+.cotizacion-mobile-card__grid>div {
   border-radius: .85rem;
   background: var(--bs-tertiary-bg);
   padding: .65rem .7rem;
 }
 
-.cotizacion-mobile-card__grid > div:last-child {
+.cotizacion-mobile-card__grid>div:last-child {
   grid-column: 1 / -1;
 }
 
@@ -267,8 +510,8 @@ html[data-theme="dark"] .cot-detail-product-card {
 }
 
 html[data-theme="dark"] .cot-ref,
-html[data-theme="dark"] .cotizacion-mobile-card__grid > div,
-html[data-theme="dark"] .cot-detail-product-card__grid > div {
+html[data-theme="dark"] .cotizacion-mobile-card__grid>div,
+html[data-theme="dark"] .cot-detail-product-card__grid>div {
   background: var(--color-surface-soft);
   color: var(--color-text);
   border: 1px solid var(--color-border);
@@ -351,7 +594,7 @@ html[data-theme="dark"] .cot-product-item.active .text-muted {
   gap: .65rem;
 }
 
-.cot-detail-product-card__grid > div {
+.cot-detail-product-card__grid>div {
   border-radius: .85rem;
   background: var(--bs-tertiary-bg);
   padding: .65rem .7rem;
@@ -374,6 +617,7 @@ html[data-theme="dark"] .cot-product-item.active .text-muted {
 }
 
 @media (max-width: 767.98px) {
+
   .cot-preview-desktop-note,
   .cot-preview-desktop-panel {
     display: none !important;
@@ -383,7 +627,7 @@ html[data-theme="dark"] .cot-product-item.active .text-muted {
     display: block;
   }
 
-  .cot-detail-kpis > .col-md-4 {
+  .cot-detail-kpis>.col-md-4 {
     width: 100%;
   }
 
@@ -392,16 +636,414 @@ html[data-theme="dark"] .cot-product-item.active .text-muted {
     grid-template-columns: 1fr;
   }
 
-  .cot-help-card .d-flex > a#cotPdfLink {
+  .cot-help-card .d-flex>a#cotPdfLink {
     display: none !important;
   }
 
   .cot-help-card .d-flex,
-  .cot-help-card .d-flex > button {
+  .cot-help-card .d-flex>button {
     width: 100%;
   }
 
-  .cotizacion-mobile-card__grid > div:last-child {
+  .cotizacion-mobile-card__grid>div:last-child {
     grid-column: auto;
+  }
+}
+
+/* Corrección de contraste para stepper en modo oscuro */
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step,
+html[data-theme="dark"] .cot-steps .wizard-step {
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step .label,
+html[data-theme="dark"] .cot-steps .wizard-step .label {
+  color: var(--color-text);
+}
+
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step .dot,
+html[data-theme="dark"] .cot-steps .wizard-step .dot {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step.active,
+html[data-theme="dark"] .cot-steps .wizard-step.active {
+  background: rgba(59, 130, 246, .16);
+  color: var(--color-text);
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 .2rem rgba(59, 130, 246, .16);
+}
+
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step.active .label,
+html[data-theme="dark"] .cot-steps .wizard-step.active .label {
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step.active .dot,
+html[data-theme="dark"] .cot-steps .wizard-step.active .dot {
+  background: var(--bs-primary);
+  color: #fff;
+  border-color: var(--bs-primary);
+}
+
+html[data-theme="dark"] .cotizacion-wizard-card .wizard-step:not(.active),
+html[data-theme="dark"] .cot-steps .wizard-step:not(.active) {
+  opacity: .92;
+}
+
+
+/* ==========================================================
+   FIX UI/UX — Cotizaciones alineado a sistema SG
+   ========================================================== */
+.cotizaciones-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.cotizaciones-page .sg-page-header {
+  margin-bottom: 0;
+}
+
+.cotizaciones-page .sg-form-card,
+.cotizaciones-page .sg-table-card {
+  background: var(--color-surface) !important;
+  color: var(--color-text);
+}
+
+.cotizaciones-page .sg-table th,
+.cotizaciones-page .sg-table td {
+  vertical-align: middle;
+}
+
+.cotizaciones-page .sg-table-actions {
+  white-space: nowrap;
+}
+
+.cotizaciones-detail-page .sg-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cotizaciones-detail-page .sg-kpi-card {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  padding: 1rem;
+  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.08);
+}
+
+.cotizaciones-detail-page .sg-kpi-title {
+  color: var(--color-text-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.cotizaciones-detail-page .sg-kpi-value {
+  margin-top: .35rem;
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.cotizacion-wizard-card .form-label,
+.cotizacion-wizard-card .sg-form-label,
+.cotizaciones-page .form-label,
+.cotizaciones-page .sg-form-label {
+  color: var(--color-text) !important;
+  font-weight: 700;
+}
+
+.cotizacion-wizard-card .form-text,
+.cotizacion-wizard-card .text-muted,
+.cotizaciones-page .text-muted {
+  color: var(--color-text-soft) !important;
+}
+
+.cotizacion-wizard-card .form-control,
+.cotizacion-wizard-card .form-select,
+.cotizacion-wizard-card textarea,
+.cotizaciones-page .form-control,
+.cotizaciones-page .form-select,
+.cotizaciones-page textarea {
+  background-color: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+.cotizaciones-list-responsive {
+  border-radius: .85rem;
+  overflow: auto;
+}
+
+@media (max-width: 991.98px) {
+  .cotizaciones-detail-page .sg-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .cotizaciones-page .sg-page-actions,
+  .cotizaciones-page .sg-page-actions > a,
+  .cotizaciones-page .sg-page-actions > button {
+    width: 100%;
+  }
+}
+
+
+/* ==========================================================
+   ROADMAP MÓVIL — Cotizaciones alineado a cards/grid SG
+   ========================================================== */
+.cotizacion-wizard-card,
+.cotizaciones-page,
+.cotizaciones-detail-page {
+  min-width: 0;
+}
+
+.cotizacion-wizard-card .wizard-panel,
+.cotizacion-wizard-card .row,
+.cotizaciones-page .card,
+.cotizaciones-detail-page .card {
+  min-width: 0;
+}
+
+.cotizacion-wizard-card .input-group {
+  min-width: 0;
+}
+
+.cotizacion-wizard-card .input-group .form-control {
+  min-width: 0;
+}
+
+.client-result-item,
+.cot-product-item {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.client-result-item .small,
+.cot-product-item .small {
+  line-height: 1.35;
+}
+
+.cot-product-card-header > div:first-child {
+  min-width: 0;
+}
+
+.cot-product-card-title {
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+.cot-product-card-remove {
+  flex: 0 0 auto;
+}
+
+.cot-product-card-remove span {
+  display: inline;
+}
+
+.cot-ref strong,
+.cot-edit-grid input,
+.cot-summary-card strong,
+.cot-detail-product-card__grid strong,
+.cotizacion-mobile-card__grid strong {
+  overflow-wrap: anywhere;
+}
+
+.cot-detail-actions__group form,
+.cot-detail-actions__group a,
+.cot-detail-actions__group button {
+  min-width: 0;
+}
+
+@media (max-width: 767.98px) {
+  .cotizaciones-page,
+  .cotizaciones-detail-page {
+    gap: .75rem;
+  }
+
+  .cotizacion-wizard-card .card-body {
+    padding: .75rem;
+  }
+
+  .cot-page-header,
+  .cotizaciones-page .sg-page-header {
+    display: grid !important;
+    gap: .75rem;
+  }
+
+  .cot-page-header #cotStepBadge {
+    justify-self: start;
+  }
+
+  .cotizacion-wizard-card .wizard-steps,
+  .cot-steps {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .45rem;
+    margin-bottom: 1rem !important;
+  }
+
+  .cotizacion-wizard-card .wizard-step {
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: .35rem;
+    padding: .55rem .25rem;
+    text-align: center;
+    border-radius: .85rem;
+  }
+
+  .cotizacion-wizard-card .wizard-step .dot {
+    width: 1.75rem;
+    height: 1.75rem;
+    font-size: .82rem;
+  }
+
+  .cotizacion-wizard-card .wizard-step .label {
+    max-width: 100%;
+    font-size: .68rem;
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .cotizacion-wizard-card .input-group {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+  }
+
+  .cotizacion-wizard-card .input-group > .form-control,
+  .cotizacion-wizard-card .input-group > .sg-btn-outline,
+  .cotizacion-wizard-card .input-group > .sg-btn-primary {
+    border-radius: .75rem !important;
+  }
+
+  .cot-product-picker {
+    position: static;
+  }
+
+  .client-results,
+  .cot-product-results {
+    max-height: 46vh;
+  }
+
+  .client-result-item,
+  .cot-product-item {
+    border-radius: .85rem !important;
+    margin-bottom: .45rem;
+    border: 1px solid var(--color-border) !important;
+    background: var(--color-surface) !important;
+    color: var(--color-text) !important;
+  }
+
+  .client-result-item.active,
+  .cot-product-item.active {
+    background: var(--color-primary) !important;
+    color: var(--color-text-inverse) !important;
+  }
+
+  .cot-product-card {
+    padding: .8rem;
+    border-radius: 1rem;
+  }
+
+  .cot-product-card-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .65rem;
+  }
+
+  .cot-product-card-remove {
+    width: 100%;
+    min-height: 2.4rem;
+  }
+
+  .cot-ref-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .45rem;
+  }
+
+  .cot-ref {
+    padding: .5rem;
+  }
+
+  .cot-ref span {
+    font-size: .64rem;
+  }
+
+  .cot-ref strong {
+    font-size: .82rem;
+  }
+
+  .cot-edit-grid,
+  .cot-edit-grid-prices {
+    grid-template-columns: 1fr;
+    gap: .65rem;
+  }
+
+  .cot-edit-grid > div {
+    border: 1px solid var(--color-border);
+    border-radius: .85rem;
+    background: var(--color-surface-soft);
+    padding: .6rem;
+  }
+
+  .cot-edit-grid label {
+    color: var(--color-text-soft);
+  }
+
+  .cot-wizard-actions,
+  .cot-wizard-actions__buttons,
+  .cot-detail-actions,
+  .cot-detail-actions__group {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr;
+    align-items: stretch !important;
+  }
+
+  .cot-wizard-actions > a,
+  .cot-wizard-actions__buttons > button,
+  .cot-detail-actions > a,
+  .cot-detail-actions__group > a,
+  .cot-detail-actions__group > form,
+  .cot-detail-actions__group button {
+    width: 100%;
+  }
+
+  .cot-detail-actions__group form {
+    display: block;
+  }
+
+  .cot-summary-card,
+  .cot-help-card,
+  .cot-detail-product-card,
+  .cotizacion-mobile-card {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .cot-detail-product-card__grid,
+  .cotizacion-mobile-card__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 380px) {
+  .cotizacion-wizard-card .wizard-steps,
+  .cot-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cot-ref-grid {
+    grid-template-columns: 1fr;
   }
 }

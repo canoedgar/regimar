@@ -132,8 +132,8 @@
           Productos
         </h6>
 
-        <div class="table-responsive">
-          <table class="table table-hover align-middle sg-table">
+        <div class="table-responsive d-none d-md-block">
+          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
             <thead class="table-light">
               <tr>
                 <th>Producto</th>
@@ -187,6 +187,55 @@
             </tfoot>
           </table>
         </div>
+
+        <div class="sg-mobile-list d-md-none">
+          {% for d in detalles %}
+            <article class="sg-mobile-card">
+              <div class="sg-mobile-card-header">
+                <div>
+                  <span class="sg-mobile-card-title">{{ d.producto }}</span>
+                  <span class="sg-mobile-card-subtitle">
+                    {% if d.almacen %}
+                      {{ d.almacen.codigo }} - {{ d.almacen.nombre }}
+                    {% elif entrada.almacen %}
+                      {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
+                    {% else %}
+                      Sin almacén
+                    {% endif %}
+                  </span>
+                </div>
+              </div>
+              <div class="sg-mobile-card-grid">
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Presentación</span>
+                  <span class="sg-mobile-card-value">
+                    {{ d.presentacion_nombre|default:d.producto.metrica|default:'Base' }}
+                    {% if d.presentacion_equivalencia_texto %}<small class="d-block text-muted">{{ d.presentacion_equivalencia_texto }}</small>{% endif %}
+                  </span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Capturada</span>
+                  <span class="sg-mobile-card-value">{{ d.cantidad_presentacion|default:d.cantidad|floatformat:2 }}</span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Inventario</span>
+                  <span class="sg-mobile-card-value">{{ d.cantidad|floatformat:2 }} {{ d.presentacion_metrica_default|default:d.producto.metrica }}</span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Costo unitario</span>
+                  <span class="sg-mobile-card-value">$ {{ d.costo_unitario|precio_entero }}</span>
+                </div>
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Importe</span>
+                  <span class="sg-mobile-card-value">$ {{ d.importe|dinero_decimal }}</span>
+                </div>
+              </div>
+            </article>
+          {% empty %}
+            <div class="sg-empty-state">Esta entrada no tiene productos registrados.</div>
+          {% endfor %}
+        </div>
+
 
       </div>
     </div>

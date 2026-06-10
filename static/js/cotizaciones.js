@@ -213,7 +213,7 @@
       card.innerHTML = `
         <div class="cot-product-card-header">
           <div><div class="cot-product-card-title">${escapeHtml(item.nombre)}</div><div class="small text-muted">Precio por ${escapeHtml(item.metrica)}</div></div>
-          <button type="button" class="sg-btn-outline sg-btn-sm" data-action="remove"><i class="bi bi-trash"></i></button>
+          <button type="button" class="sg-btn-outline sg-btn-sm cot-product-card-remove" data-action="remove"><i class="bi bi-trash"></i><span>Eliminar</span></button>
         </div>
         <div class="cot-ref-grid">
           <div class="cot-ref"><span>Costo</span><strong>${money(item.costo_base)}</strong></div>
@@ -222,9 +222,9 @@
         </div>
         <div class="alert alert-warning py-2 small mb-2 cot-price-warning ${warning ? "" : "d-none"}">El precio está por debajo del mínimo de referencia.</div>
         <div class="cot-edit-grid cot-edit-grid-prices">
-          <div><label>Margen $</label><input class="form-control form-control-sm" type="number" step="1" data-product-id="${escapeHtml(item.producto_id)}" data-field="margen_pesos" value="${normalizedItemValue(item, "margen_pesos")}"></div>
-          <div><label>Margen %</label><input class="form-control form-control-sm" type="number" step="1" data-product-id="${escapeHtml(item.producto_id)}" data-field="margen_porcentaje" value="${normalizedItemValue(item, "margen_porcentaje")}"></div>
-          <div><label>Precio de venta</label><input class="form-control form-control-sm" type="number" min="0" step="1" data-product-id="${escapeHtml(item.producto_id)}" data-field="precio_propuesto" value="${normalizedItemValue(item, "precio_propuesto")}"></div>
+          <div><label>Margen $</label><input class="form-control form-control-sm" type="number" inputmode="numeric" step="1" data-product-id="${escapeHtml(item.producto_id)}" data-field="margen_pesos" value="${normalizedItemValue(item, "margen_pesos")}"></div>
+          <div><label>Margen %</label><input class="form-control form-control-sm" type="number" inputmode="numeric" step="1" data-product-id="${escapeHtml(item.producto_id)}" data-field="margen_porcentaje" value="${normalizedItemValue(item, "margen_porcentaje")}"></div>
+          <div><label>Precio de venta</label><input class="form-control form-control-sm" type="number" inputmode="numeric" min="0" step="1" data-product-id="${escapeHtml(item.producto_id)}" data-field="precio_propuesto" value="${normalizedItemValue(item, "precio_propuesto")}"></div>
         </div>`;
 
       card.querySelector('[data-action="remove"]').addEventListener("click", () => {

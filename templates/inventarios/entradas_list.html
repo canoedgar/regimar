@@ -78,8 +78,8 @@
 
 <div class="sg-table-card">
   <div class="card-body">
-    <div class="table-responsive">
-      <table class="table table-hover align-middle sg-table">
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
         <thead class="table-light">
           <tr>
             <th>Folio</th>
@@ -165,6 +165,75 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
+
+    <div class="sg-mobile-list d-md-none">
+      {% for entrada in entradas %}
+        <article class="sg-mobile-card">
+          <div class="sg-mobile-card-header">
+            <div>
+              <span class="sg-mobile-card-label">Folio</span>
+              <strong class="sg-mobile-card-title">{{ entrada.folio }}</strong>
+              <span class="sg-mobile-card-subtitle">{{ entrada.fecha|date:"d/m/Y" }}</span>
+            </div>
+            <div>
+              {% if entrada.tipo == "OCF" %}
+                <span class="badge text-bg-success">Factura</span>
+              {% elif entrada.tipo == "MAN" %}
+                <span class="badge text-bg-warning text-dark">Manual</span>
+              {% else %}
+                <span class="badge text-bg-info text-dark">Ajuste</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Almacén</span>
+              <span class="sg-mobile-card-value">
+                {% if entrada.num_almacenes|default:0 > 1 %}
+                  Varios ({{ entrada.num_almacenes }})
+                {% elif entrada.num_almacenes|default:0 == 1 %}
+                  {% with det=entrada.detalles.all|first %}
+                    {% if det and det.almacen %}
+                      {{ det.almacen.codigo }} - {{ det.almacen.nombre }}
+                    {% elif entrada.almacen %}
+                      {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
+                    {% else %}
+                      —
+                    {% endif %}
+                  {% endwith %}
+                {% elif entrada.almacen %}
+                  {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
+                {% else %}
+                  —
+                {% endif %}
+              </span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Proveedor</span>
+              <span class="sg-mobile-card-value">{{ entrada.proveedor|default:"—" }}</span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Kilogramos</span>
+              <span class="sg-mobile-card-value">{{ entrada.total_productos|default:"0" }}</span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Importe total</span>
+              <span class="sg-mobile-card-value">$ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}</span>
+            </div>
+          </div>
+
+          <div class="sg-mobile-card-actions">
+            <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-outline sg-btn-sm">
+              <i class="bi bi-eye"></i>
+              Ver detalle
+            </a>
+          </div>
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">No hay entradas registradas.</div>
+      {% endfor %}
     </div>
   </div>
 </div>

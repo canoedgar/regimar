@@ -94,7 +94,7 @@
           {{ formset.management_form }}
 
           <div class="table-responsive">
-            <table class="table table-hover align-middle sg-table" id="detalleTable">
+            <table class="table table-hover align-middle sg-table sg-editable-mobile-table sg-no-mobile-grid" id="detalleTable">
               <thead>
                 <tr>
                   <th>Producto</th>
@@ -107,20 +107,20 @@
                 {# Renderiza SOLO los forms que vengan (en POST) #}
                 {% for f in formset %}
                   <tr class="detalle-row">
-                    <td>
+                    <td data-label="Producto">
                       {{ f.id }}
                       {{ f.producto }}
                       {% for e in f.producto.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
                     </td>
-                    <td>
+                    <td data-label="Cantidad">
                       {{ f.cantidad }}
                       {% for e in f.cantidad.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
                     </td>
-                    <td>
+                    <td data-label="Precio unit.">
                       {{ f.precio_unitario }}
                       {% for e in f.precio_unitario.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
                     </td>
-                    <td class="text-center">
+                    <td data-label="Quitar" class="text-center">
                       <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm btnRemoveRow" title="Quitar">
                         <i class="bi bi-x-lg"></i>
                       </button>
@@ -140,13 +140,13 @@
           {# PLANTILLA para clonar (empty_form) #}
           <template id="rowTemplate">
             <tr class="detalle-row">
-              <td>
+              <td data-label="Producto">
                 {{ formset.empty_form.id }}
                 {{ formset.empty_form.producto }}
               </td>
-              <td>{{ formset.empty_form.cantidad }}</td>
-              <td>{{ formset.empty_form.precio_unitario }}</td>
-              <td class="text-center">
+              <td data-label="Cantidad">{{ formset.empty_form.cantidad }}</td>
+              <td data-label="Precio unit.">{{ formset.empty_form.precio_unitario }}</td>
+              <td data-label="Quitar" class="text-center">
                 <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm btnRemoveRow" title="Quitar">
                   <i class="bi bi-x-lg"></i>
                 </button>

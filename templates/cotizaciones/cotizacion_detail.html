@@ -4,102 +4,37 @@
 {% block title %}{{ cotizacion.folio }} | Cotizaciones{% endblock %}
 {% block active_cotizaciones %}active{% endblock %}
 {% block page_title %}Detalle de cotización{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cotizaciones.css' %}">{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-xl-11">
-    <div class="card border-0 shadow-sm sg-form-card">
-      <div class="card-body">
-        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-start mb-3">
-          <div>
-            <h5 class="fw-bold mb-1"><i class="bi bi-file-earmark-text me-2"></i>{{ cotizacion.folio }}</h5>
-            <p class="sg-form-help mb-0">{{ cotizacion.nombre_cliente }} · Vigente hasta {{ cotizacion.fecha_vigencia|date:'d/m/Y' }}</p>
-          </div>
-          <span class="badge fs-6 {% if cotizacion.estatus == 'APROBADA' %}text-bg-success{% elif cotizacion.estatus == 'CANCELADA' %}text-bg-secondary{% elif cotizacion.estatus == 'VENCIDA' %}text-bg-danger{% else %}text-bg-warning{% endif %}">
-            {{ cotizacion.get_estatus_display }}
-          </span>
-        </div>
-
-        <div class="row g-3 mb-3 cot-detail-kpis">
-          <div class="col-12 col-md-4"><div class="cot-kpi"><span>Fecha</span><strong>{{ cotizacion.fecha|date:'d/m/Y' }}</strong></div></div>
-        </div>
-
-        <div class="cot-detail-products-grid mb-3">
-          {% for d in cotizacion.detalles.all %}
-            <article class="cot-detail-product-card">
-              <div class="cot-detail-product-card__name">{{ d.producto.nombre }}</div>
-              <div class="cot-detail-product-card__grid">
-                <div>
-                  <span>Precio cotizado</span>
-                  <strong>$ {{ d.precio_propuesto|precio_entero }}</strong>
-                </div>
-                <div>
-                  <span>% Margen</span>
-                  <strong>{{ d.margen_porcentaje|floatformat:0 }}%</strong>
-                </div>
-              </div>
-            </article>
-          {% empty %}
-            <div class="cot-empty-state">Sin productos registrados.</div>
-          {% endfor %}
-        </div>
-
-        <div class="cot-help-card mb-3">
-          <strong>Vista previa / impresión</strong>
-          <p class="mb-2">Para revisar el formato final, abre la cotización en una pestaña nueva. Desde ahí podrás imprimirla o guardarla como PDF.</p>
-          <div class="d-flex flex-wrap gap-2">
-            <a class="sg-btn-outline sg-btn-md" href="{% url 'cotizaciones:cotizacion_pdf' cotizacion.id %}" target="_blank" rel="noopener" id="cotPdfLink">
-              <i class="bi bi-box-arrow-up-right me-1"></i>Abrir vista de impresión
-            </a>
-            <button class="sg-btn-primary sg-btn-md d-md-none" type="button" id="cotSharePdfBtn" data-pdf-url="{% url 'cotizaciones:cotizacion_pdf' cotizacion.id %}" data-folio="{{ cotizacion.folio }}">
-              <i class="bi bi-share me-1"></i>Compartir / abrir PDF
-            </button>
-          </div>
-        </div>
-
-        <div class="d-flex flex-wrap justify-content-between gap-2">
-          <a class="sg-btn-secondary sg-btn-md" href="{% url 'cotizaciones:cotizacion_list' %}"><i class="bi bi-arrow-left me-1"></i>Regresar</a>
-          <div class="d-flex flex-wrap gap-2">
-            <a class="sg-btn-outline sg-btn-md" href="{% url 'cotizaciones:cotizacion_pdf' cotizacion.id %}" target="_blank"><i class="bi bi-printer me-1"></i>PDF / Imprimir</a>
-            {% if cotizacion.estatus == 'BORRADOR' %}
-              <form method="post" action="{% url 'cotizaciones:cotizacion_aprobar' cotizacion.id %}">{% csrf_token %}
-                <button class="sg-btn-success sg-btn-md" type="submit"><i class="bi bi-check2-circle me-1"></i>Aprobar</button>
-              </form>
-              <form method="post" action="{% url 'cotizaciones:cotizacion_cancelar' cotizacion.id %}">{% csrf_token %}
-                <button class="sg-btn-danger sg-btn-md" type="submit"><i class="bi bi-x-circle me-1"></i>Cancelar</button>
-              </form>
-            {% endif %}
-          </div>
-        </div>
+<div class="cotizaciones-page cotizaciones-detail-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-file-earmark-text"></i>{{ cotizacion.folio }}</h5>
+        <p class="sg-page-header-subtitle">{{ cotizacion.nombre_cliente }} · Vigente hasta {{ cotizacion.fecha_vigencia|date:'d/m/Y' }}</p>
+      </div>
+      <div class="sg-page-actions">
+        <span class="badge fs-6 {% if cotizacion.estatus == 'APROBADA' %}text-bg-success{% elif cotizacion.estatus == 'CANCELADA' %}text-bg-secondary{% elif cotizacion.estatus == 'VENCIDA' %}text-bg-danger{% else %}text-bg-warning{% endif %}">{{ cotizacion.get_estatus_display }}</span>
       </div>
     </div>
-  </div>
+  </section>
+
+  <section class="sg-dashboard-grid cot-detail-kpis">
+    <article class="sg-kpi-card"><div class="sg-kpi-title"><i class="bi bi-calendar"></i>Fecha</div><div class="sg-kpi-value fs-4">{{ cotizacion.fecha|date:'d/m/Y' }}</div></article>
+    <article class="sg-kpi-card"><div class="sg-kpi-title"><i class="bi bi-calendar-check"></i>Vigencia</div><div class="sg-kpi-value fs-4">{{ cotizacion.fecha_vigencia|date:'d/m/Y' }}</div></article>
+    <article class="sg-kpi-card"><div class="sg-kpi-title"><i class="bi bi-box-seam"></i>Productos</div><div class="sg-kpi-value fs-4">{{ cotizacion.detalles.all|length }}</div></article>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+    <div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-box-seam"></i>Productos cotizados</h5></div>
+    <div class="card-body"><div class="cot-detail-products-grid">{% for d in cotizacion.detalles.all %}<article class="cot-detail-product-card"><div class="cot-detail-product-card__name">{{ d.producto.nombre }}</div><div class="cot-detail-product-card__grid"><div><span>Precio cotizado</span><strong>$ {{ d.precio_propuesto|precio_entero }}</strong></div><div><span>% Margen</span><strong>{{ d.margen_porcentaje|floatformat:0 }}%</strong></div></div></article>{% empty %}<div class="cot-empty-state sg-empty-state">Sin productos registrados.</div>{% endfor %}</div></div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-body"><div class="cot-help-card"><strong>Vista previa / impresión</strong><p class="mb-2">Para revisar el formato final, abre la cotización en una pestaña nueva. Desde ahí podrás imprimirla o guardarla como PDF.</p><div class="d-flex flex-wrap gap-2 cot-detail-actions__group"><a class="sg-btn-outline sg-btn-md" href="{% url 'cotizaciones:cotizacion_pdf' cotizacion.id %}" target="_blank" rel="noopener" id="cotPdfLink"><i class="bi bi-box-arrow-up-right me-1"></i>Abrir vista de impresión</a><button class="sg-btn-primary sg-btn-md d-md-none" type="button" id="cotSharePdfBtn" data-pdf-url="{% url 'cotizaciones:cotizacion_pdf' cotizacion.id %}" data-folio="{{ cotizacion.folio }}"><i class="bi bi-share me-1"></i>Compartir / abrir PDF</button></div></div></div></section>
+
+  <section class="sg-form-actions sg-form-actions-between cot-detail-actions"><a class="sg-btn-secondary sg-btn-md" href="{% url 'cotizaciones:cotizacion_list' %}"><i class="bi bi-arrow-left me-1"></i>Regresar</a><div class="d-flex flex-wrap gap-2 cot-detail-actions__group"><a class="sg-btn-outline sg-btn-md" href="{% url 'cotizaciones:cotizacion_pdf' cotizacion.id %}" target="_blank"><i class="bi bi-printer me-1"></i>PDF / Imprimir</a>{% if cotizacion.estatus == 'BORRADOR' %}<form method="post" action="{% url 'cotizaciones:cotizacion_aprobar' cotizacion.id %}">{% csrf_token %}<button class="sg-btn-success sg-btn-md" type="submit"><i class="bi bi-check2-circle me-1"></i>Aprobar</button></form><form method="post" action="{% url 'cotizaciones:cotizacion_cancelar' cotizacion.id %}">{% csrf_token %}<button class="sg-btn-danger sg-btn-md" type="submit"><i class="bi bi-x-circle me-1"></i>Cancelar</button></form>{% endif %}</div></section>
 </div>
 {% endblock %}
 
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cotizaciones.css' %}">{% endblock %}
-{% block extra_js %}
-<script>
-(function(){
-  const shareBtn = document.getElementById('cotSharePdfBtn');
-  if (!shareBtn) return;
-  const pdfUrl = new URL(shareBtn.dataset.pdfUrl, window.location.origin).toString();
-  async function openOrSharePdf(){
-    if (navigator.share && window.matchMedia('(max-width: 767px)').matches) {
-      try {
-        await navigator.share({ title: shareBtn.dataset.folio || 'Cotización', url: pdfUrl });
-        return;
-      } catch (err) {
-        if (err && err.name === 'AbortError') return;
-      }
-    }
-    window.location.href = pdfUrl;
-  }
-  shareBtn.addEventListener('click', openOrSharePdf);
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('open_pdf') === '1' && window.matchMedia('(max-width: 767px)').matches) {
-    setTimeout(openOrSharePdf, 350);
-  }
-})();
-</script>
-{% endblock %}
+{% block extra_js %}<script src="{% static 'js/cotizacion_detail.js' %}"></script>{% endblock %}

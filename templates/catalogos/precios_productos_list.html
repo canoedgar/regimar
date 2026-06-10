@@ -31,8 +31,8 @@
   <div class="col-12">
     <div class="card border-0 shadow-sm sg-form-card sg-table-card">
       <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle sg-table">
+        <div class="table-responsive d-none d-md-block">
+          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
             <thead class="table-light">
               <tr>
                 <th>Producto</th>
@@ -93,6 +93,75 @@
               {% endfor %}
             </tbody>
           </table>
+        </div>
+
+        <div class="sg-mobile-list d-md-none" aria-label="Precios de productos en vista móvil">
+          {% for producto in productos %}
+            <article class="sg-mobile-card">
+              <div class="sg-mobile-card-header">
+                <div class="min-w-0">
+                  <span class="sg-mobile-card-label">Producto</span>
+                  <strong class="sg-mobile-card-title">{{ producto.nombre }}</strong>
+                  <span class="sg-mobile-card-subtitle">{{ producto.metrica }}</span>
+                </div>
+                <div>
+                  {% if producto.margen_estimado < 0 %}
+                    <span class="badge text-bg-danger">Margen ${{ producto.margen_estimado|dinero_decimal }}</span>
+                  {% elif producto.margen_estimado == 0 %}
+                    <span class="badge text-bg-secondary">Margen ${{ producto.margen_estimado|dinero_decimal }}</span>
+                  {% else %}
+                    <span class="badge text-bg-success">Margen ${{ producto.margen_estimado|dinero_decimal }}</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              <form method="post" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="producto_id" value="{{ producto.id }}">
+                <div class="sg-mobile-card-grid">
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Stock</span>
+                    <span class="sg-mobile-card-value">{{ producto.stock }}</span>
+                  </div>
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Último costo</span>
+                    <span class="sg-mobile-card-value">${{ producto.ultimo_costo_compra|precio_entero }}</span>
+                  </div>
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Costo promedio</span>
+                    <span class="sg-mobile-card-value">${{ producto.costo_promedio|precio_entero }}</span>
+                  </div>
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Margen %</span>
+                    <span class="sg-mobile-card-value">{{ producto.margen_porcentaje|floatformat:2 }}%</span>
+                  </div>
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Precio venta</span>
+                    <input type="number" name="precio" value="{{ producto.precio|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end sg-form-control">
+                  </div>
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Precio mínimo</span>
+                    <input type="number" name="precio_minimo" value="{{ producto.precio_minimo|precio_entero_input }}" step="1" min="0" class="form-control form-control-sm text-end sg-form-control">
+                  </div>
+                  <div class="sg-mobile-card-field">
+                    <span class="sg-mobile-card-label">Última compra</span>
+                    <span class="sg-mobile-card-value">{{ producto.fecha_ultima_compra|default:"—" }}</span>
+                  </div>
+                </div>
+
+                <div class="sg-mobile-card-actions">
+                  <button type="submit" class="sg-btn-primary sg-btn-sm">
+                    <i class="bi bi-check2"></i> Guardar
+                  </button>
+                  <a href="{% url 'producto_precio_bitacora' producto.id %}" class="sg-btn-secondary sg-btn-sm">
+                    <i class="bi bi-clock-history"></i> Bitácora
+                  </a>
+                </div>
+              </form>
+            </article>
+          {% empty %}
+            <div class="sg-empty-state">No hay productos registrados.</div>
+          {% endfor %}
         </div>
       </div>
     </div>

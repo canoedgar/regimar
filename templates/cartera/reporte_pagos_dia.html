@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Pagos del día{% endblock %}
+{% block page_title %}Pagos por fecha de pago{% endblock %}
+{% block active_cartera %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-3">
+    <div>
+      <h4 class="mb-1">Pagos aplicados</h4>
+      <p class="text-muted mb-0">Reporte operativo de pagos por fecha indicada por el cliente.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-outline-secondary" target="_blank" href="{% url 'cartera:reporte_pagos_dia_print' %}?fecha={{ fecha|date:'Y-m-d' }}&cantidad={{ cantidad }}">Imprimir</a>
+      <a href="{% url 'cartera:dashboard' %}" class="btn btn-outline-secondary">Volver</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body d-flex flex-column flex-xl-row justify-content-between gap-3">
+      <form method="get" class="row g-2 align-items-end flex-grow-1">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <label class="form-label">Fecha</label>
+          <input type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}" class="form-control">
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3">
+          <label class="form-label">Pagos a mostrar</label>
+          <select name="cantidad" class="form-select">
+            {% for opcion in cantidad_opciones %}
+              <option value="{{ opcion }}" {% if cantidad == opcion %}selected{% endif %}>{% if opcion == "todos" %}Todos{% else %}{{ opcion }}{% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-auto">
+          <button class="btn btn-primary w-100">Consultar</button>
+        </div>
+      </form>
+      <div class="text-xl-end">
+        <div class="text-muted small">Total recibido activo</div>
+        <div class="fs-3 fw-bold">${{ total_recibido|floatformat:2|intcomma }}</div>
+        <div class="text-muted small">Mostrando {{ total_mostrado }} de {{ total_registros }} pagos</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="table-responsive d-none d-md-block sg-no-mobile-grid">
+      <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid">
+        <thead>
+          <tr>
+            <th>Pago</th>
+            <th>Fecha pago</th>
+            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Notas</th>
+            <th class="text-end">Monto</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pago in pagos %}
+            <tr>
+              <td><a href="{% url 'cartera:pago_detalle' pago.id %}" class="fw-semibold">#{{ pago.id }}</a></td>
+              <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+              <td>{{ pago.cliente.nombre_fiscal|default:pago.cliente.nombre_comercial }}</td>
+              <td>{{ pago.get_tipo_aplicacion_display }}</td>
+              <td>
+                {% for app in pago.aplicaciones.all %}
+                  <span class="badge text-bg-light border">{{ app.nota_venta.folio }}</span>
+                {% empty %}
+                  <span class="text-muted">Saldo a favor</span>
+                {% endfor %}
+              </td>
+              <td class="text-end fw-semibold">${{ pago.monto_recibido|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No hay pagos registrados en esta fecha.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="sg-mobile-list d-md-none">
+      {% for pago in pagos %}
+        <article class="sg-mobile-card">
+          <div class="sg-mobile-card-header">
+            <div>
+              <span class="sg-mobile-card-label">Pago</span>
+              <a href="{% url 'cartera:pago_detalle' pago.id %}" class="sg-mobile-card-title">#{{ pago.id }}</a>
+              <span class="sg-mobile-card-subtitle">{{ pago.cliente.nombre_fiscal|default:pago.cliente.nombre_comercial }}</span>
+            </div>
+          </div>
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Fecha pago</span><span class="sg-mobile-card-value">{{ pago.fecha|date:"d/m/Y" }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Tipo</span><span class="sg-mobile-card-value">{{ pago.get_tipo_aplicacion_display }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Monto</span><span class="sg-mobile-card-value">${{ pago.monto_recibido|floatformat:2|intcomma }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Notas</span><span class="sg-mobile-card-value">{% for app in pago.aplicaciones.all %}{{ app.nota_venta.folio }}{% if not forloop.last %}, {% endif %}{% empty %}Saldo a favor{% endfor %}</span></div>
+          </div>
+          <div class="sg-mobile-card-actions"><a href="{% url 'cartera:pago_detalle' pago.id %}" class="sg-btn-outline sg-btn-sm"><i class="bi bi-eye"></i> Ver detalle</a></div>
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">No hay pagos registrados en esta fecha.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

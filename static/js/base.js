@@ -217,6 +217,250 @@
     });
   }
 
+
+
+  function initResponsiveTables() {
+    const MOBILE_LIST_CLASS = "sg-auto-mobile-list";
+    const TABLE_WRAPPER_CLASS = "sg-has-mobile-grid";
+
+    function normalizeLabel(text) {
+      return (text || "")
+        .replace(/\s+/g, " ")
+        .replace(/[\n\r\t]+/g, " ")
+        .trim();
+    }
+
+    function isActionsLabel(label) {
+      return /^(accion|acciones|opcion|opciones)$/i.test(normalizeLabel(label));
+    }
+
+    function isEmptyRow(row) {
+      const cells = Array.from(row.children).filter((cell) => cell.matches("td,th"));
+      if (cells.length !== 1) return false;
+      const colspan = Number(cells[0].getAttribute("colspan") || "1");
+      return colspan > 1 || cells[0].classList.contains("sg-empty-state");
+    }
+
+    function tableCanBeConverted(table) {
+      if (!table.matches(".sg-table")) return false;
+      if (table.matches(".sg-no-mobile-grid, .dataTable")) return false;
+      if (table.closest(".sg-no-mobile-grid, .modal, .dropdown-menu")) return false;
+      if (!table.tHead || !table.tBodies.length) return false;
+      if (table.querySelector("input, select, textarea, button[data-bs-toggle='modal']")) return false;
+      return true;
+    }
+
+    function getLabels(table) {
+      const headerRow = table.tHead?.querySelector("tr:last-child");
+      if (!headerRow) return [];
+      return Array.from(headerRow.children).map((cell) => normalizeLabel(cell.textContent));
+    }
+
+    function cloneCellContent(cell) {
+      const clone = document.createElement("span");
+      clone.innerHTML = cell.innerHTML;
+      clone.querySelectorAll("script, style").forEach((node) => node.remove());
+      clone.querySelectorAll("[id]").forEach((node) => node.removeAttribute("id"));
+      clone.querySelectorAll(".text-end").forEach((node) => node.classList.remove("text-end"));
+      return clone;
+    }
+
+    function getActionFallbackLabel(action) {
+      const explicitLabel = normalizeLabel(action.getAttribute("aria-label") || action.dataset.mobileLabel || "");
+      if (explicitLabel) return explicitLabel;
+
+      const icon = action.querySelector("i");
+      const iconClass = icon?.className || "";
+      const href = action.getAttribute("href") || "";
+      const className = action.className || "";
+      const semanticSource = `${iconClass} ${href} ${className}`.toLowerCase();
+
+      const map = [
+        { pattern: /(bi-pencil|edit|editar)/, label: "Editar" },
+        { pattern: /(bi-trash|delete|eliminar|borrar)/, label: "Eliminar" },
+        { pattern: /(bi-eye|detail|detalle|ver)/, label: "Ver" },
+        { pattern: /(bi-printer|print|imprimir)/, label: "Imprimir" },
+        { pattern: /(bi-file-earmark-pdf|pdf)/, label: "PDF" },
+        { pattern: /(bi-cash|bi-credit-card|pago|pagar)/, label: "Pagar" },
+        { pattern: /(bi-check|aceptar|aprobar|confirmar)/, label: "Aceptar" },
+        { pattern: /(bi-x|cancel|cancelar|rechazar)/, label: "Cancelar" },
+        { pattern: /(bi-plus|add|agregar|nuevo)/, label: "Agregar" },
+        { pattern: /(bi-arrow-repeat|refresh|actualizar)/, label: "Actualizar" },
+        { pattern: /(bi-box-arrow-up-right|abrir)/, label: "Abrir" },
+      ];
+
+      const match = map.find((item) => item.pattern.test(semanticSource));
+      if (match) return match.label;
+
+      const title = normalizeLabel(action.getAttribute("title") || "");
+      if (title && title.length <= 24 && !/^solo\s+puedes/i.test(title)) return title;
+
+      return "Ver";
+    }
+
+    function buildCard(row, labels) {
+      const cells = Array.from(row.children).filter((cell) => cell.matches("td,th"));
+      const card = document.createElement("article");
+      card.className = "sg-auto-mobile-card";
+
+      if (isEmptyRow(row)) {
+        const empty = document.createElement("div");
+        empty.className = "sg-empty-state mb-0";
+        empty.innerHTML = cells[0]?.innerHTML || "Sin datos para mostrar.";
+        card.appendChild(empty);
+        return card;
+      }
+
+      const actionIndexes = cells
+        .map((cell, index) => ({ cell, index, label: labels[index] || "" }))
+        .filter(({ cell, index, label }) => isActionsLabel(label) || cell.classList.contains("sg-table-actions") || (index >= cells.length - 1 && cell.querySelector("a, button")))
+        .map(({ index }) => index);
+
+      const statusIndex = cells.findIndex((cell) => cell.querySelector(".badge"));
+      const titleIndex = cells.findIndex((_, index) => !actionIndexes.includes(index));
+      const subtitleIndex = cells.findIndex((_, index) => index !== titleIndex && index !== statusIndex && !actionIndexes.includes(index));
+
+      const header = document.createElement("div");
+      header.className = "sg-auto-mobile-card__header";
+
+      const titleWrap = document.createElement("div");
+      titleWrap.className = "min-w-0";
+
+      if (labels[titleIndex]) {
+        const label = document.createElement("span");
+        label.className = "sg-auto-mobile-card__label";
+        label.textContent = labels[titleIndex];
+        titleWrap.appendChild(label);
+      }
+
+      const title = document.createElement("strong");
+      title.className = "sg-auto-mobile-card__title";
+      title.appendChild(cloneCellContent(cells[titleIndex] || cells[0]));
+      titleWrap.appendChild(title);
+
+      if (subtitleIndex >= 0) {
+        const subtitle = document.createElement("span");
+        subtitle.className = "sg-auto-mobile-card__subtitle";
+        subtitle.appendChild(cloneCellContent(cells[subtitleIndex]));
+        titleWrap.appendChild(subtitle);
+      }
+
+      header.appendChild(titleWrap);
+
+      if (statusIndex >= 0 && statusIndex !== titleIndex) {
+        const status = document.createElement("div");
+        status.className = "sg-auto-mobile-card__status";
+        status.appendChild(cloneCellContent(cells[statusIndex]));
+        header.appendChild(status);
+      }
+
+      card.appendChild(header);
+
+      const grid = document.createElement("div");
+      grid.className = "sg-auto-mobile-card__grid";
+
+      cells.forEach((cell, index) => {
+        if (index === titleIndex || index === subtitleIndex || index === statusIndex || actionIndexes.includes(index)) return;
+        const labelText = labels[index] || `Dato ${index + 1}`;
+        if (!normalizeLabel(cell.textContent) && !cell.querySelector("a, button, .badge")) return;
+
+        const field = document.createElement("div");
+        field.className = "sg-auto-mobile-card__field";
+
+        const label = document.createElement("span");
+        label.className = "sg-auto-mobile-card__label";
+        label.textContent = labelText;
+
+        const value = document.createElement("span");
+        value.className = "sg-auto-mobile-card__value";
+        value.appendChild(cloneCellContent(cell));
+
+        field.append(label, value);
+        grid.appendChild(field);
+      });
+
+      if (grid.children.length) card.appendChild(grid);
+
+      if (actionIndexes.length) {
+        const actions = document.createElement("div");
+        actions.className = "sg-auto-mobile-card__actions";
+        actionIndexes.forEach((index) => {
+          const content = cloneCellContent(cells[index]);
+          content.querySelectorAll("a, button").forEach((action) => {
+            action.classList.add("sg-btn-sm", "sg-mobile-action-btn");
+            if (!normalizeLabel(action.textContent)) {
+              action.appendChild(document.createTextNode(` ${getActionFallbackLabel(action)}`));
+            }
+          });
+          actions.appendChild(content);
+        });
+        card.appendChild(actions);
+      }
+
+      return card;
+    }
+
+    function getContainer(table) {
+      const responsive = table.closest(".table-responsive");
+      return responsive || table;
+    }
+
+    function hasManualMobileList(container) {
+      let sibling = container.nextElementSibling;
+      while (sibling && sibling.nodeType === 1) {
+        if (sibling.matches(".d-md-none, .d-lg-none, .sg-mobile-list, [class*='mobile-list']")) return true;
+        if (!sibling.matches("script, style")) return false;
+        sibling = sibling.nextElementSibling;
+      }
+      return false;
+    }
+
+    function rebuildTable(table) {
+      if (!tableCanBeConverted(table)) return;
+
+      const container = getContainer(table);
+      if (hasManualMobileList(container)) return;
+
+      const labels = getLabels(table);
+      const bodyRows = Array.from(table.tBodies[0]?.rows || [])
+        .filter((row) => !row.classList.contains("d-none"));
+
+      let list = container.nextElementSibling;
+      if (!list || !list.classList?.contains(MOBILE_LIST_CLASS)) {
+        list = document.createElement("div");
+        list.className = MOBILE_LIST_CLASS;
+        list.setAttribute("aria-label", "Listado móvil");
+        container.insertAdjacentElement("afterend", list);
+      }
+
+      list.innerHTML = "";
+      bodyRows.forEach((row) => list.appendChild(buildCard(row, labels)));
+      container.classList.add(TABLE_WRAPPER_CLASS);
+    }
+
+    function rebuildAll() {
+      document.querySelectorAll("table.sg-table").forEach(rebuildTable);
+    }
+
+    rebuildAll();
+
+    if (window.jQuery) {
+      window.jQuery(document).on("draw.dt", () => window.requestAnimationFrame(rebuildAll));
+    }
+
+    const observer = new MutationObserver((mutations) => {
+      const shouldRebuild = mutations.some((mutation) => {
+        const target = mutation.target;
+        return target instanceof HTMLElement && Boolean(target.closest?.("table.sg-table"));
+      });
+      if (shouldRebuild) window.requestAnimationFrame(rebuildAll);
+    });
+
+    document.querySelectorAll("table.sg-table tbody").forEach((tbody) => {
+      observer.observe(tbody, { childList: true, subtree: true, characterData: true });
+    });
+  }
+
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       window.closeSidebar?.();
@@ -233,5 +477,6 @@
     initActiveMenu();
     initMenuSearch();
     initThemeSwitcher();
+    initResponsiveTables();
   });
 })();
