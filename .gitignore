@@ -1,4 +1,5 @@
 db.sqlite3
 .env
+.env.sessions.examples
 venv/
 **/__pycache__/

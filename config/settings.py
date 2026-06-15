@@ -7,6 +7,25 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Cargar .env
 load_dotenv(BASE_DIR / ".env")
 
+
+def env_bool(name, default=False):
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def env_int(name, default):
+    try:
+        return int(os.getenv(name, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def env_list(name, default=""):
+    value = os.getenv(name, default)
+    return [item.strip() for item in value.split(",") if item.strip()]
+
 # =========================
 # CONFIG BÁSICA
 # =========================
@@ -14,7 +33,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-insegura")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.68.101").split(",")
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.68.101")
 
 # =========================
 # APPS INSTALADAS
@@ -51,6 +70,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "accounts.middleware.SessionSecurityMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -130,6 +150,57 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# =========================
+# SEGURIDAD DE SESIÓN / PRODUCCIÓN
+# =========================
+
+# Dominio(s) confiables para formularios POST cuando el sistema esté publicado con HTTPS.
+# Ejemplo .env:
+# CSRF_TRUSTED_ORIGINS=https://portal.cpcalimentos.com,https://cpcalimentos.com
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
+
+# Cuando Django está detrás de Nginx/Proxy con HTTPS, esta cabecera permite detectar
+# correctamente que la petición original fue segura. Nginx debe enviar:
+# proxy_set_header X-Forwarded-Proto $scheme;
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# En producción deben quedar activos. En desarrollo local se pueden desactivar desde .env.
+SECURE_SSL_REDIRECT = env_bool("SECURE_SSL_REDIRECT", not DEBUG)
+SESSION_COOKIE_SECURE = env_bool("SESSION_COOKIE_SECURE", not DEBUG)
+CSRF_COOKIE_SECURE = env_bool("CSRF_COOKIE_SECURE", not DEBUG)
+
+# Mitigación contra robo de cookies/sesión desde scripts o contextos externos.
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = os.getenv("SESSION_COOKIE_SAMESITE", "Lax")
+SESSION_COOKIE_NAME = os.getenv("SESSION_COOKIE_NAME", "cpc_sessionid")
+CSRF_COOKIE_SAMESITE = os.getenv("CSRF_COOKIE_SAMESITE", "Lax")
+CSRF_COOKIE_NAME = os.getenv("CSRF_COOKIE_NAME", "cpc_csrftoken")
+
+# Caducidad de sesión.
+# SESSION_IDLE_TIMEOUT controla inactividad real; cada request válida renueva la actividad.
+# SESSION_ABSOLUTE_TIMEOUT limita el tiempo máximo aunque el usuario siga activo.
+SESSION_IDLE_TIMEOUT = env_int("SESSION_IDLE_TIMEOUT", 60 * 30)          # 30 minutos
+SESSION_ABSOLUTE_TIMEOUT = env_int("SESSION_ABSOLUTE_TIMEOUT", 60 * 60 * 8)  # 8 horas
+SESSION_COOKIE_AGE = env_int("SESSION_COOKIE_AGE", SESSION_ABSOLUTE_TIMEOUT)
+SESSION_SAVE_EVERY_REQUEST = env_bool("SESSION_SAVE_EVERY_REQUEST", True)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = env_bool("SESSION_EXPIRE_AT_BROWSER_CLOSE", True)
+
+# Validación antifraude básica de sesión.
+# El User-Agent ayuda a invalidar cookies robadas y reutilizadas desde otro navegador.
+# IP se deja apagado por default porque en redes móviles/proxy puede cambiar y cerrar sesiones válidas.
+SESSION_BIND_USER_AGENT = env_bool("SESSION_BIND_USER_AGENT", True)
+SESSION_BIND_IP = env_bool("SESSION_BIND_IP", False)
+
+# Headers de seguridad HTTP recomendados para publicación en nube.
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = "DENY"
+SECURE_REFERRER_POLICY = "same-origin"
+
+# HSTS solo debe activarse cuando HTTPS y el dominio estén funcionando correctamente.
+SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 0 if DEBUG else 31536000)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", not DEBUG)
+SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", False)
 
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
