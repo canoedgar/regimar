@@ -109,7 +109,7 @@ class RoleForm(forms.ModelForm):
         from django.contrib.auth.models import Permission
         from django.contrib.contenttypes.models import ContentType
 
-        apps_visibles = ["auth", "catalogos", "inventarios", "cartera", "cotizaciones", "accounts"]
+        apps_visibles = ["catalogos", "inventarios", "cartera", "cotizaciones"]
         acciones_crud = ["view", "add", "change", "delete"]
 
         accion_filter = Q()
@@ -141,6 +141,6 @@ class RoleForm(forms.ModelForm):
         self.fields["permissions"].label_from_instance = _perm_label
 
         self.fields["permissions"].help_text = (
-            "Selecciona qué puede hacer este rol. "
+            "Selecciona qué puede hacer este rol dentro de la operación del sistema. "
             "Ver = consultar, Agregar = crear, Modificar = editar/procesar, Eliminar = borrar/cancelar según el flujo."
         )

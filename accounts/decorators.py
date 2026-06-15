@@ -8,13 +8,10 @@ ADMIN_GROUP_NAME = "Administrador"
 
 
 def _es_administrador_sistema(user):
-    return (
-        user.is_authenticated
-        and (
-            user.is_superuser
-            or user.groups.filter(name=ADMIN_GROUP_NAME).exists()
-        )
-    )
+    # En la administración por permisos CRUD, únicamente el superusuario
+    # conserva bypass total. Los roles normales, incluyendo "Administrador",
+    # deben respetar los permisos configurados desde Roles y permisos.
+    return user.is_authenticated and user.is_superuser
 
 
 def grupos_requeridos(*nombres_grupo):
@@ -48,6 +45,18 @@ def administrador_requerido(view_func):
     return grupos_requeridos(ADMIN_GROUP_NAME)(view_func)
 
 
+
+def superusuario_requerido(view_func):
+    """Restringe una vista exclusivamente a superusuarios."""
+    @wraps(view_func)
+    @login_required
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+
+    return _wrapped_view
+
 def permiso_requerido(*permisos, require_all=False):
     """
     Restringe una vista por permisos específicos de Django.
@@ -57,9 +66,8 @@ def permiso_requerido(*permisos, require_all=False):
       @permiso_requerido("catalogos.add_cliente")
       @permiso_requerido("inventarios.change_salidainventario")
 
-    Los superusuarios y el grupo Administrador conservan acceso total para no
-    bloquear la administración operativa. El resto de usuarios depende de los
-    permisos asignados a su rol desde Configuración > Roles y permisos.
+    Los superusuarios conservan acceso total. El resto de usuarios depende de
+    los permisos asignados a su rol desde Configuración > Roles y permisos.
     """
     permisos = tuple(p for p in permisos if p)
 

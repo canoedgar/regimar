@@ -4,11 +4,11 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from accounts.decorators import administrador_requerido
+from accounts.decorators import superusuario_requerido
 from .forms import RoleForm, UserCreateForm, UserUpdateForm
 
 
-@administrador_requerido
+@superusuario_requerido
 def users_list(request):
     q = (request.GET.get("q") or "").strip()
     users = User.objects.prefetch_related("groups").all().order_by("username")
@@ -23,7 +23,7 @@ def users_list(request):
     return render(request, "accounts/users_list.html", {"users": users, "q": q})
 
 
-@administrador_requerido
+@superusuario_requerido
 def users_create(request):
     if request.method == "POST":
         form = UserCreateForm(request.POST)
@@ -37,7 +37,7 @@ def users_create(request):
     return render(request, "accounts/users_form.html", {"form": form, "modo": "create"})
 
 
-@administrador_requerido
+@superusuario_requerido
 def users_update(request, pk):
     user_obj = get_object_or_404(User, pk=pk)
 
@@ -54,7 +54,7 @@ def users_update(request, pk):
     return render(request, "accounts/users_form.html", {"form": form, "modo": "update", "user_obj": user_obj})
 
 
-@administrador_requerido
+@superusuario_requerido
 @require_POST
 def users_toggle_active(request, pk):
     user_obj = get_object_or_404(User, pk=pk)
@@ -74,7 +74,7 @@ def users_toggle_active(request, pk):
     return redirect("users_list")
 
 
-@administrador_requerido
+@superusuario_requerido
 def roles_list(request):
     q = (request.GET.get("q") or "").strip()
     roles = (
@@ -88,7 +88,7 @@ def roles_list(request):
     return render(request, "accounts/roles_list.html", {"roles": roles, "q": q})
 
 
-@administrador_requerido
+@superusuario_requerido
 def roles_create(request):
     if request.method == "POST":
         form = RoleForm(request.POST)
@@ -102,7 +102,7 @@ def roles_create(request):
     return render(request, "accounts/roles_form.html", {"form": form, "modo": "create"})
 
 
-@administrador_requerido
+@superusuario_requerido
 def roles_update(request, pk):
     role = get_object_or_404(Group, pk=pk)
     if request.method == "POST":
@@ -117,7 +117,7 @@ def roles_update(request, pk):
     return render(request, "accounts/roles_form.html", {"form": form, "modo": "update", "role": role})
 
 
-@administrador_requerido
+@superusuario_requerido
 @require_POST
 def roles_delete(request, pk):
     role = get_object_or_404(Group, pk=pk)

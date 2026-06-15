@@ -68,30 +68,40 @@
         <span>Dashboard</span>
       </a>
 
+      {# Permisos para pintar el menú. El backend sigue siendo la fuente de seguridad. #}
+      {% has_any_perm request.user "inventarios.add_salidainventario" "inventarios.view_salidainventario" "cotizaciones.view_cotizacionprecio" "cotizaciones.add_cotizacionprecio" "cartera.view_pagocliente" "cartera.add_pagocliente" as puede_menu_ventas %}
+      {% has_any_perm request.user "inventarios.view_entradainventario" "inventarios.add_entradainventario" "inventarios.view_salidainventario" "inventarios.add_salidainventario" "inventarios.view_inventariostock" "inventarios.change_inventariostock" as puede_menu_inventario %}
+      {% has_any_perm request.user "catalogos.view_proveedor" "catalogos.view_cliente" "catalogos.view_clienteproductoprecio" "catalogos.view_categoria" "catalogos.view_producto" "catalogos.view_almacen" "catalogos.view_proyecto" "catalogos.add_producto" "catalogos.add_proveedor" "catalogos.add_cliente" as puede_menu_catalogos %}
+      {% has_any_perm request.user "catalogos.view_parametrosistema" as puede_menu_parametros %}
+
       <!-- VENTAS -->
-      {% if request.user.is_superuser or request.user|has_group:"Ventas" %}
+      {% if puede_menu_ventas %}
         <div class="nav-section-title">Ventas</div>
 
+        {% if perms.inventarios.add_salidainventario %}
         <a href="{% url 'salida_venta_create' %}" class="nav-link {% block active_ventas %}{% endblock %}">
           <i class="bi bi-cash-coin"></i>
           Ventas
         </a>
+        {% endif %}
 
+        {% if perms.cotizaciones.view_cotizacionprecio or perms.cotizaciones.add_cotizacionprecio %}
         <a href="{% url 'cotizaciones:cotizacion_list' %}" class="nav-link {% block active_cotizaciones %}{% endblock %}">
           <i class="bi bi-file-earmark-text"></i>
           Cotizaciones
         </a>
+        {% endif %}
 
+        {% if perms.cartera.view_pagocliente or perms.cartera.add_pagocliente %}
         <a href="{% url 'cartera:dashboard' %}" class="nav-link {% block active_cartera %}{% endblock %}">
           <i class="bi bi-wallet2"></i>
           Cartera
         </a>
+        {% endif %}
       {% endif %}
 
-
-
       <!-- INVENTARIO -->
-      {% if request.user.is_superuser or request.user|has_group:"Inventarios" %}
+      {% if puede_menu_inventario %}
         <a class="nav-link d-flex justify-content-between align-items-center {% block active_inventario %}{% endblock %}"
           data-bs-toggle="collapse"
           href="#inventarioSubmenu">
@@ -105,97 +115,80 @@
         <div class="collapse {% block inventario_show %}{% endblock %}" id="inventarioSubmenu">
           <nav class="nav flex-column nav-submenu">
 
-            <!-- ENTRADAS -->
-            <span class="nav-subtitle">Entradas</span>
+            {% if perms.inventarios.view_entradainventario or perms.inventarios.add_entradainventario %}
+              <span class="nav-subtitle">Entradas</span>
 
-            <a href="{% url 'entradas_list' %}" class="nav-link {% block active_entradas_list %}{% endblock %}">
-              <i class="bi bi-arrow-down-circle me-1"></i>
-              Listado de entradas
-            </a>
+              {% if perms.inventarios.view_entradainventario %}
+              <a href="{% url 'entradas_list' %}" class="nav-link {% block active_entradas_list %}{% endblock %}">
+                <i class="bi bi-arrow-down-circle me-1"></i>
+                Listado de entradas
+              </a>
+              {% endif %}
 
-            {# Entrada con factura XML / OC con CFDI #}
-            <a href="{% url 'entrada_ocf_create' %}"
-              class="nav-link {% block active_entradas_xml %}{% endblock %}">
-              <i class="bi bi-file-earmark-code me-1"></i>
-              Entrada desde factura XML
-            </a>
+              {% if perms.inventarios.add_entradainventario %}
+              <a href="{% url 'entrada_ocf_create' %}"
+                class="nav-link {% block active_entradas_xml %}{% endblock %}">
+                <i class="bi bi-file-earmark-code me-1"></i>
+                Entrada desde factura XML
+              </a>
 
-            {# Entrada manual sin factura, con nota o remisión #}
-            <a href="{% url 'entrada_manual_create' %}"
-              class="nav-link {% block active_entradas_manual %}{% endblock %}">
-              <i class="bi bi-journal-text me-1"></i>
-              Entrada nota / remisión
-            </a>
+              <a href="{% url 'entrada_manual_create' %}"
+                class="nav-link {% block active_entradas_manual %}{% endblock %}">
+                <i class="bi bi-journal-text me-1"></i>
+                Entrada nota / remisión
+              </a>
+              {% endif %}
+            {% endif %}
 
-            {# Retorno de inventario de cliente (devoluciones) #}
-            <!--<a href="#"
-              class="nav-link {% block active_entradas_retorno %}{% endblock %}">
-              <i class="bi bi-arrow-repeat me-1"></i>
-              Retorno de inventario
-            </a>-->
+            {% if perms.inventarios.change_inventariostock %}
+              <span class="nav-subtitle">Ajustes</span>
+              <a href="{% url 'ajuste_inventario' %}"
+                class="nav-link {% block active_ajustes_inventario %}{% endblock %}">
+                <i class="bi bi-sliders me-1"></i>
+                Ajustes de inventario
+              </a>
+            {% endif %}
 
-            <!-- AJUSTES -->
-            <span class="nav-subtitle">Ajustes</span>
+            {% if perms.inventarios.view_salidainventario or perms.inventarios.add_salidainventario %}
+              <span class="nav-subtitle">Salidas</span>
 
-            {# Ajustes de inventario: correcciones, diferencias físicas, etc. #}
-            <a href="{% url 'ajuste_inventario' %}"
-              class="nav-link {% block active_ajustes_inventario %}{% endblock %}">
-              <i class="bi bi-sliders me-1"></i>
-              Ajustes de inventario
-            </a>
+              {% if perms.inventarios.view_salidainventario %}
+              <a href="{% url 'salidas_list' %}"
+                class="nav-link {% block active_salidas_list %}{% endblock %}">
+                <i class="bi bi-arrow-up-circle me-1"></i>
+                Listado de salidas
+              </a>
 
-            <!-- SALIDAS -->
-            <span class="nav-subtitle">Salidas</span>
+              <a href="{% url 'ventas_list' %}"
+                class="nav-link {% block active_ventas_list %}{% endblock %}">
+                <i class="bi bi-cart-check me-1"></i>
+                Notas de venta
+              </a>
+              {% endif %}
+            {% endif %}
 
-            <a href="{% url 'salidas_list' %}"
-              class="nav-link {% block active_salidas_list %}{% endblock %}">
-              <i class="bi bi-arrow-up-circle me-1"></i>
-              Listado de salidas
-            </a>                              
+            {% if perms.inventarios.view_inventariostock %}
+              <span class="nav-subtitle">Consultas</span>
 
-            <a href="{% url 'ventas_list' %}"
-              class="nav-link {% block active_ventas_list %}{% endblock %}">
-              <i class="bi bi-cart-check me-1"></i>
-              Notas de venta
-            </a>   
-                        
+              <a href="{% url 'inventario_actual' %}"
+                class="nav-link {% block active_inventario_actual %}{% endblock %}">
+                <i class="bi bi-clipboard-data me-1"></i>
+                Inventario actual
+              </a>
 
-            {# Merma, daño, robo, etc. #}
-            <!--<a href="#"
-              class="nav-link {% block active_salidas_merma %}{% endblock %}">
-              <i class="bi bi-exclamation-triangle me-1"></i>
-              Salida por merma / daño
-            </a>         
-
-            {# Traslado entre almacenes (cuando haya multi-almacén) #}
-            <a href="#"
-              class="nav-link {% block active_salidas_traslado %}{% endblock %}">
-              <i class="bi bi-arrow-left-right me-1"></i>
-              Traspaso entre almacenes
-            </a>-->
-
-            <!-- CONSULTAS -->
-            <span class="nav-subtitle">Consultas</span>
-
-            <a href="{% url 'inventario_actual' %}"
-              class="nav-link {% block active_inventario_actual %}{% endblock %}">
-              <i class="bi bi-clipboard-data me-1"></i>
-              Inventario actual
-            </a>
-
-            <a href="{% url 'kardex' %}"
-              class="nav-link {% block active_kardex %}{% endblock %}">
-              <i class="bi bi-clock-history me-1"></i>
-              Kardex de inventario
-            </a>
-
+              <a href="{% url 'kardex' %}"
+                class="nav-link {% block active_kardex %}{% endblock %}">
+                <i class="bi bi-clock-history me-1"></i>
+                Kardex de inventario
+              </a>
+            {% endif %}
 
           </nav>
         </div>
       {% endif %}
 
       <!-- CATÁLOGOS -->
-      {% if request.user.is_superuser or request.user|has_group:"Catalogos" %}
+      {% if puede_menu_catalogos %}
         <a class="nav-link d-flex justify-content-between align-items-center {% block active_catalogos %}{% endblock %}"
           data-bs-toggle="collapse"
           href="#catalogosSubmenu">
@@ -209,67 +202,79 @@
         <div class="collapse {% block catalogos_show %}{% endblock %}" id="catalogosSubmenu">
           <nav class="nav flex-column nav-submenu">
 
+            {% if perms.catalogos.view_proveedor %}
             <a href="{% url 'proveedores_list' %}" class="nav-link {% block active_proveedores %}{% endblock %}">
               <i class="bi bi-truck me-1"></i>
               Proveedores
             </a>
+            {% endif %}
 
+            {% if perms.catalogos.view_cliente %}
             <a href="{% url 'clientes_list' %}" class="nav-link {% block active_clientes %}{% endblock %}">
               <i class="bi bi-people me-1"></i>
               Clientes
             </a>
+            {% endif %}
 
-            {% if request.user.is_superuser or request.user|has_group:"Administrador" %}
+            {% if perms.catalogos.view_clienteproductoprecio %}
             <a href="{% url 'precios_clientes_list' %}" class="nav-link">
               <i class="bi bi-currency-dollar me-1"></i>
               Precios por cliente
             </a>
             {% endif %}
 
+            {% if perms.catalogos.view_categoria %}
             <a href="{% url 'categorias_list' %}" class="nav-link {% block active_categorias %}{% endblock %}">
               <i class="bi bi-tag me-1"></i>
               Categorías
             </a>
+            {% endif %}
 
+            {% if perms.catalogos.view_producto %}
             <a href="{% url 'productos_list' %}" class="nav-link {% block active_productos %}{% endblock %}">
               <i class="bi bi-box2-heart me-1"></i>
               Productos
             </a>
+            {% endif %}
 
+            {% if perms.catalogos.view_almacen %}
             <a href="{% url 'almacenes_list' %}" class="nav-link {% block active_almacenes %}{% endblock %}">
               <i class="bi bi-building me-1"></i>
               Almacenes
             </a>
+            {% endif %}
 
-            <!--<a href="{% url 'proyectos_list' %}" class="nav-link {% block active_proyectos %}{% endblock %}">
-              <i class="bi bi-kanban me-1"></i>
-              Proyectos
-            </a>-->
+            {% if perms.catalogos.add_producto or perms.catalogos.change_producto or perms.catalogos.add_proveedor or perms.catalogos.change_proveedor or perms.catalogos.add_cliente or perms.catalogos.change_cliente %}
+              <span class="nav-subtitle">Importaciones</span>
 
-            <span class="nav-subtitle">Importaciones</span>
+              {% if perms.catalogos.add_producto or perms.catalogos.change_producto %}
+              <a href="{% url 'importar_productos' %}" class="nav-link {% block active_importar_productos %}{% endblock %}">
+                <i class="bi bi-upload me-1"></i>
+                Productos
+              </a>
+              {% endif %}
 
-            <a href="{% url 'importar_productos' %}" class="nav-link {% block active_importar_productos %}{% endblock %}">
-              <i class="bi bi-upload me-1"></i>
-              Productos
-            </a>
+              {% if perms.catalogos.add_proveedor or perms.catalogos.change_proveedor %}
+              <a href="{% url 'importar_proveedores' %}" class="nav-link {% block active_importar_proveedores %}{% endblock %}">
+                <i class="bi bi-upload me-1"></i>
+                Proveedores
+              </a>
+              {% endif %}
 
-            <a href="{% url 'importar_proveedores' %}" class="nav-link {% block active_importar_proveedores %}{% endblock %}">
-              <i class="bi bi-upload me-1"></i>
-              Proveedores
-            </a>
-
-            <a href="{% url 'importar_clientes' %}" class="nav-link {% block active_importar_clientes %}{% endblock %}">
-              <i class="bi bi-upload me-1"></i>
-              Clientes
-            </a>
+              {% if perms.catalogos.add_cliente or perms.catalogos.change_cliente %}
+              <a href="{% url 'importar_clientes' %}" class="nav-link {% block active_importar_clientes %}{% endblock %}">
+                <i class="bi bi-upload me-1"></i>
+                Clientes
+              </a>
+              {% endif %}
+            {% endif %}
 
           </nav>
         </div>
-
       {% endif %}
 
       <!-- SISTEMA -->
-      {% if request.user.is_superuser or request.user|has_group:"Administrador" or perms.auth.change_user or perms.auth.change_group %}
+      {% if request.user.is_superuser or puede_menu_parametros %}
         <div class="nav-section-title">Sistema</div>
 
         <a class="nav-link d-flex justify-content-between align-items-center {% block active_config %}{% endblock %}"
@@ -284,6 +289,7 @@
 
         <div class="collapse {% block config_show %}{% endblock %}" id="configSubmenu">
           <nav class="nav flex-column nav-submenu">
+            {% if request.user.is_superuser %}
             <a href="{% url 'users_list' %}" class="nav-link {% block active_users %}{% endblock %}">
               <i class="bi bi-people-fill me-1"></i>
               Usuarios
@@ -292,10 +298,14 @@
               <i class="bi bi-shield-lock me-1"></i>
               Roles y permisos
             </a>
+            {% endif %}
+
+            {% if puede_menu_parametros %}
             <a href="{% url 'parametros_sistema_list' %}" class="nav-link">
               <i class="bi bi-sliders me-1"></i>
               Parámetros de sistema
             </a>
+            {% endif %}
           </nav>
         </div>
       {% endif %}

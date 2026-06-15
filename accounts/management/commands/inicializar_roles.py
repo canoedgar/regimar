@@ -4,8 +4,6 @@ from django.core.management.base import BaseCommand
 
 ROLES_PERMISOS = {
     "Administrador": [
-        "auth.view_user", "auth.add_user", "auth.change_user", "auth.delete_user",
-        "auth.view_group", "auth.add_group", "auth.change_group", "auth.delete_group",
         "catalogos.view_categoria", "catalogos.add_categoria", "catalogos.change_categoria", "catalogos.delete_categoria",
         "catalogos.view_producto", "catalogos.add_producto", "catalogos.change_producto", "catalogos.delete_producto",
         "catalogos.view_proveedor", "catalogos.add_proveedor", "catalogos.change_proveedor", "catalogos.delete_proveedor",
