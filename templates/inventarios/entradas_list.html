@@ -153,7 +153,17 @@
               <td class="text-end sg-table-actions">
                 <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
                   <i class="bi bi-eye"></i>
-                </a>                    
+                </a>
+                {% if entrada.tipo == "MAN" and not entrada.reversada and not entrada.es_reversa %}
+                  <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
+                    {% csrf_token %}
+                    <button type="submit" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Reversar entrada">
+                      <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                  </form>
+                {% elif entrada.reversada %}
+                  <span class="badge text-bg-secondary">Reversada</span>
+                {% endif %}
               </td>
             </tr>
           {% empty %}
@@ -229,6 +239,16 @@
               <i class="bi bi-eye"></i>
               Ver detalle
             </a>
+            {% if entrada.tipo == "MAN" and not entrada.reversada and not entrada.es_reversa %}
+              <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
+                {% csrf_token %}
+                <button type="submit" class="sg-btn-danger sg-btn-sm">
+                  <i class="bi bi-arrow-counterclockwise me-1"></i>Reversar
+                </button>
+              </form>
+            {% elif entrada.reversada %}
+              <span class="badge text-bg-secondary">Reversada</span>
+            {% endif %}
           </div>
         </article>
       {% empty %}

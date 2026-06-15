@@ -24,6 +24,16 @@
         <a href="{% url 'entradas_list' %}" class="sg-btn-secondary sg-btn-sm">
           <i class="bi bi-arrow-left me-1"></i> Regresar
         </a>
+        {% if entrada.tipo == "MAN" and not entrada_reversada and not entrada_es_reversa %}
+          <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
+            {% csrf_token %}
+            <button type="submit" class="sg-btn-danger sg-btn-sm">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reversar entrada
+            </button>
+          </form>
+        {% elif entrada_reversada %}
+          <span class="badge text-bg-secondary align-self-center">Entrada reversada</span>
+        {% endif %}
       </div>
     </div>
 

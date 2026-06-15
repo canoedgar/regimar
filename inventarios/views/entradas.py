@@ -1,9 +1,10 @@
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from decimal import Decimal, InvalidOperation
 
@@ -14,11 +15,19 @@ from django.db.models.functions import Round
 
 from catalogos.models import Almacen, Proveedor, Producto, ProductoMetricaConversion
 
-from ..models import EntradaInventario, EntradaInventarioDetalle
+from ..models import (
+    EntradaInventario, EntradaInventarioDetalle,
+    SalidaInventario, SalidaInventarioDetalle,
+    InventarioStock,
+)
 from ..forms import EntradaManualForm
 
 from ..services.folios import next_folio_movimiento
-from ..services.stock import aplicar_movimiento_stock, aplicar_entrada_con_costo
+from ..services.stock import (
+    aplicar_movimiento_stock,
+    aplicar_entrada_con_costo,
+    recalcular_costo_promedio_producto,
+)
 
 
 def _decimal_safe(valor, default="0"):
@@ -35,6 +44,40 @@ def _decimal_texto(valor):
         texto = texto.rstrip("0").rstrip(".")
     return texto or "0"
 
+
+
+def _folio_reversa_entrada_manual(folio_original, movimiento_id):
+    """
+    Genera un folio de reversa único compatible con max_length=20.
+    """
+    base = f"REV-{folio_original}"
+    if len(base) > 20:
+        base = f"REV-{movimiento_id}"
+
+    folio = base[:20]
+    contador = 1
+    while (
+        EntradaInventario.objects.filter(folio=folio).exists()
+        or SalidaInventario.objects.filter(folio=folio).exists()
+    ):
+        suffix = f"-{contador}"
+        folio = f"{base[:20-len(suffix)]}{suffix}"
+        contador += 1
+    return folio
+
+
+def _marcador_reversa_entrada_manual(entrada_id):
+    return f"REVERSA_DE=entrada_manual:{entrada_id}"
+
+
+def _entrada_manual_esta_reversada(entrada_id):
+    return SalidaInventario.objects.filter(
+        observaciones__icontains=_marcador_reversa_entrada_manual(entrada_id)
+    ).exists()
+
+
+def _entrada_es_reversa(entrada):
+    return "REVERSA_DE=" in (entrada.observaciones or "")
 
 def _build_productos_conversiones_json(productos):
     data = {}
@@ -74,7 +117,6 @@ def _render_entrada_manual(request, form, proveedores, almacenes, productos, det
 
 
 @permiso_requerido("inventarios.add_entradainventario")
-@transaction.atomic
 def entrada_manual_create(request):
     proveedores = Proveedor.objects.filter(activo=True).order_by("nombre")
     almacenes = Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre")
@@ -224,37 +266,42 @@ def entrada_manual_create(request):
             "costo_total": costo_total,
         })
 
-    entrada = form.save(commit=False)
-    entrada.tipo = EntradaInventario.TIPO_ENTRADA_MANUAL
-    entrada.save()
+    try:
+        with transaction.atomic():
+            entrada = form.save(commit=False)
+            entrada.tipo = EntradaInventario.TIPO_ENTRADA_MANUAL
+            entrada.save()
 
-    for d in detalle_norm:
-        EntradaInventarioDetalle.objects.create(
-            entrada=entrada,
-            producto_id=d["producto_id"],
-            almacen_id=d["almacen_id"],
-            presentacion_nombre=d["presentacion_nombre"],
-            presentacion_conversion_id=d["presentacion_conversion_id"],
-            cantidad_presentacion=d["cantidad_presentacion"],
-            presentacion_factor_conversion=d["presentacion_factor_conversion"],
-            presentacion_metrica_default=d["presentacion_metrica_default"],
-            presentacion_equivalencia_texto=d["presentacion_equivalencia_texto"],
-            cantidad=d["cantidad"],
-            costo_unitario=d["costo_unitario"],
-            es_peso_variable=d["es_peso_variable"],
-            cantidad_cajas=d["cantidad_cajas"],
-            kilos_reales=d["kilos_reales"],
-            costo_total=d["costo_total"],
-        )
+            for d in detalle_norm:
+                EntradaInventarioDetalle.objects.create(
+                    entrada=entrada,
+                    producto_id=d["producto_id"],
+                    almacen_id=d["almacen_id"],
+                    presentacion_nombre=d["presentacion_nombre"],
+                    presentacion_conversion_id=d["presentacion_conversion_id"],
+                    cantidad_presentacion=d["cantidad_presentacion"],
+                    presentacion_factor_conversion=d["presentacion_factor_conversion"],
+                    presentacion_metrica_default=d["presentacion_metrica_default"],
+                    presentacion_equivalencia_texto=d["presentacion_equivalencia_texto"],
+                    cantidad=d["cantidad"],
+                    costo_unitario=d["costo_unitario"],
+                    es_peso_variable=d["es_peso_variable"],
+                    cantidad_cajas=d["cantidad_cajas"],
+                    kilos_reales=d["kilos_reales"],
+                    costo_total=d["costo_total"],
+                )
 
-        aplicar_entrada_con_costo(
-            producto_id=d["producto_id"],
-            almacen_id=d["almacen_id"],
-            cantidad=d["cantidad"],
-            costo_unitario=d["costo_unitario"],
-            usuario=request.user,
-            motivo_bitacora="Entrada manual de inventario",
-        )
+                aplicar_entrada_con_costo(
+                    producto_id=d["producto_id"],
+                    almacen_id=d["almacen_id"],
+                    cantidad=d["cantidad"],
+                    costo_unitario=d["costo_unitario"],
+                    usuario=request.user,
+                    motivo_bitacora="Entrada manual de inventario",
+                )
+    except IntegrityError as exc:
+        messages.error(request, f"No se pudo registrar la entrada manual: {exc}")
+        return _render_entrada_manual(request, form, proveedores, almacenes, productos, detalle_json)
 
     messages.success(request, "Entrada manual registrada correctamente.")
     return redirect("entradas_list")
@@ -290,6 +337,11 @@ def entradas_list(request):
 
     if tipo in tipos_validos:
         entradas = entradas.filter(tipo=tipo)
+
+    entradas = list(entradas)
+    for entrada in entradas:
+        entrada.reversada = _entrada_manual_esta_reversada(entrada.id)
+        entrada.es_reversa = _entrada_es_reversa(entrada)
 
     context = {
         "entradas": entradas,
@@ -339,5 +391,106 @@ def entrada_detalle(request, pk):
         "almacenes_detalle": almacenes_detalle,
         "total_productos": totales["total_productos"] or 0,
         "total_importe": totales["total_importe"] or 0,
+        "entrada_reversada": _entrada_manual_esta_reversada(entrada.id),
+        "entrada_es_reversa": _entrada_es_reversa(entrada),
     }
     return render(request, "inventarios/entrada_detalle.html", context)
+
+@permiso_requerido("inventarios.change_inventariostock")
+@require_POST
+def deshacer_entrada_manual(request, pk):
+    if _entrada_manual_esta_reversada(pk):
+        messages.warning(request, "Esta entrada manual ya tiene una reversa registrada.")
+        return redirect("entrada_detalle", pk=pk)
+
+    try:
+        with transaction.atomic():
+            entrada = get_object_or_404(
+                EntradaInventario.objects.select_for_update().prefetch_related("detalles__producto", "detalles__almacen"),
+                pk=pk,
+                tipo=EntradaInventario.TIPO_ENTRADA_MANUAL,
+            )
+
+            if _entrada_es_reversa(entrada):
+                raise IntegrityError("No se puede reversar una entrada que ya corresponde a una reversa automática.")
+
+            detalles = list(entrada.detalles.select_related("producto", "almacen"))
+            if not detalles:
+                raise IntegrityError("La entrada manual no tiene detalle para reversar.")
+
+            acumulado = {}
+            for detalle in detalles:
+                almacen = detalle.almacen or entrada.almacen
+                if not almacen:
+                    raise IntegrityError(f"El producto {detalle.producto} no tiene almacén definido.")
+
+                cantidad = _decimal_safe(detalle.cantidad)
+                if cantidad <= 0:
+                    raise IntegrityError(f"El producto {detalle.producto} tiene cantidad inválida para reversar.")
+
+                key = (detalle.producto_id, almacen.id)
+                acumulado[key] = acumulado.get(key, Decimal("0")) + cantidad
+
+            for (producto_id, almacen_id), cantidad_total in acumulado.items():
+                stock_row = InventarioStock.objects.select_for_update().filter(
+                    producto_id=producto_id,
+                    almacen_id=almacen_id,
+                ).first()
+                stock_actual = _decimal_safe(stock_row.cantidad if stock_row else 0)
+                if stock_actual < cantidad_total:
+                    raise IntegrityError(
+                        f"No se puede reversar porque dejaría inventario negativo. "
+                        f"Producto ID {producto_id}, almacén ID {almacen_id}. "
+                        f"Disponible: {stock_actual}, requerido: {cantidad_total}."
+                    )
+
+            folio = _folio_reversa_entrada_manual(entrada.folio, entrada.id)
+            marcador = _marcador_reversa_entrada_manual(entrada.id)
+            salida = SalidaInventario.objects.create(
+                folio=folio,
+                fecha=timezone.localdate(),
+                proveedor="",
+                tipo=SalidaInventario.TIPO_AJUSTE_NEGATIVO,
+                motivo="Reversa de entrada manual",
+                observaciones=f"Reversa automática de la entrada manual {entrada.folio}.\n{marcador}",
+                almacen=entrada.almacen,
+            )
+
+            productos_recalculados = set()
+            for detalle in detalles:
+                almacen = detalle.almacen or entrada.almacen
+                cantidad = _decimal_safe(detalle.cantidad)
+                costo_unitario = _decimal_safe(detalle.costo_unitario)
+
+                SalidaInventarioDetalle.objects.create(
+                    salida=salida,
+                    producto=detalle.producto,
+                    almacen=almacen,
+                    presentacion_nombre=detalle.presentacion_nombre,
+                    presentacion_conversion_id=detalle.presentacion_conversion_id,
+                    cantidad_presentacion=detalle.cantidad_presentacion,
+                    presentacion_factor_conversion=detalle.presentacion_factor_conversion,
+                    presentacion_metrica_default=detalle.presentacion_metrica_default,
+                    presentacion_equivalencia_texto=detalle.presentacion_equivalencia_texto,
+                    cantidad=cantidad,
+                    precio_unitario=costo_unitario,
+                    costo_unitario_aplicado=costo_unitario,
+                )
+
+                aplicar_movimiento_stock(
+                    producto_id=detalle.producto_id,
+                    almacen_id=almacen.id,
+                    delta=-cantidad,
+                )
+                productos_recalculados.add(detalle.producto_id)
+
+            for producto_id in productos_recalculados:
+                recalcular_costo_promedio_producto(producto_id)
+
+    except IntegrityError as exc:
+        messages.error(request, f"No se pudo reversar la entrada manual: {exc}")
+        return redirect("entrada_detalle", pk=pk)
+
+    messages.success(request, f"Se reversó la entrada manual {entrada.folio} con la salida {folio}.")
+    return redirect("entrada_detalle", pk=pk)
+
