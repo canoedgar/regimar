@@ -455,6 +455,12 @@
   function getTotal(){
     return getItems().reduce(function(acc, item){ return acc + decimal(item.qty_kg) * decimal(item.precio); }, 0);
   }
+  function esAlmacenVentaSinStock(almacen){
+    return !!(almacen && (almacen.permite_venta_sin_stock || almacen.es_virtual_sistema || String(almacen.tipo || '').toUpperCase() === 'VIRTUAL'));
+  }
+  function almacenLabel(almacen){
+    return almacen ? (almacen.label || ((almacen.codigo || '') + ' - ' + (almacen.nombre || '')).trim()) : '';
+  }
   function usadoEnCarrito(productoId, almacenId){
     let usado = 0;
     cart.forEach(function(item){
@@ -468,6 +474,7 @@
   function disponibleKg(producto, almacenId){
     const almacen = (producto.almacenes || []).find(function(a){ return String(a.id) === String(almacenId); });
     if (!almacen) return 0;
+    if (esAlmacenVentaSinStock(almacen)) return Number.MAX_SAFE_INTEGER;
     return Math.max(0, decimal(almacen.stock) - usadoEnCarrito(producto.id, almacenId));
   }
   function buildTextoBusqueda(p){
@@ -549,7 +556,7 @@
     if (emptyState) emptyState.classList.toggle('d-none', filtered.length > 0);
 
     filtered.forEach(function(p, idx){
-      const almacenesDisponibles = (p.almacenes || []).filter(function(a){ return disponibleKg(p, a.id) > 0; }).length;
+      const almacenesDisponibles = (p.almacenes || []).filter(function(a){ return esAlmacenVentaSinStock(a) || disponibleKg(p, a.id) > 0; }).length;
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'list-group-item list-group-item-action product-item';
@@ -594,8 +601,8 @@
     (producto.almacenes || []).forEach(function(a){
       const opt = document.createElement('option');
       opt.value = a.id;
-      opt.textContent = (a.label || ((a.codigo || '') + ' - ' + (a.nombre || '')).trim()) + ' · Disponible: ' + numberText(disponibleKg(producto, a.id), 2) + ' kg';
-      opt.disabled = disponibleKg(producto, a.id) <= 0;
+      opt.textContent = esAlmacenVentaSinStock(a) ? (almacenLabel(a) + ' · Venta sin inventario') : (almacenLabel(a) + ' · Disponible: ' + numberText(disponibleKg(producto, a.id), 2) + ' kg');
+      opt.disabled = !esAlmacenVentaSinStock(a) && disponibleKg(producto, a.id) <= 0;
       almacenSelect.appendChild(opt);
     });
 
@@ -611,12 +618,14 @@
     const factor = pres ? decimal(pres.factor_conversion || 1) : 1;
     if (presentacionInfo) presentacionInfo.textContent = pres ? (pres.equivalencia_texto || ('Descuenta ' + numberText(factor, 2) + ' kg')) : '—';
     const aid = almacenSelect ? almacenSelect.value : '';
+    const almacen = selectedProducto && aid ? (selectedProducto.almacenes || []).find(function(a){ return String(a.id) === String(aid); }) : null;
+    const virtual = esAlmacenVentaSinStock(almacen);
     const disp = selectedProducto && aid ? disponibleKg(selectedProducto, aid) : 0;
-    if (almacenStockText) almacenStockText.textContent = selectedProducto && aid ? ('Disponible: ' + numberText(disp, 2) + ' kg') : 'Disponible: —';
+    if (almacenStockText) almacenStockText.textContent = selectedProducto && aid ? (virtual ? 'Venta sin inventario: generará entrada/salida automática' : ('Disponible: ' + numberText(disp, 2) + ' kg')) : 'Disponible: —';
     const qty = decimal(qtyInput ? qtyInput.value : 0);
     const kg = qty * factor;
-    if (qtyHelp) qtyHelp.textContent = pres ? ('Equivale a ' + numberText(kg, 2) + ' kg') : 'Selecciona presentación.';
-    if (btnAdd) btnAdd.disabled = !selectedProducto || !pres || !aid || !(qty > 0) || !(kg > 0) || kg > disp || !(decimal(precioInput.value) > 0);
+    if (qtyHelp) qtyHelp.textContent = pres ? ('Equivale a ' + numberText(kg, 2) + ' kg. ' + (virtual ? 'Entrada/salida automática en almacén virtual. ' : '')) : 'Selecciona presentación.';
+    if (btnAdd) btnAdd.disabled = !selectedProducto || !pres || !aid || !(qty > 0) || !(kg > 0) || (!virtual && kg > disp) || !(decimal(precioInput.value) > 0);
   }
 
   function addProducto(){
@@ -635,9 +644,10 @@
     const factor = decimal(pres ? pres.factor_conversion : 1);
     const qtyKg = qtyPresentacion * factor;
     const precio = decimal(precioInput.value);
+    const virtual = esAlmacenVentaSinStock(almacen);
     const disp = disponibleKg(selectedProducto, aid);
 
-    if (!pres || !almacen || !(qtyPresentacion > 0) || !(qtyKg > 0) || qtyKg > disp || !(precio > 0)){
+    if (!pres || !almacen || !(qtyPresentacion > 0) || !(qtyKg > 0) || (!virtual && qtyKg > disp) || !(precio > 0)){
       refreshSelectedInfo();
       return;
     }
@@ -670,7 +680,7 @@
     } else {
       item.allocations.push({
         almacen_id: String(almacen.id),
-        almacen_nombre: almacen.label || ((almacen.codigo || '') + ' - ' + (almacen.nombre || '')).trim(),
+        almacen_nombre: esAlmacenVentaSinStock(almacen) ? (almacenLabel(almacen) + ' (virtual)') : almacenLabel(almacen),
         qty_presentacion: qtyPresentacion,
         qty_kg: qtyKg
       });

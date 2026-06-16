@@ -119,6 +119,15 @@
     return Number.isFinite(n) ? n : 0;
   }
 
+  function esAlmacenVentaSinStock(almacen){
+    return !!(almacen && (almacen.permite_venta_sin_stock || almacen.es_virtual_sistema || String(almacen.tipo || "").toUpperCase() === "VIRTUAL"));
+  }
+
+  function getAlmacenLabel(almacen){
+    if (!almacen) return "";
+    return almacen.label || `${almacen.codigo || ""} - ${almacen.nombre || ""}`.trim();
+  }
+
   function blockInvalidNumberKeys(e){
     if (["-", "+", "e", "E"].includes(e.key)){
       e.preventDefault();
@@ -282,6 +291,7 @@
   function getAllocationDisponibleKg(producto, almacenId){
     const almacen = (producto.almacenes || []).find(a => String(a.id) === String(almacenId));
     if (!almacen) return 0;
+    if (esAlmacenVentaSinStock(almacen)) return Number.MAX_SAFE_INTEGER;
 
     let used = 0;
     cart.forEach(item => {
@@ -344,10 +354,13 @@
     productoAlmacenSelect.innerHTML = '<option value="">Selecciona un almacén…</option>';
     ((producto && producto.almacenes) ? producto.almacenes : []).forEach(a => {
       const disponibleKg = getAllocationDisponibleKg(producto, a.id);
+      const ventaSinStock = esAlmacenVentaSinStock(a);
       const opt = document.createElement("option");
       opt.value = a.id;
-      opt.textContent = `${a.label || `${a.codigo} - ${a.nombre}`} · Disponible: ${formatPlainNumber(disponibleKg, 2)} kg`;
-      opt.disabled = disponibleKg <= 0;
+      opt.textContent = ventaSinStock
+        ? `${getAlmacenLabel(a)} · Venta sin inventario`
+        : `${getAlmacenLabel(a)} · Disponible: ${formatPlainNumber(disponibleKg, 2)} kg`;
+      opt.disabled = !ventaSinStock && disponibleKg <= 0;
       productoAlmacenSelect.appendChild(opt);
     });
     productoAlmacenSelect.disabled = !producto;
@@ -453,7 +466,12 @@
     productoQty.disabled = false;
     btnAddProducto.disabled = true;
     productoPresentacionText.textContent = "";
-    productoAlmacenStockText.textContent = productoAlmacenSelect.value ? `Disponible: ${formatPlainNumber(getAllocationDisponibleKg(producto, productoAlmacenSelect.value), 2)} kg` : "Disponible: —";
+    if (productoAlmacenStockText){
+      const alm = (producto.almacenes || []).find(a => String(a.id) === String(productoAlmacenSelect.value));
+      productoAlmacenStockText.textContent = productoAlmacenSelect.value
+        ? (esAlmacenVentaSinStock(alm) ? "Venta sin inventario: generará entrada/salida automática" : `Disponible: ${formatPlainNumber(getAllocationDisponibleKg(producto, productoAlmacenSelect.value), 2)} kg`)
+        : "Disponible: —";
+    }
     validarCantidadSeleccionada();
 
     document.querySelectorAll(".product-item").forEach(el => {
@@ -480,8 +498,14 @@
       return false;
     }
 
+    const almacen = (selectedProducto.almacenes || []).find(a => String(a.id) === String(almacenId));
+    const ventaSinStock = esAlmacenVentaSinStock(almacen);
     const disponibleKg = getAllocationDisponibleKg(selectedProducto, almacenId);
-    if (productoAlmacenStockText){ productoAlmacenStockText.textContent = almacenId ? `Disponible: ${formatPlainNumber(disponibleKg, 2)} kg` : "Disponible: —"; }
+    if (productoAlmacenStockText){
+      productoAlmacenStockText.textContent = almacenId
+        ? (ventaSinStock ? "Venta sin inventario: generará entrada/salida automática" : `Disponible: ${formatPlainNumber(disponibleKg, 2)} kg`)
+        : "Disponible: —";
+    }
     const variable = esProductoPesoVariable(selectedProducto);
     const qCapturada = decimal(productoQty.value || 0);
     const cajasCapturadas = getCajasCapturadas();
@@ -490,7 +514,7 @@
     const precioKg = decimal((productoPrecio ? productoPrecio.value : '') || 0);
     const precioMenorMinimo = isPrecioMenorAlMinimo(selectedProducto, precioKg);
     const cajasOk = !variable || cajasCapturadas >= 0;
-    const qtyOk = qCapturada > 0 && (variable || factor > 0) && requeridoKg <= disponibleKg && cajasOk;
+    const qtyOk = qCapturada > 0 && (variable || factor > 0) && (ventaSinStock || requeridoKg <= disponibleKg) && cajasOk;
     const precioOk = precioKg > 0;
     const ok = qtyOk && precioOk;
 
@@ -502,8 +526,8 @@
     btnAddProducto.disabled = !ok;
     productoQty.disabled = false;
     productoQtyHelp.textContent = variable
-      ? `Se descontarán ${formatPlainNumber(requeridoKg, 2)} kg reales. ${cajasCapturadas > 0 ? 'Cajas informativas: ' + formatPlainNumber(cajasCapturadas, 2) + '. ' : ''}Subtotal: ${moneyAmount(requeridoKg * precioKg)}.`
-      : `Equivale a ${formatPlainNumber(requeridoKg, 2)} kg. Subtotal: ${moneyAmount(requeridoKg * precioKg)}.`;
+      ? `Se descontarán ${formatPlainNumber(requeridoKg, 2)} kg reales. ${cajasCapturadas > 0 ? 'Cajas informativas: ' + formatPlainNumber(cajasCapturadas, 2) + '. ' : ''}${ventaSinStock ? 'Entrada/salida automática en almacén virtual. ' : ''}Subtotal: ${moneyAmount(requeridoKg * precioKg)}.`
+      : `Equivale a ${formatPlainNumber(requeridoKg, 2)} kg. ${ventaSinStock ? 'Entrada/salida automática en almacén virtual. ' : ''}Subtotal: ${moneyAmount(requeridoKg * precioKg)}.`;
 
     if (productoPrecioClienteWarn){
       if (precioMenorMinimo){
@@ -563,7 +587,7 @@
       if (idx === highlightedIndex) item.classList.add("pos-focus");
       if (selectedProducto && String(selectedProducto.id) === String(p.id)) item.classList.add("active");
 
-      const almacenesConStock = (p.almacenes || []).filter(a => decimal(getAllocationDisponibleKg(p, a.id)) > 0).length;
+      const almacenesConStock = (p.almacenes || []).filter(a => esAlmacenVentaSinStock(a) || decimal(getAllocationDisponibleKg(p, a.id)) > 0).length;
       item.innerHTML = `
         <div class="d-flex justify-content-between align-items-start gap-3">
           <div class="text-start">
@@ -602,9 +626,10 @@
       : decimal(presentacion.factor_conversion || 0);
     const qtyKg = variable ? qCapturada : (qCapturada * factor);
     const qPresentacion = variable ? cajasCapturadas : qCapturada;
+    const ventaSinStock = esAlmacenVentaSinStock(almacen);
     const disponibleKg = getAllocationDisponibleKg(selectedProducto, almacenId);
     const precioKg = decimal(productoPrecio ? productoPrecio.value : 0);
-    if (!almacen || !(qCapturada > 0) || !(qtyKg > 0) || qtyKg > disponibleKg || qPresentacion < 0){ productoQty.classList.add("is-invalid"); productoQty.focus(); return; }
+    if (!almacen || !(qCapturada > 0) || !(qtyKg > 0) || (!ventaSinStock && qtyKg > disponibleKg) || qPresentacion < 0){ productoQty.classList.add("is-invalid"); productoQty.focus(); return; }
     if (!(precioKg > 0)){ if (productoPrecio){ productoPrecio.classList.add("is-invalid"); productoPrecio.focus(); } return; }
 
     const precioMinimoKey = getPrecioMinimoKey(selectedProducto, precioKg);
@@ -648,7 +673,7 @@
     } else {
       item.allocations.push({
         almacen_id: String(almacen.id),
-        almacen_nombre: almacen.label || `${almacen.codigo} - ${almacen.nombre}`,
+        almacen_nombre: esAlmacenVentaSinStock(almacen) ? `${getAlmacenLabel(almacen)} (virtual)` : getAlmacenLabel(almacen),
         qty_presentacion: qPresentacion,
         qty_kg: qtyKg,
       });

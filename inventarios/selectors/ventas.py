@@ -1,6 +1,6 @@
 from decimal import Decimal, InvalidOperation
 
-from catalogos.models import Almacen, Cliente, ClienteProductoPrecio
+from catalogos.models import Almacen, Cliente, ClienteProductoPrecio, Producto
 from inventarios.models import InventarioStock
 from inventarios.utils import get_almacen_default
 
@@ -102,7 +102,54 @@ def _conversiones_producto(producto):
     return conversiones
 
 
+def _almacen_permite_venta_sin_stock(almacen):
+    return bool(
+        getattr(almacen, "es_virtual_sistema", False)
+        or getattr(almacen, "tipo", "") == "VIRTUAL"
+    )
+
+
+def _producto_ui_base(producto):
+    return {
+        "id": str(producto.id),
+        "nombre": producto.nombre,
+        "stock": 0.0,
+        "precio": float(getattr(producto, "precio", 0) or 0),
+        "precio_minimo": float(getattr(producto, "precio_minimo", 0) or 0),
+        "maneja_peso_variable": bool(getattr(producto, "maneja_peso_variable", False)),
+        "costo_promedio": float(getattr(producto, "costo_promedio", 0) or 0),
+        "ultimo_costo_compra": float(getattr(producto, "ultimo_costo_compra", 0) or 0),
+        "codigo": getattr(producto, "codigo", "") or "",
+        "clave_busqueda": getattr(producto, "clave_busqueda", "") or "",
+        "metrica_default": _nombre_metrica(getattr(producto, "metrica", None)) or "kg",
+        "conversiones": _conversiones_producto(producto),
+        "almacenes": [],
+    }
+
+
+def _almacen_ui(almacen, cantidad):
+    venta_sin_stock = _almacen_permite_venta_sin_stock(almacen)
+    return {
+        "id": str(almacen.id),
+        "codigo": getattr(almacen, "codigo", "") or "",
+        "nombre": getattr(almacen, "nombre", "") or "",
+        "tipo": getattr(almacen, "tipo", "") or "",
+        "es_virtual_sistema": bool(getattr(almacen, "es_virtual_sistema", False)),
+        "permite_venta_sin_stock": venta_sin_stock,
+        "stock": float(cantidad or 0),
+        "label": (f"{getattr(almacen, 'codigo', '')} - {getattr(almacen, 'nombre', '')}").strip(" -"),
+    }
+
+
 def build_productos_ui():
+    almacenes_activos = list(Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre"))
+    almacenes_virtuales = [a for a in almacenes_activos if _almacen_permite_venta_sin_stock(a)]
+
+    productos_map = {
+        str(producto.id): _producto_ui_base(producto)
+        for producto in Producto.objects.all().order_by("nombre")
+    }
+
     stocks = (
         InventarioStock.objects
         .filter(almacen__es_activo=True)
@@ -110,44 +157,27 @@ def build_productos_ui():
         .order_by("producto__nombre", "almacen__tipo", "almacen__nombre")
     )
 
-    productos_map = {}
+    almacenes_por_producto = {producto_id: set() for producto_id in productos_map.keys()}
 
     for stock in stocks:
         producto = stock.producto
         producto_id = str(producto.id)
-
-        item = productos_map.setdefault(producto_id, {
-            "id": producto_id,
-            "nombre": producto.nombre,
-            "stock": 0.0,
-            "precio": float(getattr(producto, "precio", 0) or 0),
-            "precio_minimo": float(getattr(producto, "precio_minimo", 0) or 0),
-            "maneja_peso_variable": bool(getattr(producto, "maneja_peso_variable", False)),
-            "costo_promedio": float(getattr(producto, "costo_promedio", 0) or 0),
-            "ultimo_costo_compra": float(getattr(producto, "ultimo_costo_compra", 0) or 0),
-            "codigo": getattr(producto, "codigo", "") or "",
-            "clave_busqueda": getattr(producto, "clave_busqueda", "") or "",
-            "metrica_default": _nombre_metrica(
-                getattr(producto, "metrica", None)
-            ) or "kg",
-            "conversiones": _conversiones_producto(producto),
-            "almacenes": [],
-        })
+        item = productos_map.setdefault(producto_id, _producto_ui_base(producto))
 
         cantidad = float(stock.cantidad or 0)
         item["stock"] += cantidad
+        item["almacenes"].append(_almacen_ui(stock.almacen, cantidad))
+        almacenes_por_producto.setdefault(producto_id, set()).add(str(stock.almacen_id))
 
-        item["almacenes"].append({
-            "id": str(stock.almacen_id),
-            "codigo": getattr(stock.almacen, "codigo", "") or "",
-            "nombre": getattr(stock.almacen, "nombre", "") or "",
-            "tipo": getattr(stock.almacen, "tipo", "") or "",
-            "stock": cantidad,
-            "label": (
-                f"{getattr(stock.almacen, 'codigo', '')} - "
-                f"{getattr(stock.almacen, 'nombre', '')}"
-            ).strip(" -"),
-        })
+    # Los almacenes virtuales deben permitir venta de cualquier producto aunque no exista
+    # fila previa en InventarioStock. El backend generará entrada y salida automática.
+    for producto_id, item in productos_map.items():
+        ya_agregados = almacenes_por_producto.setdefault(producto_id, set())
+        for almacen in almacenes_virtuales:
+            if str(almacen.id) in ya_agregados:
+                continue
+            item["almacenes"].append(_almacen_ui(almacen, 0))
+            ya_agregados.add(str(almacen.id))
 
     cliente_precios = ClienteProductoPrecio.objects.select_related("cliente", "producto")
 
@@ -167,7 +197,6 @@ def build_productos_ui():
     productos_ui.sort(key=lambda item: (item.get("nombre") or "").lower())
 
     return productos_ui
-
 
 def get_contexto_salida_venta():
     almacenes_qs = Almacen.objects.filter(

@@ -237,7 +237,19 @@ class AgregarProductosNotaService:
                 cantidad=linea["cantidad"],
             )
 
-        for almacen_id, requeridos in self._agrupar_requeridos_por_almacen().items():
+        venta_service = VentaService(
+            form=type("NotaVentaDummyForm", (), {"cleaned_data": {"cliente_ref": self.salida.cliente_ref}})(),
+            detalles_validos=detalles_validos,
+            detalles_meta=detalles_meta,
+            lineas_stock=self.resultado_parseo["lineas_stock"],
+            almacenes_permitidos=self.almacenes_permitidos,
+            request=self.request,
+        )
+
+        requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
+        venta_service._registrar_entradas_virtuales(self.salida, requeridos_por_almacen)
+
+        for almacen_id, requeridos in requeridos_por_almacen.items():
             aplicar_movimientos_salida(almacen_id=almacen_id, requeridos=requeridos)
 
         cliente = getattr(self.salida, "cliente_ref", None)

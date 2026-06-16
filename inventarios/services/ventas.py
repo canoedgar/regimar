@@ -2,7 +2,7 @@ from decimal import Decimal
 from datetime import timedelta
 
 from catalogos.models import Producto, ClienteProductoPrecio, PrecioMenorMinimoAutorizacion
-from inventarios.models import SalidaInventarioDetalleAlmacen
+from inventarios.models import EntradaInventario, EntradaInventarioDetalle, SalidaInventarioDetalleAlmacen
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
@@ -13,7 +13,39 @@ from inventarios.services.stock import (
     validar_stock_suficiente,
     errores_stock_humano,
     aplicar_movimientos_salida,
+    aplicar_entrada_con_costo,
 )
+from inventarios.services.folios import next_folio_movimiento
+
+
+
+
+def es_almacen_venta_virtual(almacen) -> bool:
+    """
+    Identifica almacenes usados para venta sin existencia física previa.
+    En estos almacenes la nota debe generar una entrada automática y después
+    la salida normal, dejando trazabilidad entrada/salida sin bloquear por stock 0.
+    """
+    if not almacen:
+        return False
+    return bool(
+        getattr(almacen, "es_virtual_sistema", False)
+        or getattr(almacen, "tipo", "") == "VIRTUAL"
+    )
+
+
+def _costo_virtual_producto(producto) -> Decimal:
+    """
+    Costo histórico usado para la entrada automática virtual.
+    Se prioriza el último costo de compra; si no existe, el costo promedio.
+    """
+    if not producto:
+        return Decimal("0")
+    return (
+        getattr(producto, "ultimo_costo_compra", Decimal("0"))
+        or getattr(producto, "costo_promedio", Decimal("0"))
+        or Decimal("0")
+    )
 
 
 class VentaService:
@@ -47,6 +79,14 @@ class VentaService:
         errores.extend(self._validar_precios_minimos(productos_obj_por_id))
 
         for almacen_id, requeridos in requeridos_por_almacen.items():
+            almacen = self.almacenes_permitidos.get(str(almacen_id))
+
+            # Los almacenes virtuales representan ventas sin existencia física previa.
+            # No deben bloquearse por stock 0 porque el flujo genera entrada automática
+            # y salida de venta en la misma transacción.
+            if es_almacen_venta_virtual(almacen):
+                continue
+
             ok, disponibles, faltantes = validar_stock_suficiente(
                 almacen_id=almacen_id,
                 requeridos=requeridos,
@@ -55,7 +95,7 @@ class VentaService:
             if not ok:
                 errores.extend(
                     errores_stock_humano(
-                        almacen_nombre=str(self.almacenes_permitidos[str(almacen_id)]),
+                        almacen_nombre=str(almacen),
                         faltantes=faltantes,
                         disponibles=disponibles,
                         productos_por_id=productos_por_id,
@@ -72,6 +112,8 @@ class VentaService:
 
         self._agregar_observacion_almacenes(salida)
         salida.save()
+
+        self._registrar_entradas_virtuales(salida, requeridos_por_almacen)
 
         detalles_por_index = self._guardar_detalles(salida)
         self._guardar_asignaciones(detalles_por_index)
@@ -93,6 +135,68 @@ class VentaService:
             )
 
         return salida
+
+    def _registrar_entradas_virtuales(self, salida, requeridos_por_almacen):
+        """
+        Para almacenes virtuales genera una entrada automática por venta.
+        Luego el flujo existente registra la salida de inventario de la nota.
+        Resultado: trazabilidad completa entrada/salida y stock neto sin negativos.
+        """
+        productos_por_id = {
+            detalle.producto_id: detalle.producto
+            for detalle in self.detalles_validos
+            if getattr(detalle, "producto_id", None)
+        }
+
+        for almacen_id, agregados in (requeridos_por_almacen or {}).items():
+            almacen = self.almacenes_permitidos.get(str(almacen_id))
+            if not es_almacen_venta_virtual(almacen):
+                continue
+
+            entrada = EntradaInventario.objects.create(
+                folio=next_folio_movimiento(
+                    tipo=EntradaInventario.TIPO_AJUSTE_POSITIVO,
+                    width=6,
+                    prefix="EV",
+                ),
+                fecha=salida.fecha,
+                tipo=EntradaInventario.TIPO_AJUSTE_POSITIVO,
+                almacen=almacen,
+                documento_referencia=salida.folio,
+                motivo="Entrada automática por venta sin inventario",
+                observaciones=(
+                    f"Entrada automática generada por la nota de venta {salida.folio}.\n"
+                    "Flujo: venta desde almacén virtual; se registra entrada y salida en la misma transacción."
+                ),
+            )
+
+            for producto_id, cantidad in (agregados or {}).items():
+                producto = productos_por_id.get(producto_id)
+                costo_unitario = _costo_virtual_producto(producto)
+
+                EntradaInventarioDetalle.objects.create(
+                    entrada=entrada,
+                    producto_id=producto_id,
+                    almacen=almacen,
+                    cantidad=cantidad,
+                    costo_unitario=costo_unitario,
+                    costo_total=cantidad * costo_unitario,
+                    presentacion_nombre="Kilos",
+                    presentacion_conversion_id="default",
+                    cantidad_presentacion=cantidad,
+                    presentacion_factor_conversion=Decimal("1"),
+                    presentacion_metrica_default=getattr(producto, "metrica", "kg") if producto else "kg",
+                    presentacion_equivalencia_texto="Entrada automática por venta virtual",
+                )
+
+                aplicar_entrada_con_costo(
+                    producto_id=producto_id,
+                    almacen_id=almacen_id,
+                    cantidad=cantidad,
+                    costo_unitario=costo_unitario,
+                    usuario=self.request.user if self.request and self.request.user.is_authenticated else None,
+                    motivo_bitacora=f"Entrada automática por venta virtual {salida.folio}",
+                )
 
     def _validar_precios_minimos(self, productos_obj_por_id):
         errores = []
