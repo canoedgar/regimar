@@ -1,7 +1,10 @@
 (function(){
   const form = document.getElementById("ventaForm");
   if (!form) return;
-  const logoUrl = form.dataset.logoUrl || "/static/resources/logo.png";
+  const logoUrls = {
+    CPC: form.dataset.logoCpcUrl || form.dataset.logoUrl || "/static/resources/cpcnota.png",
+    BAJA_BACON: form.dataset.logoBajaBaconUrl || "/static/resources/bajabaconnota.png",
+  };
   const initialStep = Number(form.dataset.initialStep || "1");
   const btnPrev = document.getElementById("btnPrev");
   const btnNext = document.getElementById("btnNext");
@@ -14,6 +17,7 @@
   const clienteInputReal = form.querySelector('input[name="cliente"]');
   const formaPagoReal = form.querySelector('select[name="forma_pago_venta"]');
   const estadoPagoReal = form.querySelector('select[name="estado_pago"]');
+  const logoNotaReal = form.querySelector('select[name="logo_nota"]');
   const confirmarEnvioAutorizacionPrecio = document.getElementById("confirmarEnvioAutorizacionPrecio");
   const clienteSearch = document.getElementById("clienteSearch");
   const clientesResults = document.getElementById("clientesResults");
@@ -112,6 +116,11 @@
 
   function escapeHtml(str){
     return String(str || "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+
+  function getSelectedLogoUrl(){
+    const value = logoNotaReal ? String(logoNotaReal.value || "CPC") : "CPC";
+    return logoUrls[value] || logoUrls.CPC;
   }
 
   function decimal(v){
@@ -265,6 +274,7 @@
     setClienteText((c ? c.value : "") || "");
     if (clienteDireccionVenta) clienteDireccionVenta.value = (c ? c.direccion : "") || "";
     if (clienteContactoVenta) clienteContactoVenta.value = (c ? c.contacto : "") || "";
+    if (logoNotaReal) logoNotaReal.value = (c && c.logo ? c.logo : "CPC");
     syncClienteExtras();
     clientesResults && clientesResults.classList.add("d-none");
     clienteSearch.classList.remove("is-invalid");
@@ -859,7 +869,7 @@
         <div class="sale-note-top mt-1">
           <div class="sale-note-header">
             <div class="sale-note-header-row">
-              <img src="${escapeHtml(logoUrl)}" alt="Logo" class="sale-note-logo">
+              <img src="${escapeHtml(getSelectedLogoUrl())}" alt="Logo" class="sale-note-logo">
               <div class="sale-note-brand">
                 <div class="brand-name">CPC Alimentos</div>
                 <div class="brand-owner">Jaime Parada Villarreal</div>
@@ -964,6 +974,7 @@ Email: cpcalimentosbc@gmail.com</div>
       if (fecha && !fecha.value){ alert("Captura la fecha."); fecha.focus(); return false; }
       if (formaPagoReal && !formaPagoReal.value){ alert("Selecciona la forma de pago."); formaPagoReal.focus(); return false; }
       if (estadoPagoReal && !estadoPagoReal.value){ alert("Selecciona el estado de pago."); estadoPagoReal.focus(); return false; }
+      if (logoNotaReal && !logoNotaReal.value){ alert("Selecciona el logo de la nota."); logoNotaReal.focus(); return false; }
       if (!selectedClienteId || (clienteRefReal && !clienteRefReal.value)){
         alert("Selecciona un cliente del catálogo antes de continuar.");
         clienteSearch.classList.add("is-invalid");
@@ -1052,6 +1063,7 @@ Email: cpcalimentosbc@gmail.com</div>
   });
   clienteDireccionVenta && clienteDireccionVenta.addEventListener("input", syncClienteExtras);
   clienteContactoVenta && clienteContactoVenta.addEventListener("input", syncClienteExtras);
+  logoNotaReal && logoNotaReal.addEventListener("change", () => { if (step === 3) renderPreview(); });
   btnClearCliente.addEventListener("click", () => {
     selectedClienteId = "";
     if (clienteRefReal) clienteRefReal.value = "";
@@ -1060,6 +1072,7 @@ Email: cpcalimentosbc@gmail.com</div>
     setClienteText("");
     if (clienteDireccionVenta) clienteDireccionVenta.value = "";
     if (clienteContactoVenta) clienteContactoVenta.value = "";
+    if (logoNotaReal) logoNotaReal.value = "CPC";
     syncClienteExtras();
     clientesResults && clientesResults.classList.add("d-none");
     clienteSearch.focus();

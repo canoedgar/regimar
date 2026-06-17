@@ -359,7 +359,7 @@ class SalidaInventarioDetalleForm(forms.ModelForm):
 class SalidaVentaForm(forms.ModelForm):
     class Meta:
         model = SalidaInventario
-        fields = ["folio", "fecha", "cliente_ref", "forma_pago_venta", "estado_pago", "cliente", "cliente_direccion", "cliente_contacto", "documento_referencia", "motivo", "observaciones"]
+        fields = ["folio", "fecha", "cliente_ref", "forma_pago_venta", "estado_pago", "cliente", "cliente_direccion", "cliente_contacto", "logo_nota", "documento_referencia", "motivo", "observaciones"]
         widgets = {
             "folio": forms.TextInput(attrs={"class": "form-control"}),
             "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
@@ -369,6 +369,7 @@ class SalidaVentaForm(forms.ModelForm):
             "cliente": forms.TextInput(attrs={"class": "form-control"}),
             "cliente_direccion": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "cliente_contacto": forms.TextInput(attrs={"class": "form-control"}),
+            "logo_nota": forms.Select(attrs={"class": "form-select"}),
             "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
             "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
@@ -380,6 +381,7 @@ class SalidaVentaForm(forms.ModelForm):
         self.fields["cliente_ref"].queryset = Cliente.objects.filter(activo=True).order_by("nombre_fiscal", "nombre_comercial")
         self.fields["cliente_ref"].required = True
         self.fields["cliente_ref"].empty_label = "-- Selecciona un cliente --"
+        self.fields["logo_nota"].required = True
 
         self.fields["forma_pago_venta"].required = True
         self.fields["forma_pago_venta"].choices = [("", "-- Selecciona --")] + list(SalidaInventario.FORMA_PAGO_CHOICES)
@@ -404,6 +406,9 @@ class SalidaVentaForm(forms.ModelForm):
 
         if not cleaned.get("estado_pago"):
             self.add_error("estado_pago", "Selecciona el estado de pago.")
+
+        if not cleaned.get("logo_nota"):
+            self.add_error("logo_nota", "Selecciona el logo de la nota.")
 
         return cleaned
 
@@ -433,6 +438,7 @@ class SalidaVentaEdicionForm(forms.ModelForm):
             "cliente",
             "cliente_direccion",
             "cliente_contacto",
+            "logo_nota",
             "observaciones",
         ]
         widgets = {
@@ -443,6 +449,7 @@ class SalidaVentaEdicionForm(forms.ModelForm):
             "cliente": forms.TextInput(attrs={"class": "form-control"}),
             "cliente_direccion": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             "cliente_contacto": forms.TextInput(attrs={"class": "form-control"}),
+            "logo_nota": forms.Select(attrs={"class": "form-select"}),
             "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
@@ -452,6 +459,7 @@ class SalidaVentaEdicionForm(forms.ModelForm):
         self.fields["cliente_ref"].queryset = Cliente.objects.filter(activo=True).order_by("nombre_fiscal", "nombre_comercial")
         self.fields["cliente_ref"].required = True
         self.fields["cliente_ref"].empty_label = "-- Selecciona un cliente --"
+        self.fields["logo_nota"].required = True
         self.fields["forma_pago_venta"].required = True
         self.fields["estado_pago"].required = True
 
@@ -463,6 +471,8 @@ class SalidaVentaEdicionForm(forms.ModelForm):
             self.add_error("forma_pago_venta", "Selecciona la forma de pago.")
         if not cleaned.get("estado_pago"):
             self.add_error("estado_pago", "Selecciona el estado de pago.")
+        if not cleaned.get("logo_nota"):
+            self.add_error("logo_nota", "Selecciona el logo de la nota.")
         return cleaned
 
 

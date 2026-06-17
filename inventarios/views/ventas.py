@@ -88,7 +88,7 @@ def ventas_list(request):
     ventas = (
         SalidaInventario.objects
         .filter(tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen")
+        .select_related("almacen", "cliente_ref")
         .order_by("-fecha", "-folio")
     )
 
@@ -458,7 +458,7 @@ def nota_venta_print(request, pk=None):
     notas = (
         SalidaInventario.objects
         .filter(id__in=ids, tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen")
+        .select_related("almacen", "cliente_ref")
         .annotate(
             total_cantidad=Sum("detalles__cantidad"),
             total_importe=Sum(_importe_detalles_expr()),

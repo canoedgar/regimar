@@ -102,7 +102,7 @@ def _get_nota_guardada_para_impresion(pk):
     return (
         SalidaInventario.objects
         .filter(pk=pk, tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen")
+        .select_related("almacen", "cliente_ref")
         .annotate(
             total_cantidad=Sum("detalles__cantidad"),
             total_importe=Sum(_importe_salida_expr("detalles__")),
@@ -130,7 +130,7 @@ def salidas_list(request):
 
     salidas = (
         SalidaInventario.objects
-        .select_related("almacen")
+        .select_related("almacen", "cliente_ref")
         .all()
         .prefetch_related("detalles")
         .annotate(
@@ -166,7 +166,7 @@ def salidas_list(request):
 def salida_detalle(request, pk):
     salida = get_object_or_404(
         SalidaInventario.objects
-        .select_related("almacen", "proyecto")
+        .select_related("almacen", "proyecto", "cliente_ref")
         .prefetch_related("detalles__producto"),
         pk=pk,
     )

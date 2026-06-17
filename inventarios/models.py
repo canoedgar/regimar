@@ -203,6 +203,13 @@ class EntradaInventarioDetalle(models.Model):
 
 
 class SalidaInventario(models.Model):    
+    LOGO_CPC_ALIMENTOS = "CPC"
+    LOGO_BAJA_BACON = "BAJA_BACON"
+    LOGO_NOTA_CHOICES = [
+        (LOGO_CPC_ALIMENTOS, "CPC Alimentos"),
+        (LOGO_BAJA_BACON, "Baja Bacon"),
+    ]
+
     TIPO_VENTA = "VTA"
     TIPO_CONSUMO_INTERNO = "CON"
     TIPO_MERMA = "MRM"
@@ -262,6 +269,13 @@ class SalidaInventario(models.Model):
 
     cliente_direccion = models.TextField("Dirección del cliente para esta venta", blank=True)
     cliente_contacto = models.CharField("Contacto del cliente para esta venta", max_length=200, blank=True)
+    logo_nota = models.CharField(
+        "Logo",
+        max_length=20,
+        choices=LOGO_NOTA_CHOICES,
+        default=LOGO_CPC_ALIMENTOS,
+        help_text="Logo usado históricamente para imprimir esta nota de venta.",
+    )
     proveedor = models.CharField("Proveedor", max_length=200, blank=True) 
 
     almacen = models.ForeignKey(
@@ -308,6 +322,10 @@ class SalidaInventario(models.Model):
         verbose_name = "Salida de inventario"
         verbose_name_plural = "Salidas de inventario"
         ordering = ["-fecha", "-folio"]
+
+    @property
+    def logo_nota_static_path(self):
+        return "resources/bajabaconnota.png" if self.logo_nota == self.LOGO_BAJA_BACON else "resources/cpcnota.png"
 
     def __str__(self):
         return f"{self.folio} - {self.get_tipo_display()}"

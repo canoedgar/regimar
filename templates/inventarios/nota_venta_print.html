@@ -126,7 +126,7 @@
             <div class="sale-note-top mt-1">
               <div class="sale-note-header">
                 <div class="sale-note-header-row">
-                  <img src="{% static 'resources/logo.png' %}" alt="Logo" class="sale-note-logo">
+                  <img src="{% static nota.logo_nota_static_path %}" alt="Logo" class="sale-note-logo">
                   <div class="sale-note-brand">
                     <div class="brand-name">CPC Alimentos</div>
                     <div class="brand-owner">Jaime Parada Villarreal</div>
@@ -145,7 +145,7 @@ Email: cpcalimentosbc@gmail.com</div>
             <div class="sale-note-fields">
               <div class="sale-note-field field-client">
                 <div class="label">Cliente</div>
-                <div class="value value-left js-client-name">{% firstof nota.cliente.nombre_fiscal nota.cliente_nombre nota.nombre_cliente nota.cliente "MOSTRADOR" %}</div>
+                <div class="value value-left js-client-name">{% firstof nota.cliente_ref.nombre_fiscal nota.cliente_nombre nota.nombre_cliente nota.cliente "MOSTRADOR" %}</div>
               </div>
               <div class="sale-note-field">
                 <div class="label">Folio</div>
@@ -158,11 +158,11 @@ Email: cpcalimentosbc@gmail.com</div>
 
               <div class="sale-note-field field-address">
                 <div class="label">Dirección</div>
-                <div class="value value-left value-wrap">{% if nota.cliente_direccion %}{{ nota.cliente_direccion }}{% elif nota.direccion %}{{ nota.direccion }}{% elif nota.cliente.direccion_completa %}{{ nota.cliente.direccion_completa }}{% elif nota.cliente.direccion %}{{ nota.cliente.direccion }}{% else %}&nbsp;{% endif %}</div>
+                <div class="value value-left value-wrap">{% if nota.cliente_direccion %}{{ nota.cliente_direccion }}{% elif nota.direccion %}{{ nota.direccion }}{% elif nota.cliente_ref.direccion_completa %}{{ nota.cliente_ref.direccion_completa }}{% elif nota.cliente_ref.direccion %}{{ nota.cliente_ref.direccion }}{% else %}&nbsp;{% endif %}</div>
               </div>
               <div class="sale-note-field field-contact">
                 <div class="label">Contacto</div>
-                <div class="value value-left value-wrap">{% if nota.cliente_contacto %}{{ nota.cliente_contacto }}{% elif nota.contacto %}{{ nota.contacto }}{% elif nota.nombre_contacto %}{{ nota.nombre_contacto }}{% elif nota.cliente.contacto %}{{ nota.cliente.contacto }}{% else %}&nbsp;{% endif %}</div>
+                <div class="value value-left value-wrap">{% if nota.cliente_contacto %}{{ nota.cliente_contacto }}{% elif nota.contacto %}{{ nota.contacto }}{% elif nota.nombre_contacto %}{{ nota.nombre_contacto }}{% elif nota.cliente_ref.contacto %}{{ nota.cliente_ref.contacto }}{% else %}&nbsp;{% endif %}</div>
               </div>
               <div class="sale-note-field field-payment">
                 <div class="label">Forma de pago</div>

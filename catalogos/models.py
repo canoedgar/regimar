@@ -372,6 +372,10 @@ class Cliente(models.Model):
         FISICA = "FISICA", "Física"
         MORAL = "MORAL", "Moral"
 
+    class LogoNota(models.TextChoices):
+        CPC_ALIMENTOS = "CPC", "CPC Alimentos"
+        BAJA_BACON = "BAJA_BACON", "Baja Bacon"
+
     # =========================
     # Datos CFDI (Receptor) - CFDI 4.0
     # =========================
@@ -437,6 +441,13 @@ class Cliente(models.Model):
     nombre_comercial = models.CharField("Nombre comercial", max_length=150, blank=True)
     telefono = models.CharField(max_length=20, blank=True)
     contacto = models.CharField("Nombre de contacto", max_length=150, blank=True)
+    logo = models.CharField(
+        "Logo",
+        max_length=20,
+        choices=LogoNota.choices,
+        default=LogoNota.CPC_ALIMENTOS,
+        help_text="Logo default que se usará en las notas de venta del cliente.",
+    )
 
     # Dirección “operativa” (para expediente / envío / PDF)
     calle = models.CharField(max_length=120, blank=True)
@@ -492,6 +503,10 @@ class Cliente(models.Model):
             self.cp = self.domicilio_fiscal_cp
 
         super().save(*args, **kwargs)
+
+    @property
+    def logo_static_path(self):
+        return "resources/bajabaconnota.png" if self.logo == self.LogoNota.BAJA_BACON else "resources/cpcnota.png"
 
     def __str__(self):
         return self.nombre_fiscal or self.nombre_comercial or self.rfc or f"Cliente {self.pk}"

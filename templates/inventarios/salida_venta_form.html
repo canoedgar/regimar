@@ -46,7 +46,7 @@
           </div>
         </div>
 
-        <form method="post" novalidate id="ventaForm" class="venta-form" data-logo-url="{% static 'resources/logo.png' %}" data-initial-step="{{ nota_guardada|yesno:'4,1' }}">
+        <form method="post" novalidate id="ventaForm" class="venta-form" data-logo-url="{% static 'resources/cpcnota.png' %}" data-logo-cpc-url="{% static 'resources/cpcnota.png' %}" data-logo-baja-bacon-url="{% static 'resources/bajabaconnota.png' %}" data-initial-step="{{ nota_guardada|yesno:'4,1' }}">
           {% csrf_token %}
 
           <div class="d-none">
@@ -106,6 +106,12 @@
                 <label class="form-label fw-semibold">Estado de pago</label>
                 {{ form.estado_pago }}
               </div>
+              <div class="col-md-3">
+                <label class="form-label fw-semibold">Logo</label>
+                {{ form.logo_nota }}
+                <div class="form-text">Puedes cambiarlo solo para esta nota.</div>
+                <div class="text-danger small">{{ form.logo_nota.errors }}</div>
+              </div>
               <div class="col-lg-4 col-md-6 venta-step1-client">
                 <div class="d-flex align-items-center justify-content-between gap-2 mb-1">
                   <label class="form-label fw-semibold mb-0">Cliente</label>                  
@@ -128,7 +134,7 @@
                 </div>
               </div>
 
-              <script type="application/json" id="clientes-data">[{% for c in clientes %}{"id":"{{ c.id }}","value":"{{ c.nombre_fiscal|escapejs }}","nombre":"{{ c.nombre_fiscal|escapejs }}","rfc":"{{ c.rfc|escapejs }}","telefono":"{{ c.telefono|escapejs }}","contacto":"{{ c.contacto|escapejs }}","email":"{{ c.email_cfdi|escapejs }}","direccion":"{{ c.calle|escapejs }}{% if c.num_ext %} {{ c.num_ext|escapejs }}{% endif %}{% if c.num_int %} Int. {{ c.num_int|escapejs }}{% endif %}{% if c.colonia %}, {{ c.colonia|escapejs }}{% endif %}{% if c.localidad %}, {{ c.localidad|escapejs }}{% endif %}{% if c.municipio %}, {{ c.municipio|escapejs }}{% endif %}{% if c.estado %}, {{ c.estado|escapejs }}{% endif %}{% if c.cp %}, CP {{ c.cp|escapejs }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
+              <script type="application/json" id="clientes-data">[{% for c in clientes %}{"id":"{{ c.id }}","value":"{{ c.nombre_fiscal|escapejs }}","nombre":"{{ c.nombre_fiscal|escapejs }}","rfc":"{{ c.rfc|escapejs }}","telefono":"{{ c.telefono|escapejs }}","contacto":"{{ c.contacto|escapejs }}","email":"{{ c.email_cfdi|escapejs }}","logo":"{{ c.logo|escapejs }}","direccion":"{{ c.calle|escapejs }}{% if c.num_ext %} {{ c.num_ext|escapejs }}{% endif %}{% if c.num_int %} Int. {{ c.num_int|escapejs }}{% endif %}{% if c.colonia %}, {{ c.colonia|escapejs }}{% endif %}{% if c.localidad %}, {{ c.localidad|escapejs }}{% endif %}{% if c.municipio %}, {{ c.municipio|escapejs }}{% endif %}{% if c.estado %}, {{ c.estado|escapejs }}{% endif %}{% if c.cp %}, CP {{ c.cp|escapejs }}{% endif %}"}{% if not forloop.last %},{% endif %}{% endfor %}]</script>
 
               <div class="col-lg-5 col-md-6 venta-step1-address">
                 <label class="form-label fw-semibold">Dirección para esta venta</label>
@@ -367,7 +373,7 @@
         <div class="sale-note-top mt-1">
           <div class="sale-note-header">
             <div class="sale-note-header-row">
-              <img src="{% static 'resources/logo.png' %}" alt="Logo" class="sale-note-logo">
+              <img src="{% static nota_guardada.logo_nota_static_path %}" alt="Logo" class="sale-note-logo">
               <div class="sale-note-brand">
                 <div class="brand-name">CPC Alimentos</div>
                 <div class="brand-owner">Jaime Parada Villarreal</div>
