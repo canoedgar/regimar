@@ -8,34 +8,36 @@
 <div class="row justify-content-center">
   <div class="col-12 col-xl-10">
 
-    <div class="sg-page-header d-flex justify-content-between align-items-center mb-3">
-      <div>
-        <h5 class="mb-1">
-          <i class="bi bi-eye me-2"></i>
-          Entrada {{ entrada.folio }}
-        </h5>
-        <div class="text-muted">
-          {{ entrada.fecha|date:"d/m/Y" }}
-          · {{ entrada.get_tipo_display }}
+    <section class="card border-0 shadow-sm mb-3 sg-form-card sg-table-card sg-detail-header">
+      <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-1 sg-page-header-title">
+            <i class="bi bi-eye me-2"></i>
+            Entrada {{ entrada.folio }}
+          </h5>
+          <div class="sg-page-header-subtitle">
+            {{ entrada.fecha|date:"d/m/Y" }}
+            · {{ entrada.get_tipo_display }}
+          </div>
+        </div>
+
+        <div class="sg-page-actions">
+          <a href="{% url 'entradas_list' %}" class="sg-btn-secondary sg-btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Regresar
+          </a>
+          {% if entrada.tipo == "MAN" and not entrada_reversada and not entrada_es_reversa %}
+            <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
+              {% csrf_token %}
+              <button type="submit" class="sg-btn-danger sg-btn-sm">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Reversar entrada
+              </button>
+            </form>
+          {% elif entrada_reversada %}
+            <span class="badge text-bg-secondary align-self-center">Entrada reversada</span>
+          {% endif %}
         </div>
       </div>
-
-      <div class="d-flex gap-2 sg-page-actions">
-        <a href="{% url 'entradas_list' %}" class="sg-btn-secondary sg-btn-sm">
-          <i class="bi bi-arrow-left me-1"></i> Regresar
-        </a>
-        {% if entrada.tipo == "MAN" and not entrada_reversada and not entrada_es_reversa %}
-          <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
-            {% csrf_token %}
-            <button type="submit" class="sg-btn-danger sg-btn-sm">
-              <i class="bi bi-arrow-counterclockwise me-1"></i> Reversar entrada
-            </button>
-          </form>
-        {% elif entrada_reversada %}
-          <span class="badge text-bg-secondary align-self-center">Entrada reversada</span>
-        {% endif %}
-      </div>
-    </div>
+    </section>
 
     <!-- Resumen -->
     <div class="card border-0 shadow-sm mb-3 sg-table-card">
@@ -58,6 +60,10 @@
                 <span class="badge text-bg-warning text-dark">
                   <i class="bi bi-file-earmark-excel me-1"></i> OC sin factura
                 </span>
+              {% elif entrada.tipo == "TRE" %}
+                <span class="badge text-bg-success">
+                  <i class="bi bi-arrow-left-right me-1"></i> Traspaso (+)
+                </span>
               {% else %}
                 <span class="badge text-bg-info text-dark">
                   <i class="bi bi-sliders me-1"></i> Ajuste / Manual
@@ -70,6 +76,17 @@
             <div class="text-muted small">Proveedor</div>
             <div class="fw-semibold">{{ entrada.proveedor|default:"-" }}</div>
           </div>
+
+          {% if entrada.tipo == "TRE" %}
+          <div class="col-md-4">
+            <div class="text-muted small">Almacén origen</div>
+            <div class="fw-semibold">{% if entrada.almacen_origen %}{{ entrada.almacen_origen.codigo }} - {{ entrada.almacen_origen.nombre }}{% else %}-{% endif %}</div>
+          </div>
+          <div class="col-md-4">
+            <div class="text-muted small">Almacén destino</div>
+            <div class="fw-semibold">{% if entrada.almacen_destino %}{{ entrada.almacen_destino.codigo }} - {{ entrada.almacen_destino.nombre }}{% else %}-{% endif %}</div>
+          </div>
+          {% endif %}
 
           <div class="col-md-4">
             <div class="text-muted small">Almacén</div>
@@ -101,6 +118,11 @@
           <div class="col-md-4">
             <div class="text-muted small">Creado</div>
             <div class="fw-semibold">{{ entrada.creado_en|date:"d/m/Y H:i" }}</div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="text-muted small">Usuario registro</div>
+            <div class="fw-semibold">{% if entrada.registrado_por %}{{ entrada.registrado_por.get_username }}{% else %}-{% endif %}</div>
           </div>
 
           {% if entrada.motivo %}

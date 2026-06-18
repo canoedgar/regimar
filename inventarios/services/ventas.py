@@ -109,6 +109,7 @@ class VentaService:
 
         salida = self.form.save(commit=False)
         salida.almacen = self.lineas_stock[0]["almacen"]
+        salida.registrado_por = self.request.user if self.request and self.request.user.is_authenticated else None
 
         self._agregar_observacion_almacenes(salida)
         salida.save()
@@ -164,6 +165,7 @@ class VentaService:
                 almacen=almacen,
                 documento_referencia=salida.folio,
                 motivo="Entrada automática por venta sin inventario",
+                registrado_por=self.request.user if self.request and self.request.user.is_authenticated else None,
                 observaciones=(
                     f"Entrada automática generada por la nota de venta {salida.folio}.\n"
                     "Flujo: venta desde almacén virtual; se registra entrada y salida en la misma transacción."

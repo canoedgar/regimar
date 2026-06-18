@@ -270,6 +270,7 @@ def entrada_manual_create(request):
         with transaction.atomic():
             entrada = form.save(commit=False)
             entrada.tipo = EntradaInventario.TIPO_ENTRADA_MANUAL
+            entrada.registrado_por = request.user if request.user.is_authenticated else None
             entrada.save()
 
             for d in detalle_norm:
@@ -314,7 +315,7 @@ def entradas_list(request):
 
     entradas = (
         EntradaInventario.objects
-        .select_related("almacen")
+        .select_related("almacen", "almacen_origen", "almacen_destino", "registrado_por")
         .all()
         .prefetch_related("detalles")
         .prefetch_related("detalles__almacen")
@@ -357,7 +358,7 @@ def entradas_list(request):
 def entrada_detalle(request, pk):
     entrada = get_object_or_404(
         EntradaInventario.objects
-        .select_related("almacen")
+        .select_related("almacen", "almacen_origen", "almacen_destino", "registrado_por")
         .prefetch_related("detalles__producto", "detalles__almacen"),
         pk=pk
     )
@@ -454,6 +455,7 @@ def deshacer_entrada_manual(request, pk):
                 motivo="Reversa de entrada manual",
                 observaciones=f"Reversa automática de la entrada manual {entrada.folio}.\n{marcador}",
                 almacen=entrada.almacen,
+                registrado_por=request.user if request.user.is_authenticated else None,
             )
 
             productos_recalculados = set()

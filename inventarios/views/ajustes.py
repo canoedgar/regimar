@@ -155,7 +155,7 @@ def ajuste_inventario(request):
         return _render_ajuste(request, form, almacenes_qs, almacen, status=400)
 
     folio = form.cleaned_data["folio"]
-    fecha = timezone.localdate()
+    fecha_capturada = form.cleaned_data["fecha"]
     producto = form.cleaned_data["producto"]
     cantidad = form.cleaned_data["cantidad"]
     precio_unitario = form.cleaned_data["precio_unitario"]
@@ -176,6 +176,7 @@ def ajuste_inventario(request):
         with transaction.atomic():
             # AJUSTE POSITIVO = entrada
             if tipo_ajuste == AjusteInventarioForm.TIPO_AJUSTE_POSITIVO:
+                fecha = fecha_capturada
                 entrada = EntradaInventario.objects.create(
                     folio=folio,
                     fecha=fecha,
@@ -184,6 +185,7 @@ def ajuste_inventario(request):
                     motivo=motivo,
                     observaciones=obs,
                     almacen=almacen,
+                    registrado_por=request.user if request.user.is_authenticated else None,
                 )
 
                 EntradaInventarioDetalle.objects.create(
@@ -206,6 +208,7 @@ def ajuste_inventario(request):
                 mensaje = f"Ajuste positivo aplicado en {almacen}. Folio: {folio}"
 
             else:
+                fecha = timezone.localdate()
                 stock_row = InventarioStock.objects.select_for_update().filter(
                     producto_id=producto.pk,
                     almacen_id=almacen.id,
@@ -227,6 +230,7 @@ def ajuste_inventario(request):
                     motivo=motivo,
                     observaciones=obs,
                     almacen=almacen,
+                    registrado_por=request.user if request.user.is_authenticated else None,
                 )
 
                 SalidaInventarioDetalle.objects.create(
@@ -351,6 +355,7 @@ def deshacer_ajuste(request, tipo, pk):
                     motivo="Reversa de ajuste positivo",
                     observaciones=f"Reversa automática del ajuste {entrada_original.folio}.\n{marcador}",
                     almacen=almacen,
+                    registrado_por=request.user if request.user.is_authenticated else None,
                 )
                 SalidaInventarioDetalle.objects.create(
                     salida=salida,
@@ -390,6 +395,7 @@ def deshacer_ajuste(request, tipo, pk):
                     motivo="Reversa de ajuste negativo",
                     observaciones=f"Reversa automática del ajuste {salida_original.folio}.\n{marcador}",
                     almacen=almacen,
+                    registrado_por=request.user if request.user.is_authenticated else None,
                 )
                 EntradaInventarioDetalle.objects.create(
                     entrada=entrada,

@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -134,13 +134,19 @@ def ventas_list(request):
     ventas = ventas.distinct().annotate(
         total_cantidad=Sum("detalles__cantidad"),
         total_importe=Sum(_importe_detalles_expr()),
+        num_detalle_almacenes=Count("detalles__almacen", distinct=True),
+        num_asignacion_almacenes=Count("detalles__asignaciones__almacen", distinct=True),
     )
 
-    # Guardamos los IDs de las ventas filtradas antes de paginar
-    ventas_ids = list(ventas.values_list("id", flat=True))
+    # Guardamos los IDs de las ventas activas filtradas antes de paginar.
+    # Los KPIs/resúmenes no deben considerar notas canceladas.
+    ventas_activas_ids = list(
+        ventas.exclude(estado=SalidaInventario.ESTADO_CANCELADA)
+        .values_list("id", flat=True)
+    )
 
     resumen = SalidaInventarioDetalle.objects.filter(
-        salida_id__in=ventas_ids
+        salida_id__in=ventas_activas_ids
     ).aggregate(
         total_cantidad=Sum("cantidad"),
         total_notas=Sum(_importe_expr()),
@@ -153,6 +159,30 @@ def ventas_list(request):
 
     paginator = Paginator(ventas, 25)
     page_obj = paginator.get_page(request.GET.get("page"))
+
+    # Etiqueta visual de almacén por nota:
+    # - si se usaron varios almacenes, mostrar "Varios"
+    # - si solo hay uno, mostrar su código/nombre
+    # - si no hay dato, mostrar guion en template
+    for venta in page_obj.object_list:
+        almacenes_por_id = {}
+        if getattr(venta, "almacen_id", None) and getattr(venta, "almacen", None):
+            almacenes_por_id[venta.almacen_id] = venta.almacen
+
+        for detalle in getattr(venta, "detalles_filtrados", []):
+            almacen_detalle = getattr(detalle, "almacen", None)
+            if getattr(detalle, "almacen_id", None) and almacen_detalle:
+                almacenes_por_id[detalle.almacen_id] = almacen_detalle
+
+            for asignacion in getattr(detalle, "asignaciones", []).all():
+                almacen_asignacion = getattr(asignacion, "almacen", None)
+                if getattr(asignacion, "almacen_id", None) and almacen_asignacion:
+                    almacenes_por_id[asignacion.almacen_id] = almacen_asignacion
+
+        almacenes_unicos = list(almacenes_por_id.values())
+        venta.almacen_es_multiple = len(almacenes_unicos) > 1
+        venta.almacen_codigo_display = almacenes_unicos[0].codigo if len(almacenes_unicos) == 1 else ""
+        venta.almacen_nombre_display = almacenes_unicos[0].nombre if len(almacenes_unicos) == 1 else ""
 
     filtros = request.GET.copy()
     if not request.GET:

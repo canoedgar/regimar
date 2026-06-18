@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Traspaso de inventario | Sistema de Gestión{% endblock %}
+{% block active_inventario %}active{% endblock %}
+{% block inventario_show %}show{% endblock %}
+{% block active_traspasos_inventario %}active{% endblock %}
+{% block page_title %}Traspaso de inventario{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/inventarios.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center sg-inventory-page">
+  <div class="col-lg-9">
+    <div class="card border-0 shadow-sm sg-form-card sg-inventory-section">
+      <div class="card-body">
+        <div class="sg-section-header">
+          <div>
+            <h5 class="sg-section-title"><i class="bi bi-arrow-left-right"></i> Nuevo traspaso</h5>
+            <p class="sg-section-help">
+              Registra una salida negativa en el almacén origen y una entrada positiva en el almacén destino, conservando trazabilidad del movimiento.
+            </p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="{% url 'salidas_list' %}?tipo=TRS" class="sg-btn-outline sg-btn-sm">
+              <i class="bi bi-box-arrow-up me-1"></i>Ver salidas
+            </a>
+            <a href="{% url 'entradas_list' %}?tipo=TRE" class="sg-btn-outline sg-btn-sm">
+              <i class="bi bi-box-arrow-in-down me-1"></i>Ver entradas
+            </a>
+          </div>
+        </div>
+
+        <form method="post" class="sg-inventory-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas aplicar este traspaso de inventario?" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+              {% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="row g-3 sg-form-grid">
+            <div class="col-md-4">
+              <label class="sg-form-label">Folio salida</label>
+              {{ form.folio_salida }}
+              {% for e in form.folio_salida.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+              <label class="sg-form-label">Folio entrada</label>
+              {{ form.folio_entrada }}
+              {% for e in form.folio_entrada.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+              <label class="sg-form-label sg-required">Fecha de aplicación</label>
+              {{ form.fecha }}
+              {% for e in form.fecha.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="sg-form-label sg-required">Almacén origen</label>
+              {{ form.almacen_origen }}
+              <div class="sg-form-help">De este almacén se descontará el inventario.</div>
+              {% for e in form.almacen_origen.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-6">
+              <label class="sg-form-label sg-required">Almacén destino</label>
+              {{ form.almacen_destino }}
+              <div class="sg-form-help">A este almacén se sumará el inventario.</div>
+              {% for e in form.almacen_destino.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-md-8">
+              <label class="sg-form-label sg-required">Producto</label>
+              {{ form.producto }}
+              {% for e in form.producto.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-4">
+              <label class="sg-form-label sg-required">Cantidad</label>
+              {{ form.cantidad }}
+              {% for e in form.cantidad.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+
+            <div class="col-12">
+              <div id="traspasoPreview" class="alert alert-secondary border-0 shadow-sm mb-0" role="status">
+                <div class="d-flex flex-column flex-md-row justify-content-between gap-2">
+                  <div>
+                    <strong>Vista previa del origen</strong>
+                    <div class="small" id="traspasoPreviewMessage">Selecciona almacén origen, producto y cantidad para calcular disponibilidad.</div>
+                  </div>
+                  <div class="text-md-end small">
+                    <div>Disponible: <strong id="traspasoDisponibleValue">—</strong></div>
+                    <div>Después del traspaso: <strong id="traspasoResultanteValue">—</strong></div>
+                    <div>Costo origen: <strong id="traspasoCostoValue">—</strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="sg-form-label">Motivo</label>
+              {{ form.motivo }}
+              {% for e in form.motivo.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-12">
+              <label class="sg-form-label">Observaciones</label>
+              {{ form.observaciones }}
+              {% for e in form.observaciones.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <div class="sg-form-actions sg-inventory-actions">
+            <a href="{% url 'inventario_actual' %}" class="sg-btn-secondary sg-btn-md">Cancelar</a>
+            <button class="sg-btn-primary sg-btn-md" type="submit" id="btnAplicarTraspaso">
+              <i class="bi bi-check2-circle me-1"></i>Aplicar traspaso
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const origen = document.getElementById("id_almacen_origen");
+    const destino = document.getElementById("id_almacen_destino");
+    const producto = document.getElementById("id_producto");
+    const cantidad = document.getElementById("id_cantidad");
+    const btn = document.getElementById("btnAplicarTraspaso");
+    const preview = document.getElementById("traspasoPreview");
+    const msg = document.getElementById("traspasoPreviewMessage");
+    const disponible = document.getElementById("traspasoDisponibleValue");
+    const resultante = document.getElementById("traspasoResultanteValue");
+    const costo = document.getElementById("traspasoCostoValue");
+
+    function formatQty(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return value;
+      return n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+    }
+
+    function setState(kind, message, disponibleText = "—", resultanteText = "—", costoText = "—") {
+      if (!preview) return;
+      preview.classList.remove("alert-secondary", "alert-success", "alert-danger", "alert-warning");
+      preview.classList.add(kind);
+      msg.textContent = message;
+      disponible.textContent = disponibleText;
+      resultante.textContent = resultanteText;
+      costo.textContent = costoText;
+    }
+
+    function validarAlmacenesDistintos() {
+      if (!origen || !destino || !origen.value || !destino.value) return true;
+      return origen.value !== destino.value;
+    }
+
+    let timer = null;
+    function actualizarPreview() {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (!validarAlmacenesDistintos()) {
+          if (btn) btn.disabled = true;
+          setState("alert-danger", "El almacén destino debe ser diferente al almacén origen.");
+          return;
+        }
+
+        if (!origen.value || !producto.value) {
+          if (btn) btn.disabled = true;
+          setState("alert-secondary", "Selecciona almacén origen y producto para calcular disponibilidad.");
+          return;
+        }
+
+        const qty = Number(cantidad.value || 0);
+        if (!Number.isFinite(qty) || qty <= 0) {
+          if (btn) btn.disabled = true;
+          setState("alert-warning", "Captura una cantidad mayor a 0 para aplicar el traspaso.");
+          return;
+        }
+
+        const params = new URLSearchParams({
+          almacen_origen_id: origen.value,
+          producto_id: producto.value,
+          cantidad: cantidad.value || "0",
+        });
+
+        fetch("{% url 'traspaso_stock_preview' %}?" + params.toString(), {
+          headers: {"X-Requested-With": "XMLHttpRequest"}
+        })
+          .then(r => r.json())
+          .then(data => {
+            if (!data.ok) {
+              if (btn) btn.disabled = true;
+              setState("alert-warning", data.message || "No se pudo calcular el stock.");
+              return;
+            }
+            const disponibleText = formatQty(data.disponible);
+            const resultanteText = formatQty(data.resultante);
+            const costoText = "$ " + formatQty(data.costo_promedio);
+            if (!data.permite) {
+              if (btn) btn.disabled = true;
+              setState("alert-danger", data.message, disponibleText, resultanteText, costoText);
+            } else {
+              if (btn) btn.disabled = false;
+              setState("alert-success", data.message, disponibleText, resultanteText, costoText);
+            }
+          })
+          .catch(() => {
+            if (btn) btn.disabled = false;
+            setState("alert-warning", "No se pudo consultar el stock en este momento.");
+          });
+      }, 250);
+    }
+
+    [origen, destino, producto, cantidad].forEach(el => {
+      if (!el) return;
+      el.addEventListener("change", actualizarPreview);
+      el.addEventListener("input", actualizarPreview);
+    });
+
+    actualizarPreview();
+  });
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/inventarios_forms.js' %}"></script>
+{% endblock %}

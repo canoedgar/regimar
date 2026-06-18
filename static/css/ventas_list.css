@@ -140,19 +140,23 @@
   }
 }
 
-/* Ajuste: evitar que acciones se desfasen al guardar/mostrar fecha de edición */
+/* Ajuste: evitar que acciones, folios e importes se desfasen. */
 .ventas-compact-table {
-  min-width: 1040px;
+  min-width: 1120px;
 }
 
 .ventas-compact-table .sg-table-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: nowrap;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .ventas-compact-table .sg-table-actions .sg-btn-table {
-  flex: 0 0 auto;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.ventas-summary-value,
+.ventas-compact-table td.fw-bold,
+.ventas-compact-table td.text-end {
+  white-space: nowrap;
 }

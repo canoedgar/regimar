@@ -3,6 +3,7 @@
 
 {% block title %}Notas de venta | Sistema de Gestión{% endblock %}
 {% block page_title %}Notas de venta{% endblock %}
+{% block active_ventas_list %}active{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/ventas_list.css' %}">
@@ -142,6 +143,7 @@
             <th>Folio</th>
             <th>Fecha</th>
             <th>Cliente</th>
+            <th>Almacén</th>
             <th class="text-center">Estado</th>
             <th class="text-center">Pago</th>
             <th class="text-center">Editada</th>
@@ -163,6 +165,16 @@
               <td class="fw-bold">{{ venta.folio }}</td>
               <td>{{ venta.fecha|date:'d/m/Y' }}</td>
               <td>{{ venta.cliente|default:'MOSTRADOR' }}</td>
+              <td class="sg-nowrap">
+                {% if venta.almacen_es_multiple %}
+                  <span class="badge text-bg-warning">Varios</span>
+                {% elif venta.almacen_codigo_display %}
+                  <span class="badge text-bg-light border">{{ venta.almacen_codigo_display }}</span>
+                  <span class="sg-form-help">{{ venta.almacen_nombre_display }}</span>
+                {% else %}
+                  <span class="sg-form-help">—</span>
+                {% endif %}
+              </td>
               <td class="text-center">
                 {% if venta.estado == 'CAN' %}
                   <span class="badge text-bg-danger">Cancelada</span>
@@ -211,7 +223,7 @@
 
             {% if venta.estado != 'CAN' %}
               <tr class="collapse ventas-cancel-row" id="cancelar-{{ venta.id }}">
-                <td colspan="10">
+                <td colspan="11">
                   <form
                     method="post"
                     action="{% url 'cancelar_nota_venta' venta.id %}"
@@ -234,7 +246,7 @@
             {% endif %}
           {% empty %}
             <tr>
-              <td colspan="10" class="sg-empty-state">
+              <td colspan="11" class="sg-empty-state">
                 No hay notas de venta con los filtros seleccionados.
               </td>
             </tr>

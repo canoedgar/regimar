@@ -261,3 +261,8 @@ html[data-theme="dark"] .sg-inventory-form .badge.text-bg-light {
     padding: 1rem 0 0;
   }
 }
+
+.sg-inventory-form .sg-readonly-soft {
+  cursor: not-allowed;
+  opacity: 0.75;
+}

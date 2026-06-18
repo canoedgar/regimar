@@ -78,24 +78,31 @@
       {% if puede_menu_ventas %}
         <div class="nav-section-title">Ventas</div>
 
+        {% if perms.inventarios.view_salidainventario %}
+        <a href="{% url 'ventas_list' %}" class="nav-link {% block active_ventas_list %}{% endblock %}">
+          <i class="bi bi-receipt-cutoff"></i>
+          <span>Notas de venta</span>
+        </a>
+        {% endif %}
+
         {% if perms.inventarios.add_salidainventario %}
         <a href="{% url 'salida_venta_create' %}" class="nav-link {% block active_ventas %}{% endblock %}">
           <i class="bi bi-cash-coin"></i>
-          Ventas
+          <span>Nueva venta</span>
         </a>
         {% endif %}
 
         {% if perms.cotizaciones.view_cotizacionprecio or perms.cotizaciones.add_cotizacionprecio %}
         <a href="{% url 'cotizaciones:cotizacion_list' %}" class="nav-link {% block active_cotizaciones %}{% endblock %}">
           <i class="bi bi-file-earmark-text"></i>
-          Cotizaciones
+          <span>Cotizaciones</span>
         </a>
         {% endif %}
 
         {% if perms.cartera.view_pagocliente or perms.cartera.add_pagocliente %}
         <a href="{% url 'cartera:dashboard' %}" class="nav-link {% block active_cartera %}{% endblock %}">
           <i class="bi bi-wallet2"></i>
-          Cartera
+          <span>Cartera</span>
         </a>
         {% endif %}
       {% endif %}
@@ -149,6 +156,15 @@
               </a>
             {% endif %}
 
+            {% if perms.inventarios.add_entradainventario and perms.inventarios.add_salidainventario and perms.inventarios.change_inventariostock %}
+              <span class="nav-subtitle">Traspasos</span>
+              <a href="{% url 'traspaso_inventario' %}"
+                class="nav-link {% block active_traspasos_inventario %}{% endblock %}">
+                <i class="bi bi-arrow-left-right me-1"></i>
+                Aplicar traspaso
+              </a>
+            {% endif %}
+
             {% if perms.inventarios.view_salidainventario or perms.inventarios.add_salidainventario %}
               <span class="nav-subtitle">Salidas</span>
 
@@ -157,13 +173,7 @@
                 class="nav-link {% block active_salidas_list %}{% endblock %}">
                 <i class="bi bi-arrow-up-circle me-1"></i>
                 Listado de salidas
-              </a>
-
-              <a href="{% url 'ventas_list' %}"
-                class="nav-link {% block active_ventas_list %}{% endblock %}">
-                <i class="bi bi-cart-check me-1"></i>
-                Notas de venta
-              </a>
+              </a>              
               {% endif %}
             {% endif %}
 

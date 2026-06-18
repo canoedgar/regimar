@@ -39,8 +39,9 @@
             </div>
 
             <div class="col-md-6">
-              <label class="sg-form-label">Fecha</label>
+              <label class="sg-form-label">Fecha de aplicación</label>
               {{ form.fecha }}
+              <div class="sg-form-help" id="fechaAjusteHelp">En ajustes positivos puedes registrar la fecha real de entrada. En ajustes negativos se aplicará la fecha actual.</div>
               {% for e in form.fecha.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
@@ -227,6 +228,8 @@
     });
 
     const tipoAjuste = document.getElementById("id_tipo_ajuste");
+    const fechaInput = document.getElementById("id_fecha");
+    const fechaHelp = document.getElementById("fechaAjusteHelp");
     const productoSelect = document.getElementById("id_producto");
     const cantidadInput = document.getElementById("id_cantidad");
     const btnAplicar = document.getElementById("btnAplicarAjuste");
@@ -237,15 +240,27 @@
     const stockActualValue = document.getElementById("stockActualValue");
     const stockResultanteValue = document.getElementById("stockResultanteValue");
 
-    function actualizarTextoPrecio() {
+    function actualizarCamposPorTipo() {
       if (!tipoAjuste || !precioLabel || !precioHelp) return;
 
       if (tipoAjuste.value === "POS") {
         precioLabel.textContent = "Costo unitario de entrada";
         precioHelp.textContent = "Costo por unidad base que se usará para recalcular el costo promedio del inventario.";
+        if (fechaInput) {
+          fechaInput.removeAttribute("readonly");
+          fechaInput.classList.remove("sg-readonly-soft");
+        }
+        if (fechaHelp) fechaHelp.textContent = "Selecciona la fecha real en la que entró el inventario.";
       } else {
         precioLabel.textContent = "Precio unitario de salida";
         precioHelp.textContent = "Precio de referencia de la salida. El costo aplicado para margen se conservará desde el costo promedio actual.";
+        if (fechaInput) {
+          const hoy = new Date().toISOString().slice(0, 10);
+          fechaInput.value = hoy;
+          fechaInput.setAttribute("readonly", "readonly");
+          fechaInput.classList.add("sg-readonly-soft");
+        }
+        if (fechaHelp) fechaHelp.textContent = "Los ajustes negativos se aplican siempre con la fecha actual.";
       }
     }
 
@@ -324,13 +339,13 @@
     [tipoAjuste, productoSelect, cantidadInput, almacenSelect].forEach(el => {
       if (!el) return;
       el.addEventListener("change", () => {
-        actualizarTextoPrecio();
+        actualizarCamposPorTipo();
         actualizarVistaStock();
       });
       el.addEventListener("input", actualizarVistaStock);
     });
 
-    actualizarTextoPrecio();
+    actualizarCamposPorTipo();
     actualizarVistaStock();
   });
 </script>

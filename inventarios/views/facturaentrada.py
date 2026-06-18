@@ -399,6 +399,7 @@ def entrada_ocf_create(request):
                 tiene_xml=True,
                 xml_contenido=xml_text,
                 almacen=almacen,
+                registrado_por=request.user if request.user.is_authenticated else None,
             )
 
             # --- 1) Crear detalles y actualizar inventario/costos ---

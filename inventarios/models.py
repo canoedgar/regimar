@@ -61,7 +61,30 @@ class EntradaInventario(models.Model):
         blank=True,
     )
 
-
+    almacen_origen = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.PROTECT,
+        related_name="entradas_traspaso_origen",
+        null=True,
+        blank=True,
+        help_text="Almacén origen cuando el movimiento corresponde a un traspaso.",
+    )
+    almacen_destino = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.PROTECT,
+        related_name="entradas_traspaso_destino",
+        null=True,
+        blank=True,
+        help_text="Almacén destino cuando el movimiento corresponde a un traspaso.",
+    )
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entradas_inventario_registradas",
+        help_text="Usuario que registró el movimiento de inventario.",
+    )
 
     # Datos de factura (si aplica)
     uuid_factura = models.CharField(
@@ -102,6 +125,14 @@ class EntradaInventario(models.Model):
 
         if self.tipo in tipos_requieren_proveedor and not self.proveedor_id:
             raise ValidationError({"proveedor": "Selecciona un proveedor."})
+
+        if self.tipo == self.TIPO_TRASLADO:
+            if not self.almacen_origen_id:
+                raise ValidationError({"almacen_origen": "Selecciona el almacén origen del traspaso."})
+            if not self.almacen_destino_id:
+                raise ValidationError({"almacen_destino": "Selecciona el almacén destino del traspaso."})
+            if self.almacen_origen_id == self.almacen_destino_id:
+                raise ValidationError({"almacen_destino": "El almacén destino debe ser diferente al origen."})
 
 
 class EntradaInventarioDetalle(models.Model):
@@ -219,8 +250,9 @@ class SalidaInventario(models.Model):
     TIPO_PROYECTO = "PRY"
 
     TIPO_CHOICES = [
-        (TIPO_VENTA, "Salida por venta"),        
-        (TIPO_AJUSTE_NEGATIVO, "Ajuste (disminuye stock)")        
+        (TIPO_VENTA, "Salida por venta"),
+        (TIPO_AJUSTE_NEGATIVO, "Ajuste (disminuye stock)"),
+        (TIPO_TRASLADO_SALIDA, "Salida por traspaso"),
     ]
 
     folio = models.CharField("Folio", max_length=20, unique=True)
@@ -286,6 +318,30 @@ class SalidaInventario(models.Model):
         blank=True,
     )
 
+    almacen_origen = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.PROTECT,
+        related_name="salidas_traspaso_origen",
+        null=True,
+        blank=True,
+        help_text="Almacén origen cuando el movimiento corresponde a un traspaso.",
+    )
+    almacen_destino = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.PROTECT,
+        related_name="salidas_traspaso_destino",
+        null=True,
+        blank=True,
+        help_text="Almacén destino cuando el movimiento corresponde a un traspaso.",
+    )
+    registrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="salidas_inventario_registradas",
+        help_text="Usuario que registró el movimiento de inventario.",
+    )
 
     documento_referencia = models.CharField("Documento referencia", max_length=60, blank=True)
     motivo = models.TextField("Motivo", blank=True)
@@ -336,6 +392,14 @@ class SalidaInventario(models.Model):
             raise ValidationError({"proyecto": "Selecciona un proyecto para este tipo de salida."})
         if self.tipo != self.TIPO_PROYECTO and self.proyecto_id:            
             raise ValidationError({"proyecto": "Este campo solo aplica para salidas por proyecto."})
+
+        if self.tipo == self.TIPO_TRASLADO_SALIDA:
+            if not self.almacen_origen_id:
+                raise ValidationError({"almacen_origen": "Selecciona el almacén origen del traspaso."})
+            if not self.almacen_destino_id:
+                raise ValidationError({"almacen_destino": "Selecciona el almacén destino del traspaso."})
+            if self.almacen_origen_id == self.almacen_destino_id:
+                raise ValidationError({"almacen_destino": "El almacén destino debe ser diferente al origen."})
 
 
 

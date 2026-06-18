@@ -12,7 +12,7 @@
       Entradas de inventario
     </h5>
     <p class="sg-page-header-subtitle">
-      Consulta las entradas por orden de compra y ajustes de inventario.
+      Consulta entradas, ajustes positivos y traspasos recibidos en inventario.
     </p>
   </div>
 
@@ -33,6 +33,13 @@
           <a class="dropdown-item" href="{% url 'entrada_manual_create' %}">
             <i class="bi bi-journal-text me-2"></i>
             Nota / remisión (Manual)
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item" href="{% url 'traspaso_inventario' %}">
+            <i class="bi bi-arrow-left-right me-2"></i>
+            Traspaso entre almacenes
           </a>
         </li>
       </ul>
@@ -84,9 +91,10 @@
           <tr>
             <th>Folio</th>
             <th>Fecha</th>
-            <th>Almacén</th>
+            <th>Almacén / traspaso</th>
             <th>Tipo</th>
             <th>Proveedor</th>
+            <th>Usuario</th>
             <th class="text-end">Kilogramos</th>
             <th class="text-end">Importe total</th>
             <th class="text-end">Acciones</th>
@@ -98,7 +106,14 @@
               <td class="fw-semibold">{{ entrada.folio }}</td>
               <td>{{ entrada.fecha|date:"d/m/Y" }}</td>
               <td>
-                {% if entrada.num_almacenes|default:0 > 1 %}
+                {% if entrada.tipo == "TRE" %}
+                  <span class="badge text-bg-light border">{{ entrada.almacen_origen.codigo|default:"—" }}</span>
+                  <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                  <span class="badge text-bg-success">{{ entrada.almacen_destino.codigo|default:"—" }}</span>
+                  <div class="sg-form-help">
+                    {{ entrada.almacen_origen.nombre|default:"Origen no definido" }} → {{ entrada.almacen_destino.nombre|default:"Destino no definido" }}
+                  </div>
+                {% elif entrada.num_almacenes|default:0 > 1 %}
                   <span class="badge text-bg-warning">Varios</span>
                   <span class="sg-form-help">({{ entrada.num_almacenes }})</span>
 
@@ -136,6 +151,11 @@
                     <i class="bi bi-file-earmark-excel me-1"></i>
                     Entrada Manual
                   </span>
+                {% elif entrada.tipo == "TRE" %}
+                  <span class="badge text-bg-success">
+                    <i class="bi bi-arrow-left-right me-1"></i>
+                    Traspaso (+)
+                  </span>
                 {% else %}
                   <span class="badge text-bg-info text-dark">
                     <i class="bi bi-sliders me-1"></i>
@@ -144,6 +164,13 @@
                 {% endif %}
               </td>
               <td>{{ entrada.proveedor|default:"-" }}</td>
+              <td>
+                {% if entrada.registrado_por %}
+                  {{ entrada.registrado_por.get_username }}
+                {% else %}
+                  <span class="sg-form-help">—</span>
+                {% endif %}
+              </td>
               <td class="text-end">
                 {{ entrada.total_productos|default:"0" }}
               </td>
@@ -168,7 +195,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td colspan="8" class="sg-empty-state">
+              <td colspan="9" class="sg-empty-state">
                 No hay entradas registradas.
               </td>
             </tr>
@@ -191,6 +218,8 @@
                 <span class="badge text-bg-success">Factura</span>
               {% elif entrada.tipo == "MAN" %}
                 <span class="badge text-bg-warning text-dark">Manual</span>
+              {% elif entrada.tipo == "TRE" %}
+                <span class="badge text-bg-success">Traspaso (+)</span>
               {% else %}
                 <span class="badge text-bg-info text-dark">Ajuste</span>
               {% endif %}
@@ -201,7 +230,9 @@
             <div class="sg-mobile-card-field">
               <span class="sg-mobile-card-label">Almacén</span>
               <span class="sg-mobile-card-value">
-                {% if entrada.num_almacenes|default:0 > 1 %}
+                {% if entrada.tipo == "TRE" %}
+                  {{ entrada.almacen_origen.codigo|default:"—" }} - {{ entrada.almacen_origen.nombre|default:"Origen" }} → {{ entrada.almacen_destino.codigo|default:"—" }} - {{ entrada.almacen_destino.nombre|default:"Destino" }}
+                {% elif entrada.num_almacenes|default:0 > 1 %}
                   Varios ({{ entrada.num_almacenes }})
                 {% elif entrada.num_almacenes|default:0 == 1 %}
                   {% with det=entrada.detalles.all|first %}
@@ -223,6 +254,10 @@
             <div class="sg-mobile-card-field">
               <span class="sg-mobile-card-label">Proveedor</span>
               <span class="sg-mobile-card-value">{{ entrada.proveedor|default:"—" }}</span>
+            </div>
+            <div class="sg-mobile-card-field">
+              <span class="sg-mobile-card-label">Usuario</span>
+              <span class="sg-mobile-card-value">{% if entrada.registrado_por %}{{ entrada.registrado_por.get_username }}{% else %}—{% endif %}</span>
             </div>
             <div class="sg-mobile-card-field">
               <span class="sg-mobile-card-label">Kilogramos</span>

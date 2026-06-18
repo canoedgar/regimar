@@ -2111,3 +2111,90 @@ html[data-theme="dark"] .sg-auto-mobile-list .sg-empty-state {
     gap: 0.25rem;
   }
 }
+
+/* ==========================================================
+   FIX PRODUCCIÓN — tablas, importes, folios y headers detalle
+   ========================================================== */
+
+/* Headers de ventanas "ver detalle": siempre dentro de card para evitar
+   pérdida visual de botones sobre fondos degradados. */
+.sg-detail-header .sg-page-header {
+  margin-bottom: 0;
+}
+
+.sg-detail-header .sg-page-actions {
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  .sg-detail-header .sg-page-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: stretch;
+  }
+
+  .sg-detail-header .sg-page-actions > a,
+  .sg-detail-header .sg-page-actions > button,
+  .sg-detail-header .sg-page-actions > form {
+    flex: 1 1 auto;
+  }
+}
+
+/* Evita saltos visuales en folios, importes y columnas numéricas.
+   Aplica de forma global a tablas/listados del sistema. */
+.sg-nowrap,
+.sg-folio,
+.sg-money,
+.sg-table td:first-child,
+.sg-table th:first-child,
+.sg-table td.text-end,
+.sg-table th.text-end {
+  white-space: nowrap;
+}
+
+/* Evita que el signo de pesos se separe del importe en celdas y KPIs. */
+.sg-table td,
+.sg-table th {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.sg-table td.text-end,
+.sg-table th.text-end {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Refuerzo de líneas completas en tablas: todas las celdas conservan el
+   mismo borde inferior, incluyendo la columna de acciones. */
+.sg-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sg-table tbody tr > td,
+.sg-table thead tr > th,
+.sg-table tfoot tr > td {
+  border-bottom: 1px solid var(--color-border) !important;
+}
+
+.sg-table td.sg-table-actions,
+.sg-table th.sg-table-actions,
+td.sg-table-actions,
+th.sg-table-actions {
+  border-bottom: 1px solid var(--color-border) !important;
+  min-width: 6.25rem;
+}
+
+.sg-table td.sg-table-actions > a,
+.sg-table td.sg-table-actions > button,
+td.sg-table-actions > a,
+td.sg-table-actions > button {
+  white-space: nowrap;
+}
+
+/* Badges y datos complementarios dentro de celdas sin desbordar ni partir
+   folios/códigos importantes. */
+.sg-table .badge {
+  white-space: nowrap;
+}
+
