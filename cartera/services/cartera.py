@@ -282,3 +282,70 @@ def aplicar_saldo_favor_a_nota(cliente, nota, monto, usuario=None, referencia=""
     )
     actualizar_estado_pago_nota(nota)
     return movimiento
+
+
+@transaction.atomic
+def cancelar_pago_cliente(pago, usuario=None, motivo=""):
+    """Cancela un pago activo y revierte su efecto en cartera.
+
+    Las aplicaciones a notas dejan de contar porque los selectores solo toman
+    pagos activos. Si el pago generó saldo a favor, se registra un movimiento
+    de cancelación para dejar trazabilidad y compensar dicho saldo.
+    """
+    motivo = (motivo or "").strip()
+    if not motivo:
+        raise ValidationError("Captura el motivo de cancelación del pago.")
+
+    pago = PagoCliente.objects.select_for_update().select_related("cliente").get(pk=pago.pk)
+    if pago.estado == PagoCliente.ESTADO_CANCELADO:
+        raise ValidationError("El pago ya se encuentra cancelado.")
+
+    movimientos_saldo = list(
+        ClienteSaldoFavorMovimiento.objects.select_for_update().filter(pago_origen=pago)
+    )
+    saldo_generado = sum(
+        (_money(mov.monto) for mov in movimientos_saldo if mov.tipo == ClienteSaldoFavorMovimiento.TIPO_GENERACION),
+        Decimal("0.00"),
+    )
+    saldo_cancelado = sum(
+        (_money(mov.monto) for mov in movimientos_saldo if mov.tipo == ClienteSaldoFavorMovimiento.TIPO_CANCELACION),
+        Decimal("0.00"),
+    )
+    saldo_a_reversar = max(saldo_generado - saldo_cancelado, Decimal("0.00"))
+
+    if saldo_a_reversar > 0:
+        saldo_disponible = _money(get_saldo_favor_cliente(pago.cliente))
+        if saldo_a_reversar > saldo_disponible:
+            raise ValidationError(
+                "No se puede cancelar este pago porque el saldo a favor que generó ya fue aplicado o devuelto. "
+                "Primero revisa los movimientos de saldo a favor del cliente."
+            )
+
+    notas_afectadas = list(
+        SalidaInventario.objects.select_for_update()
+        .filter(aplicaciones_cartera__pago=pago)
+        .distinct()
+    )
+
+    pago.estado = PagoCliente.ESTADO_CANCELADO
+    pago.cancelado_por = usuario
+    pago.cancelado_en = timezone.now()
+    pago.motivo_cancelacion = motivo
+    pago.save(update_fields=["estado", "cancelado_por", "cancelado_en", "motivo_cancelacion"])
+
+    if saldo_a_reversar > 0:
+        ClienteSaldoFavorMovimiento.objects.create(
+            cliente=pago.cliente,
+            tipo=ClienteSaldoFavorMovimiento.TIPO_CANCELACION,
+            monto=saldo_a_reversar,
+            pago_origen=pago,
+            fecha=pago.cancelado_en,
+            referencia=f"Cancelación pago #{pago.id}",
+            observaciones=motivo,
+            creado_por=usuario,
+        )
+
+    for nota in notas_afectadas:
+        actualizar_estado_pago_nota(nota)
+
+    return pago

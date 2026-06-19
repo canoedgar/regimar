@@ -9,6 +9,7 @@ urlpatterns = [
     path("pagos/global/", views.pago_global_create, name="pago_global_create"),
     path("pagos/nota/<int:nota_id>/", views.pago_nota_create, name="pago_nota_create"),
     path("pagos/<int:pago_id>/", views.pago_detalle, name="pago_detalle"),
+    path("pagos/<int:pago_id>/cancelar/", views.pago_cancelar, name="pago_cancelar"),
     path("pagos/<int:pago_id>/imprimir/", views.pago_detalle_print, name="pago_detalle_print"),
     path("clientes/<int:cliente_id>/estado-cuenta/", views.estado_cuenta_cliente, name="estado_cuenta_cliente"),
     path("clientes/<int:cliente_id>/estado-cuenta/imprimir/", views.estado_cuenta_cliente_print, name="estado_cuenta_cliente_print"),

@@ -116,7 +116,11 @@ def get_saldo_favor_cliente(cliente) -> Decimal:
         total=Coalesce(Sum("monto"), Value(Decimal("0.00"), output_field=MONEY_FIELD))
     )["total"]
     resta = movimientos.filter(
-        tipo__in=[ClienteSaldoFavorMovimiento.TIPO_APLICACION, ClienteSaldoFavorMovimiento.TIPO_DEVOLUCION]
+        tipo__in=[
+            ClienteSaldoFavorMovimiento.TIPO_APLICACION,
+            ClienteSaldoFavorMovimiento.TIPO_DEVOLUCION,
+            ClienteSaldoFavorMovimiento.TIPO_CANCELACION,
+        ]
     ).aggregate(total=Coalesce(Sum("monto"), Value(Decimal("0.00"), output_field=MONEY_FIELD)))["total"]
     return max(genera - resta, Decimal("0.00"))
 

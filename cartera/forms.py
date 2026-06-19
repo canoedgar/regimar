@@ -195,3 +195,23 @@ class SaldoFavorAplicacionForm(FechaPagoMixin):
             "placeholder": "Describe por qué se aplica el saldo a favor a esta nota.",
         }),
     )
+
+
+class CancelarPagoForm(forms.Form):
+    motivo_cancelacion = forms.CharField(
+        label="Motivo de cancelación",
+        required=True,
+        min_length=8,
+        widget=forms.Textarea(attrs={
+            "class": "form-control sg-form-control",
+            "rows": 3,
+            "placeholder": "Describe el error de captura, fecha incorrecta u otro motivo de cancelación.",
+        }),
+        error_messages={
+            "required": "Captura el motivo de cancelación.",
+            "min_length": "El motivo debe tener al menos 8 caracteres.",
+        },
+    )
+
+    def clean_motivo_cancelacion(self):
+        return (self.cleaned_data.get("motivo_cancelacion") or "").strip()

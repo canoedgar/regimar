@@ -8,19 +8,96 @@
 
 {% block content %}
 <div class="cartera-detail-page">
-  <section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-body sg-page-header d-flex justify-content-between align-items-center"><div><h5 class="sg-page-header-title"><i class="bi bi-receipt"></i>Pago #{{ pago.id }}</h5><p class="sg-page-header-subtitle">Trazabilidad completa de aplicación, usuario, notas afectadas y saldo generado.</p></div><div class="sg-page-actions"><a href="{% url 'cartera:pago_detalle_print' pago.id %}" target="_blank" class="sg-btn-primary sg-btn-md">Imprimir</a><a href="{% url 'cartera:pago_global_create' %}?cliente={{ pago.cliente.id }}" class="sg-btn-outline sg-btn-md">Nuevo pago</a><a href="{% url 'cartera:estado_cuenta_cliente' pago.cliente.id %}" class="sg-btn-secondary sg-btn-md">Estado de cuenta</a></div></div></section>
-  <section class="cartera-kpi-grid"><article class="cartera-kpi-card"><div class="cartera-kpi-title">Cliente</div><div class="cartera-kpi-value fs-5">{{ pago.cliente.nombre_fiscal|default:pago.cliente.nombre_comercial }}</div>{% if pago.cliente.nombre_comercial %}<div class="cartera-kpi-help">{{ pago.cliente.nombre_comercial }}</div>{% endif %}</article><article class="cartera-kpi-card"><div class="cartera-kpi-title">Monto recibido</div><div class="cartera-kpi-value">${{ pago.monto_recibido|floatformat:2|intcomma }}</div><div class="cartera-kpi-help">Fecha pago: {{ pago.fecha|date:"Y-m-d" }} · {{ pago.get_tipo_aplicacion_display }}</div></article><article class="cartera-kpi-card"><div class="cartera-kpi-title">Aplicado a notas</div><div class="cartera-kpi-value">${{ total_aplicado|floatformat:2|intcomma }}</div>{% if saldo_generado > 0 %}<div class="text-success small fw-semibold">Saldo a favor generado: ${{ saldo_generado|floatformat:2|intcomma }}</div>{% endif %}</article></section>
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+    <div class="card-body sg-page-header d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-receipt"></i>Pago #{{ pago.id }}
+          <span class="badge {% if pago.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %} ms-2">{{ pago.get_estado_display }}</span>
+        </h5>
+        <p class="sg-page-header-subtitle mb-0">Trazabilidad completa de aplicación, usuario, notas afectadas, saldo generado y cancelación.</p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'cartera:pago_detalle_print' pago.id %}" target="_blank" class="sg-btn-primary sg-btn-md"><i class="bi bi-printer me-1"></i>Imprimir</a>
+        <a href="{% url 'cartera:pago_global_create' %}?cliente={{ pago.cliente.id }}" class="sg-btn-outline sg-btn-md"><i class="bi bi-cash-coin me-1"></i>Nuevo pago</a>
+        <a href="{% url 'cartera:estado_cuenta_cliente' pago.cliente.id %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-file-text me-1"></i>Estado de cuenta</a>
+      </div>
+    </div>
+  </section>
+
+  {% if pago.estado == 'CAN' %}
+    <div class="alert alert-danger border-0 shadow-sm">
+      <div class="fw-semibold"><i class="bi bi-x-octagon me-1"></i>Pago cancelado</div>
+      <div>Cancelado el {{ pago.cancelado_en|date:"Y-m-d H:i" }} por {{ pago.cancelado_por|default:"—" }}.</div>
+      <div class="small mt-1">Motivo: {{ pago.motivo_cancelacion|default:"—" }}</div>
+    </div>
+  {% endif %}
+
+  <section class="cartera-kpi-grid">
+    <article class="cartera-kpi-card">
+      <div class="cartera-kpi-title">Cliente</div>
+      <div class="cartera-kpi-value fs-5">{{ pago.cliente.nombre_fiscal|default:pago.cliente.nombre_comercial }}</div>
+      {% if pago.cliente.nombre_comercial %}<div class="cartera-kpi-help">{{ pago.cliente.nombre_comercial }}</div>{% endif %}
+    </article>
+    <article class="cartera-kpi-card">
+      <div class="cartera-kpi-title">Monto recibido</div>
+      <div class="cartera-kpi-value {% if pago.estado == 'CAN' %}text-decoration-line-through{% endif %}">${{ pago.monto_recibido|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Fecha pago: {{ pago.fecha|date:"Y-m-d" }} · {{ pago.get_tipo_aplicacion_display }}</div>
+    </article>
+    <article class="cartera-kpi-card">
+      <div class="cartera-kpi-title">Aplicado a notas</div>
+      <div class="cartera-kpi-value {% if pago.estado == 'CAN' %}text-decoration-line-through{% endif %}">${{ total_aplicado|floatformat:2|intcomma }}</div>
+      {% if pago.estado == 'CAN' %}
+        <div class="text-danger small fw-semibold">Aplicación revertida por cancelación.</div>
+      {% elif saldo_generado > 0 %}
+        <div class="text-success small fw-semibold">Saldo a favor generado: ${{ saldo_generado|floatformat:2|intcomma }}</div>
+      {% endif %}
+      {% if saldo_reversado > 0 %}<div class="text-danger small fw-semibold">Saldo a favor reversado: ${{ saldo_reversado|floatformat:2|intcomma }}</div>{% endif %}
+    </article>
+  </section>
 
   <div class="cartera-grid-main">
     <div class="cartera-stack">
       <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
-        <div class="card-header"><h5 class="sg-page-header-title">Notas afectadas por este pago</h5></div>
+        <div class="card-header">
+          <h5 class="sg-page-header-title mb-1">Notas afectadas por este pago</h5>
+          {% if pago.estado == 'CAN' %}<p class="sg-page-header-subtitle mb-0">Histórico de aplicaciones revertidas; ya no afectan el saldo de las notas.</p>{% endif %}
+        </div>
         <div class="table-responsive d-none d-md-block sg-no-mobile-grid">
-          <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid"><thead class="table-light"><tr><th>Folio</th><th>Fecha nota</th><th>Fecha pago</th><th>Registro</th><th class="text-end">Saldo antes</th><th class="text-end">Monto aplicado</th><th class="text-end">Saldo después</th><th class="text-end">Acción</th></tr></thead><tbody>{% for aplicacion in pago.aplicaciones.all %}<tr><td class="fw-semibold">{{ aplicacion.nota_venta.folio }}</td><td>{{ aplicacion.nota_venta.fecha|date:"Y-m-d" }}</td><td>{{ pago.fecha|date:"Y-m-d" }}</td><td>{{ aplicacion.aplicado_en|date:"Y-m-d H:i" }}</td><td class="text-end">{% if aplicacion.saldo_antes != None %}${{ aplicacion.saldo_antes|floatformat:2|intcomma }}{% else %}—{% endif %}</td><td class="text-end fw-semibold">${{ aplicacion.monto_aplicado|floatformat:2|intcomma }}</td><td class="text-end">{% if aplicacion.saldo_despues != None %}${{ aplicacion.saldo_despues|floatformat:2|intcomma }}{% else %}—{% endif %}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' aplicacion.nota_venta.id %}" class="sg-btn-table sg-btn-sm" title="Ver nota"><i class="bi bi-eye"></i></a></td></tr>{% empty %}<tr><td colspan="8" class="sg-empty-state">No se aplicó a notas. El monto quedó como saldo a favor.</td></tr>{% endfor %}</tbody></table>
+          <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid">
+            <thead class="table-light">
+              <tr>
+                <th>Folio</th>
+                <th>Fecha nota</th>
+                <th>Fecha pago</th>
+                <th>Registro</th>
+                <th class="text-end">Saldo antes</th>
+                <th class="text-end">Monto aplicado</th>
+                <th class="text-end">Saldo después</th>
+                <th class="text-end">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for aplicacion in pago.aplicaciones.all %}
+                <tr class="{% if pago.estado == 'CAN' %}table-danger{% endif %}">
+                  <td class="fw-semibold">{{ aplicacion.nota_venta.folio }}</td>
+                  <td>{{ aplicacion.nota_venta.fecha|date:"Y-m-d" }}</td>
+                  <td>{{ pago.fecha|date:"Y-m-d" }}</td>
+                  <td>{{ aplicacion.aplicado_en|date:"Y-m-d H:i" }}</td>
+                  <td class="text-end">{% if aplicacion.saldo_antes != None %}${{ aplicacion.saldo_antes|floatformat:2|intcomma }}{% else %}—{% endif %}</td>
+                  <td class="text-end fw-semibold">${{ aplicacion.monto_aplicado|floatformat:2|intcomma }}</td>
+                  <td class="text-end">{% if aplicacion.saldo_despues != None %}${{ aplicacion.saldo_despues|floatformat:2|intcomma }}{% else %}—{% endif %}</td>
+                  <td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' aplicacion.nota_venta.id %}" class="sg-btn-table sg-btn-sm" title="Ver nota"><i class="bi bi-eye"></i></a></td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="8" class="sg-empty-state">No se aplicó a notas. El monto quedó como saldo a favor.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
         <div class="sg-mobile-list d-md-none">
           {% for aplicacion in pago.aplicaciones.all %}
-            <article class="sg-mobile-card">
+            <article class="sg-mobile-card {% if pago.estado == 'CAN' %}border-danger{% endif %}">
               <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Folio</span><span class="sg-mobile-card-title">{{ aplicacion.nota_venta.folio }}</span><span class="sg-mobile-card-subtitle">Nota: {{ aplicacion.nota_venta.fecha|date:"Y-m-d" }} · Pago: {{ pago.fecha|date:"Y-m-d" }}</span></div></div>
               <div class="sg-mobile-card-grid">
                 <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Registro</span><span class="sg-mobile-card-value">{{ aplicacion.aplicado_en|date:"Y-m-d H:i" }}</span></div>
@@ -38,7 +115,12 @@
 
       <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
         <div class="card-header"><h5 class="sg-page-header-title">Notas pendientes del cliente</h5></div>
-        <div class="table-responsive d-none d-md-block sg-no-mobile-grid"><table class="table table-sm table-hover align-middle mb-0 sg-table sg-no-mobile-grid"><thead class="table-light"><tr><th>Folio</th><th>Fecha</th><th class="text-end">Total</th><th class="text-end">Pagado</th><th class="text-end">Saldo</th><th class="text-end">Acción</th></tr></thead><tbody>{% for nota in notas_pendientes %}<tr><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"Y-m-d" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-table sg-btn-sm" title="Pagar"><i class="bi bi-cash"></i></a></td></tr>{% empty %}<tr><td colspan="6" class="sg-empty-state">El cliente no tiene notas pendientes.</td></tr>{% endfor %}</tbody></table></div>
+        <div class="table-responsive d-none d-md-block sg-no-mobile-grid">
+          <table class="table table-sm table-hover align-middle mb-0 sg-table sg-no-mobile-grid">
+            <thead class="table-light"><tr><th>Folio</th><th>Fecha</th><th class="text-end">Total</th><th class="text-end">Pagado</th><th class="text-end">Saldo</th><th class="text-end">Acción</th></tr></thead>
+            <tbody>{% for nota in notas_pendientes %}<tr><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"Y-m-d" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-table sg-btn-sm" title="Pagar"><i class="bi bi-cash"></i></a></td></tr>{% empty %}<tr><td colspan="6" class="sg-empty-state">El cliente no tiene notas pendientes.</td></tr>{% endfor %}</tbody>
+          </table>
+        </div>
         <div class="sg-mobile-list d-md-none">
           {% for nota in notas_pendientes %}
             <article class="sg-mobile-card">
@@ -57,7 +139,49 @@
       </section>
     </div>
 
-    <div class="cartera-stack"><section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-header"><h5 class="sg-page-header-title">Métodos de pago</h5></div><div class="list-group list-group-flush cartera-list-group">{% for metodo in pago.metodos.all %}<div class="list-group-item"><div class="d-flex justify-content-between gap-2"><span class="fw-semibold">{{ metodo.get_metodo_display }}</span><span>${{ metodo.monto|floatformat:2|intcomma }}</span></div>{% if metodo.referencia %}<div class="sg-form-help">{{ metodo.referencia }}</div>{% endif %}</div>{% endfor %}</div></section><section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-header"><h5 class="sg-page-header-title">Datos adicionales</h5></div><div class="card-body"><dl class="row mb-0"><dt class="col-5">Referencia</dt><dd class="col-7">{{ pago.referencia|default:"—" }}</dd><dt class="col-5">Registró</dt><dd class="col-7">{{ pago.creado_por|default:"—" }}</dd><dt class="col-5">Estado</dt><dd class="col-7">{{ pago.get_estado_display }}</dd><dt class="col-5">Observaciones</dt><dd class="col-7">{{ pago.observaciones|default:"—" }}</dd></dl></div></section></div>
+    <div class="cartera-stack">
+      <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+        <div class="card-header"><h5 class="sg-page-header-title">Métodos de pago</h5></div>
+        <div class="list-group list-group-flush cartera-list-group">
+          {% for metodo in pago.metodos.all %}
+            <div class="list-group-item"><div class="d-flex justify-content-between gap-2"><span class="fw-semibold">{{ metodo.get_metodo_display }}</span><span>${{ metodo.monto|floatformat:2|intcomma }}</span></div>{% if metodo.referencia %}<div class="sg-form-help">{{ metodo.referencia }}</div>{% endif %}</div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+        <div class="card-header"><h5 class="sg-page-header-title">Datos adicionales</h5></div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-5">Referencia</dt><dd class="col-7">{{ pago.referencia|default:"—" }}</dd>
+            <dt class="col-5">Registró</dt><dd class="col-7">{{ pago.creado_por|default:"—" }}</dd>
+            <dt class="col-5">Estado</dt><dd class="col-7"><span class="badge {% if pago.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ pago.get_estado_display }}</span></dd>
+            {% if pago.estado == 'CAN' %}
+              <dt class="col-5">Canceló</dt><dd class="col-7">{{ pago.cancelado_por|default:"—" }}</dd>
+              <dt class="col-5">Fecha cancelación</dt><dd class="col-7">{{ pago.cancelado_en|date:"Y-m-d H:i" }}</dd>
+              <dt class="col-5">Motivo</dt><dd class="col-7">{{ pago.motivo_cancelacion|default:"—" }}</dd>
+            {% endif %}
+            <dt class="col-5">Observaciones</dt><dd class="col-7">{{ pago.observaciones|default:"—" }}</dd>
+          </dl>
+        </div>
+      </section>
+
+      {% if pago.estado != 'CAN' and puede_cancelar_pagos %}
+        <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+          <div class="card-header"><h5 class="sg-page-header-title text-danger"><i class="bi bi-x-octagon"></i>Cancelar pago</h5></div>
+          <div class="card-body">
+            <p class="sg-page-header-subtitle">La cancelación revierte las aplicaciones a notas y, si aplica, el saldo a favor generado por este pago.</p>
+            <form method="post" action="{% url 'cartera:pago_cancelar' pago.id %}" id="cancelarPagoForm" onsubmit="return confirm('¿Confirmas cancelar el pago #{{ pago.id }}? Esta acción recalculará la cartera del cliente.');" novalidate>
+              {% csrf_token %}
+              <label class="sg-form-label" for="{{ cancelar_form.motivo_cancelacion.id_for_label }}">{{ cancelar_form.motivo_cancelacion.label }}</label>
+              {{ cancelar_form.motivo_cancelacion }}
+              <div class="sg-form-help">Obligatorio para auditoría y trazabilidad.</div>
+              <button class="sg-btn-danger sg-btn-md w-100 mt-3" type="submit"><i class="bi bi-x-circle me-1"></i>Confirmar cancelación</button>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}

@@ -8,10 +8,11 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q, Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from catalogos.models import Cliente, ParametroSistema
 from inventarios.models import SalidaInventario
-from cartera.forms import PagoGlobalForm, PagoNotaForm, SaldoFavorAplicacionForm, SaldoFavorDevolucionForm
+from cartera.forms import CancelarPagoForm, PagoGlobalForm, PagoNotaForm, SaldoFavorAplicacionForm, SaldoFavorDevolucionForm
 from cartera.models import ClienteSaldoFavorMovimiento, PagoAplicacionNota, PagoCliente
 from cartera.selectors.cartera import (
     get_estado_cuenta_cliente,
@@ -21,7 +22,7 @@ from cartera.selectors.cartera import (
     get_total_adeudado_cliente,
     get_total_nota,
 )
-from cartera.services.cartera import aplicar_saldo_favor_a_nota, devolver_saldo_favor, registrar_pago_fifo, registrar_pago_notas_especificas
+from cartera.services.cartera import aplicar_saldo_favor_a_nota, cancelar_pago_cliente, devolver_saldo_favor, registrar_pago_fifo, registrar_pago_notas_especificas
 
 
 def _puede_registrar_pagos(user):
@@ -29,6 +30,16 @@ def _puede_registrar_pagos(user):
         user.is_superuser
         or user.has_perm("cartera.puede_registrar_pagos")
         or user.groups.filter(name__in=["Ventas", "Administrador"]).exists()
+    )
+
+
+
+
+def _puede_cancelar_pagos(user):
+    return (
+        user.is_superuser
+        or user.has_perm("cartera.puede_cancelar_pagos")
+        or user.has_perm("cartera.change_pagocliente")
     )
 
 
@@ -78,6 +89,14 @@ def _get_movimientos_limit(request):
     if valor not in opciones:
         valor = "10"
     return valor, None if valor == "todos" else int(valor)
+
+
+def _get_cantidad_reporte(request, default="todos"):
+    opciones = ["10", "20", "30", "50", "100", "todos"]
+    valor = (request.GET.get("cantidad") or default).strip().lower()
+    if valor not in opciones:
+        valor = default if default in opciones else "todos"
+    return valor, None if valor == "todos" else int(valor), opciones
 
 
 def _empresa_contexto():
@@ -279,13 +298,55 @@ def pago_detalle(request, pago_id):
         pago.movimientos_saldo_favor.filter(tipo=ClienteSaldoFavorMovimiento.TIPO_GENERACION).aggregate(total=Sum("monto"))["total"]
         or Decimal("0.00")
     )
+    saldo_reversado = (
+        pago.movimientos_saldo_favor.filter(tipo=ClienteSaldoFavorMovimiento.TIPO_CANCELACION).aggregate(total=Sum("monto"))["total"]
+        or Decimal("0.00")
+    )
     notas_pendientes = list(get_notas_con_saldo_pendiente(pago.cliente))
 
     return render(
         request,
         "cartera/pago_detalle.html",
-        {"pago": pago, "total_aplicado": total_aplicado, "saldo_generado": saldo_generado, "notas_pendientes": notas_pendientes},
+        {
+            "pago": pago,
+            "total_aplicado": total_aplicado,
+            "saldo_generado": saldo_generado,
+            "saldo_reversado": saldo_reversado,
+            "notas_pendientes": notas_pendientes,
+            "cancelar_form": CancelarPagoForm(),
+            "puede_cancelar_pagos": _puede_cancelar_pagos(request.user),
+        },
     )
+
+
+@permiso_requerido("cartera.puede_cancelar_pagos", "cartera.change_pagocliente")
+@require_POST
+def pago_cancelar(request, pago_id):
+    if not _puede_cancelar_pagos(request.user):
+        messages.error(request, "No tienes permiso para cancelar pagos.")
+        return redirect("cartera:pago_detalle", pago_id=pago_id)
+
+    pago = get_object_or_404(PagoCliente.objects.select_related("cliente"), pk=pago_id)
+    form = CancelarPagoForm(request.POST)
+    if not form.is_valid():
+        errores = []
+        for campo_errores in form.errors.values():
+            errores.extend(campo_errores)
+        messages.error(request, " ".join(errores) or "No se pudo cancelar el pago.")
+        return redirect("cartera:pago_detalle", pago_id=pago.id)
+
+    try:
+        cancelar_pago_cliente(
+            pago=pago,
+            usuario=request.user,
+            motivo=form.cleaned_data["motivo_cancelacion"],
+        )
+    except ValidationError as exc:
+        messages.error(request, " ".join(exc.messages) if hasattr(exc, "messages") else str(exc))
+    else:
+        messages.success(request, f"Pago #{pago.id} cancelado correctamente. Las notas afectadas fueron recalculadas.")
+
+    return redirect("cartera:pago_detalle", pago_id=pago.id)
 
 
 @permiso_requerido("cartera.view_pagocliente")
@@ -300,8 +361,12 @@ def pago_detalle_print(request, pago_id):
         pago.movimientos_saldo_favor.filter(tipo=ClienteSaldoFavorMovimiento.TIPO_GENERACION).aggregate(total=Sum("monto"))["total"]
         or Decimal("0.00")
     )
+    saldo_reversado = (
+        pago.movimientos_saldo_favor.filter(tipo=ClienteSaldoFavorMovimiento.TIPO_CANCELACION).aggregate(total=Sum("monto"))["total"]
+        or Decimal("0.00")
+    )
     notas_pendientes = list(get_notas_con_saldo_pendiente(pago.cliente))
-    return render(request, "cartera/prints/pago_detalle_print.html", {"pago": pago, "total_aplicado": total_aplicado, "saldo_generado": saldo_generado, "notas_pendientes": notas_pendientes, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
+    return render(request, "cartera/prints/pago_detalle_print.html", {"pago": pago, "total_aplicado": total_aplicado, "saldo_generado": saldo_generado, "saldo_reversado": saldo_reversado, "notas_pendientes": notas_pendientes, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
 
 
 @permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
@@ -332,6 +397,7 @@ def estado_cuenta_cliente(request, cliente_id):
             "movimientos_opcion": movimientos_opcion,
             "total_pagos": total_pagos,
             "total_movimientos_saldo": total_movimientos_saldo,
+            "puede_cancelar_pagos": _puede_cancelar_pagos(request.user),
         },
     )
 
@@ -408,9 +474,27 @@ def reporte_pagos_dia(request):
         fecha = date.fromisoformat(fecha_txt)
     except ValueError:
         fecha = timezone.localdate()
-    pagos = PagoCliente.objects.filter(fecha__date=fecha).select_related("cliente", "creado_por").prefetch_related("aplicaciones__nota_venta", "metodos").order_by("-fecha", "-id")
-    total_recibido = pagos.filter(estado=PagoCliente.ESTADO_ACTIVO).aggregate(total=Sum("monto_recibido"))["total"] or Decimal("0.00")
-    return render(request, "cartera/reporte_pagos_dia.html", {"fecha": fecha, "pagos": pagos, "total_recibido": total_recibido})
+
+    cantidad, cantidad_limite, cantidad_opciones = _get_cantidad_reporte(request)
+    pagos_qs = PagoCliente.objects.filter(fecha__date=fecha).select_related("cliente", "creado_por").prefetch_related("aplicaciones__nota_venta", "metodos").order_by("-fecha", "-id")
+    total_recibido = pagos_qs.filter(estado=PagoCliente.ESTADO_ACTIVO).aggregate(total=Sum("monto_recibido"))["total"] or Decimal("0.00")
+    total_registros = pagos_qs.count()
+    pagos = pagos_qs if cantidad_limite is None else pagos_qs[:cantidad_limite]
+    total_mostrado = total_registros if cantidad_limite is None else min(cantidad_limite, total_registros)
+
+    return render(
+        request,
+        "cartera/reporte_pagos_dia.html",
+        {
+            "fecha": fecha,
+            "pagos": pagos,
+            "total_recibido": total_recibido,
+            "cantidad": cantidad,
+            "cantidad_opciones": cantidad_opciones,
+            "total_mostrado": total_mostrado,
+            "total_registros": total_registros,
+        },
+    )
 
 
 @permiso_requerido("cartera.view_pagocliente")
@@ -420,9 +504,14 @@ def reporte_pagos_dia_print(request):
         fecha = date.fromisoformat(fecha_txt)
     except ValueError:
         fecha = timezone.localdate()
-    pagos = PagoCliente.objects.filter(fecha__date=fecha).select_related("cliente").prefetch_related("aplicaciones__nota_venta", "metodos").order_by("fecha", "id")
-    total_recibido = pagos.filter(estado=PagoCliente.ESTADO_ACTIVO).aggregate(total=Sum("monto_recibido"))["total"] or Decimal("0.00")
-    return render(request, "cartera/prints/reporte_pagos_dia_print.html", {"fecha": fecha, "pagos": pagos, "total_recibido": total_recibido, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
+
+    cantidad, cantidad_limite, _cantidad_opciones = _get_cantidad_reporte(request)
+    pagos_qs = PagoCliente.objects.filter(fecha__date=fecha).select_related("cliente").prefetch_related("aplicaciones__nota_venta", "metodos").order_by("fecha", "id")
+    total_recibido = pagos_qs.filter(estado=PagoCliente.ESTADO_ACTIVO).aggregate(total=Sum("monto_recibido"))["total"] or Decimal("0.00")
+    total_registros = pagos_qs.count()
+    pagos = pagos_qs if cantidad_limite is None else pagos_qs[:cantidad_limite]
+    total_mostrado = total_registros if cantidad_limite is None else min(cantidad_limite, total_registros)
+    return render(request, "cartera/prints/reporte_pagos_dia_print.html", {"fecha": fecha, "pagos": pagos, "total_recibido": total_recibido, "cantidad": cantidad, "total_mostrado": total_mostrado, "total_registros": total_registros, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
 
 
 @permiso_requerido("cartera.add_pagoaplicacionnota", "cartera.change_clientesaldofavormovimiento")
