@@ -2,6 +2,11 @@ from decimal import Decimal
 from datetime import timedelta
 
 from catalogos.models import Producto, ClienteProductoPrecio, PrecioMenorMinimoAutorizacion
+from catalogos.services.credito_clientes import (
+    marcar_autorizacion_credito_usada,
+    total_detalles_venta,
+    validar_credito_cliente_para_venta,
+)
 from inventarios.models import EntradaInventario, EntradaInventarioDetalle, SalidaInventarioDetalleAlmacen
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -57,6 +62,9 @@ class VentaService:
         lineas_stock,
         almacenes_permitidos,
         request=None,
+        venta_existente=None,
+        total_venta_override=None,
+        validar_credito=True,
     ):
         self.form = form
         self.detalles_validos = detalles_validos
@@ -64,6 +72,10 @@ class VentaService:
         self.lineas_stock = lineas_stock
         self.almacenes_permitidos = almacenes_permitidos
         self.request = request
+        self.venta_existente = venta_existente
+        self.total_venta_override = total_venta_override
+        self.validar_credito = validar_credito
+        self.autorizacion_credito = None
 
     def validar_stock(self):
         requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
@@ -77,6 +89,7 @@ class VentaService:
         errores = []
 
         errores.extend(self._validar_precios_minimos(productos_obj_por_id))
+        errores.extend(self._validar_credito_cliente())
 
         for almacen_id, requeridos in requeridos_por_almacen.items():
             almacen = self.almacenes_permitidos.get(str(almacen_id))
@@ -113,6 +126,7 @@ class VentaService:
 
         self._agregar_observacion_almacenes(salida)
         salida.save()
+        marcar_autorizacion_credito_usada(self.autorizacion_credito, salida)
 
         self._registrar_entradas_virtuales(salida, requeridos_por_almacen)
 
@@ -199,6 +213,31 @@ class VentaService:
                     usuario=self.request.user if self.request and self.request.user.is_authenticated else None,
                     motivo_bitacora=f"Entrada automática por venta virtual {salida.folio}",
                 )
+
+    def _validar_credito_cliente(self):
+        if not self.validar_credito:
+            return []
+
+        cliente = self.form.cleaned_data.get("cliente_ref") if hasattr(self.form, "cleaned_data") else None
+        if not cliente:
+            return []
+
+        total_venta = (
+            self.total_venta_override
+            if self.total_venta_override is not None
+            else total_detalles_venta(self.detalles_validos)
+        )
+        fecha_venta = self.form.cleaned_data.get("fecha") if hasattr(self.form, "cleaned_data") else None
+
+        errores, autorizacion = validar_credito_cliente_para_venta(
+            cliente=cliente,
+            total_venta=total_venta,
+            fecha_venta=fecha_venta,
+            request=self.request,
+            venta_existente=self.venta_existente,
+        )
+        self.autorizacion_credito = autorizacion
+        return errores
 
     def _validar_precios_minimos(self, productos_obj_por_id):
         errores = []

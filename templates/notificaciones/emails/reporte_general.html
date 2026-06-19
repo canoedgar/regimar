@@ -1,0 +1,137 @@
+{% load humanize %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Reporte general</title>
+</head>
+<body style="margin:0; padding:0; background:#f3f4f6; font-family:Arial, Helvetica, sans-serif; color:#111827;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f4f6; padding:24px 0;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="760" cellspacing="0" cellpadding="0" style="max-width:760px; width:96%; background:#ffffff; border-radius:14px; overflow:hidden; border:1px solid #e5e7eb;">
+          <tr>
+            <td style="padding:24px; background:#111827; color:#ffffff;">
+              <h1 style="margin:0; font-size:22px;">Reporte general de operación</h1>
+              <p style="margin:8px 0 0; color:#d1d5db; font-size:14px;">
+                {{ reporte.empresa.nombre }} · {{ reporte.fecha_inicio|date:"Y-m-d" }} al {{ reporte.fecha_fin|date:"Y-m-d" }}
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px;">
+              <p style="margin:0 0 18px; color:#4b5563; font-size:14px;">
+                Generado el {{ reporte.generado_en|date:"Y-m-d H:i" }} desde el módulo de notificaciones.
+              </p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse; margin-bottom:20px;">
+                <tr>
+                  <td style="width:33.3%; padding:12px; border:1px solid #e5e7eb; vertical-align:top;">
+                    <div style="font-size:12px; color:#6b7280; text-transform:uppercase;">Inventario</div>
+                    <div style="font-size:22px; font-weight:bold; margin-top:5px;">{{ reporte.inventario.entradas_count }} entradas</div>
+                    <div style="font-size:13px; color:#374151; margin-top:6px;">Importe: ${{ reporte.inventario.entradas_importe|floatformat:2|intcomma }}</div>
+                    <div style="font-size:13px; color:#374151;">Productos bajos: {{ reporte.inventario.productos_bajos_count }}</div>
+                  </td>
+                  <td style="width:33.3%; padding:12px; border:1px solid #e5e7eb; vertical-align:top;">
+                    <div style="font-size:12px; color:#6b7280; text-transform:uppercase;">Ventas</div>
+                    <div style="font-size:22px; font-weight:bold; margin-top:5px;">${{ reporte.ventas.importe|floatformat:2|intcomma }}</div>
+                    <div style="font-size:13px; color:#374151; margin-top:6px;">Notas: {{ reporte.ventas.notas_count }}</div>
+                    <div style="font-size:13px; color:#374151;">Margen: ${{ reporte.ventas.margen|floatformat:2|intcomma }}</div>
+                  </td>
+                  <td style="width:33.3%; padding:12px; border:1px solid #e5e7eb; vertical-align:top;">
+                    <div style="font-size:12px; color:#6b7280; text-transform:uppercase;">Pagos / cartera</div>
+                    <div style="font-size:22px; font-weight:bold; margin-top:5px;">${{ reporte.cartera.pagos_importe|floatformat:2|intcomma }}</div>
+                    <div style="font-size:13px; color:#374151; margin-top:6px;">Pagos: {{ reporte.cartera.pagos_count }}</div>
+                    <div style="font-size:13px; color:#374151;">Por cobrar: ${{ reporte.cartera.total_cartera|floatformat:2|intcomma }}</div>
+                  </td>
+                </tr>
+              </table>
+
+              <h2 style="font-size:17px; margin:22px 0 10px;">Inventario</h2>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="7" style="border-collapse:collapse; font-size:13px;">
+                <tr style="background:#f9fafb;">
+                  <th align="left" style="border:1px solid #e5e7eb;">Tipo</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Movs.</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Cantidad</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Importe</th>
+                </tr>
+                {% for item in reporte.inventario.entradas_por_tipo %}
+                  <tr>
+                    <td style="border:1px solid #e5e7eb;">{{ item.tipo_label }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">{{ item.movimientos }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">{{ item.cantidad|floatformat:2|intcomma }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">${{ item.importe|floatformat:2|intcomma }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="4" style="border:1px solid #e5e7eb; color:#6b7280;">Sin entradas en el rango.</td></tr>
+                {% endfor %}
+              </table>
+
+              <h2 style="font-size:17px; margin:22px 0 10px;">Ventas por cliente</h2>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="7" style="border-collapse:collapse; font-size:13px;">
+                <tr style="background:#f9fafb;">
+                  <th align="left" style="border:1px solid #e5e7eb;">Cliente</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Notas</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Importe</th>
+                </tr>
+                {% for item in reporte.ventas.ventas_por_cliente %}
+                  <tr>
+                    <td style="border:1px solid #e5e7eb;">{{ item.cliente_ref__nombre_fiscal|default:item.cliente_ref__nombre_comercial|default:item.cliente|default:"Cliente no capturado" }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">{{ item.notas }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">${{ item.importe|floatformat:2|intcomma }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" style="border:1px solid #e5e7eb; color:#6b7280;">Sin ventas en el rango.</td></tr>
+                {% endfor %}
+              </table>
+
+              <h2 style="font-size:17px; margin:22px 0 10px;">Pagos por cliente</h2>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="7" style="border-collapse:collapse; font-size:13px;">
+                <tr style="background:#f9fafb;">
+                  <th align="left" style="border:1px solid #e5e7eb;">Cliente</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Pagos</th>
+                  <th align="right" style="border:1px solid #e5e7eb;">Importe</th>
+                </tr>
+                {% for item in reporte.cartera.pagos_por_cliente %}
+                  <tr>
+                    <td style="border:1px solid #e5e7eb;">{{ item.cliente__nombre_fiscal|default:item.cliente__nombre_comercial|default:"Cliente" }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">{{ item.pagos }}</td>
+                    <td align="right" style="border:1px solid #e5e7eb;">${{ item.importe|floatformat:2|intcomma }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="3" style="border:1px solid #e5e7eb; color:#6b7280;">Sin pagos activos en el rango.</td></tr>
+                {% endfor %}
+              </table>
+
+              <h2 style="font-size:17px; margin:22px 0 10px;">Cartera actual</h2>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="7" style="border-collapse:collapse; font-size:13px;">
+                <tr><td style="border:1px solid #e5e7eb;">Total por cobrar</td><td align="right" style="border:1px solid #e5e7eb; font-weight:bold;">${{ reporte.cartera.total_cartera|floatformat:2|intcomma }}</td></tr>
+                <tr><td style="border:1px solid #e5e7eb;">Saldo a favor acumulado</td><td align="right" style="border:1px solid #e5e7eb;">${{ reporte.cartera.total_saldo_favor|floatformat:2|intcomma }}</td></tr>
+                <tr><td style="border:1px solid #e5e7eb;">Notas pendientes</td><td align="right" style="border:1px solid #e5e7eb;">{{ reporte.cartera.notas_pendientes_count }} · ${{ reporte.cartera.notas_pendientes_importe|floatformat:2|intcomma }}</td></tr>
+              </table>
+
+              {% if reporte.inventario.productos_bajos %}
+                <h2 style="font-size:17px; margin:22px 0 10px;">Productos en mínimo o bajo mínimo</h2>
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="7" style="border-collapse:collapse; font-size:13px;">
+                  <tr style="background:#f9fafb;">
+                    <th align="left" style="border:1px solid #e5e7eb;">Producto</th>
+                    <th align="right" style="border:1px solid #e5e7eb;">Stock</th>
+                    <th align="right" style="border:1px solid #e5e7eb;">Mínimo</th>
+                  </tr>
+                  {% for item in reporte.inventario.productos_bajos %}
+                    <tr>
+                      <td style="border:1px solid #e5e7eb;">{{ item.nombre }}</td>
+                      <td align="right" style="border:1px solid #e5e7eb;">{{ item.stock_actual|floatformat:2|intcomma }} {{ item.metrica }}</td>
+                      <td align="right" style="border:1px solid #e5e7eb;">{{ item.stock_minimo|floatformat:2|intcomma }}</td>
+                    </tr>
+                  {% endfor %}
+                </table>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -1,0 +1,19 @@
+Solicitud de autorización de venta extraordinaria
+
+Cliente: {{ autorizacion.cliente }}
+Usuario solicitante: {{ usuario }}
+Fecha: {{ fecha|date:"Y-m-d H:i" }}
+
+Total de la venta: ${{ autorizacion.total_venta }}
+Saldo actual considerado: ${{ autorizacion.saldo_actual }}
+Saldo proyectado: ${{ autorizacion.saldo_proyectado }}
+Límite de crédito: ${{ autorizacion.limite_credito }}
+Días de crédito: {{ autorizacion.dias_credito }}
+
+Motivo:
+{{ autorizacion.motivo }}
+
+Autorizar o rechazar:
+{{ url_autorizacion }}
+
+El enlace solo puede resolverse una vez y únicamente el día de creación.

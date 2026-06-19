@@ -1,4 +1,4 @@
-from catalogos.models import Almacen, Producto, ClienteProductoPrecio, ParametroSistema, PrecioMenorMinimoAutorizacion
+from catalogos.models import Almacen, Producto, ClienteCreditoAutorizacion, ClienteProductoPrecio, ParametroSistema, PrecioMenorMinimoAutorizacion
 from ..models import SalidaInventario, SalidaInventarioDetalle
 from ..forms import (
     SalidaInventarioDetalleForm,
@@ -78,6 +78,50 @@ def autorizar_precio_minimo(request, token):
         f"Precio autorizado para {autorizacion.cliente} / {autorizacion.producto}: ${autorizacion.precio_solicitado}.",
     )
     return redirect("precios_clientes_list")
+
+
+
+def autorizar_venta_extraordinaria(request, token):
+    autorizacion = get_object_or_404(
+        ClienteCreditoAutorizacion.objects.select_related("cliente", "usuario_solicita"),
+        token=token,
+    )
+
+    mensaje = ""
+    mensaje_tipo = "info"
+
+    if request.method == "POST" and autorizacion.puede_resolverse():
+        accion = (request.POST.get("accion") or "").strip().lower()
+        comentario = (request.POST.get("comentario") or "").strip()
+        if accion == "autorizar":
+            autorizacion.aprobar(comentario=comentario)
+            mensaje = "Venta extraordinaria autorizada. El usuario ya puede continuar con el flujo de venta."
+            mensaje_tipo = "success"
+        elif accion == "rechazar":
+            autorizacion.rechazar(comentario=comentario)
+            mensaje = "Solicitud rechazada. El usuario no podrá usar esta autorización."
+            mensaje_tipo = "danger"
+        else:
+            mensaje = "Acción inválida."
+            mensaje_tipo = "warning"
+    elif request.method == "POST":
+        mensaje = "Este enlace ya fue usado, fue resuelto previamente o ya no corresponde al día de creación."
+        mensaje_tipo = "warning"
+
+    if not mensaje and not autorizacion.puede_resolverse():
+        if not autorizacion.vigente_hoy:
+            mensaje = "Este enlace ya expiró porque solo puede usarse el día de creación."
+            mensaje_tipo = "warning"
+        elif autorizacion.estado != ClienteCreditoAutorizacion.ESTADO_PENDIENTE:
+            mensaje = "Esta solicitud ya fue resuelta previamente."
+            mensaje_tipo = "info"
+
+    return render(request, "catalogos/autorizaciones/credito_resolver.html", {
+        "autorizacion": autorizacion,
+        "puede_resolver": autorizacion.puede_resolverse(),
+        "mensaje": mensaje,
+        "mensaje_tipo": mensaje_tipo,
+    })
 
 
 def _importe_salida_expr(prefix=""):

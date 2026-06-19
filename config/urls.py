@@ -32,6 +32,9 @@ urlpatterns = [
     # Proyectos
     path("proyectos/", include("proyectos.urls")),
 
+    # Notificaciones
+    path("notificaciones/", include("notificaciones.urls")),
+
     # Usuarios
     path("config/", include("accounts.urls")),
 

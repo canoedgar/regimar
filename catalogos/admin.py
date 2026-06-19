@@ -3,7 +3,8 @@ from django.contrib import admin
 
 from .models import (
     Categoria, Producto, ProductoMetricaConversion, Proveedor, Proyecto, Cliente, Almacen,
-    ProductoPrecioBitacora, ProductoPrecioHistorial, ParametroSistema, ClienteProductoPrecio, PrecioMenorMinimoAutorizacion,
+    ProductoPrecioBitacora, ProductoPrecioHistorial, ParametroSistema, ClienteProductoPrecio,
+    PrecioMenorMinimoAutorizacion, ClienteCreditoAutorizacion,
 )
 
 
@@ -36,7 +37,14 @@ class ProductoMetricaConversionAdmin(admin.ModelAdmin):
 
 admin.site.register(Proveedor)
 admin.site.register(Proyecto)
-admin.site.register(Cliente)
+
+
+@admin.register(Cliente)
+class ClienteAdmin(admin.ModelAdmin):
+    list_display = ("nombre_fiscal", "nombre_comercial", "rfc", "limite_credito", "dias_credito", "activo")
+    search_fields = ("nombre_fiscal", "nombre_comercial", "rfc", "telefono", "contacto")
+    list_filter = ("activo", "logo")
+
 admin.site.register(Almacen)
 
 
@@ -75,3 +83,11 @@ class PrecioMenorMinimoAutorizacionAdmin(admin.ModelAdmin):
     list_display = ("cliente", "producto", "precio_minimo", "precio_solicitado", "creado_en", "expira_en", "usado_en")
     search_fields = ("cliente__nombre_fiscal", "cliente__nombre_comercial", "producto__nombre")
     readonly_fields = ("token", "creado_en", "usado_en")
+
+
+@admin.register(ClienteCreditoAutorizacion)
+class ClienteCreditoAutorizacionAdmin(admin.ModelAdmin):
+    list_display = ("cliente", "estado", "fecha_solicitud", "total_venta", "saldo_proyectado", "limite_credito", "dias_credito", "usado_en")
+    search_fields = ("cliente__nombre_fiscal", "cliente__nombre_comercial", "token")
+    list_filter = ("estado", "fecha_solicitud")
+    readonly_fields = ("token", "creado_en", "respondido_en", "usado_en")

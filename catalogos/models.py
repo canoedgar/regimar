@@ -4,6 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
 import uuid
+import secrets
 import re
 import unicodedata
 from django.core.validators import RegexValidator, MinLengthValidator, MaxLengthValidator, MinValueValidator
@@ -449,6 +450,23 @@ class Cliente(models.Model):
         help_text="Logo default que se usará en las notas de venta del cliente.",
     )
 
+    # =========================
+    # Parámetros de cartera / crédito
+    # =========================
+    limite_credito = models.DecimalField(
+        "Límite de crédito",
+        max_digits=14,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        help_text="Monto máximo autorizado de cartera. 0 = sin validación por monto.",
+    )
+    dias_credito = models.PositiveIntegerField(
+        "Días de crédito",
+        default=0,
+        help_text="Días máximos permitidos para notas pendientes. 0 = sin validación por días.",
+    )
+
     # Dirección “operativa” (para expediente / envío / PDF)
     calle = models.CharField(max_length=120, blank=True)
     num_ext = models.CharField("No. ext.", max_length=20, blank=True)
@@ -604,6 +622,102 @@ class PrecioMenorMinimoAutorizacion(models.Model):
 
     def puede_usarse(self):
         return not self.usado and not self.expirado
+
+
+class ClienteCreditoAutorizacion(models.Model):
+    """Autorización diaria y de un solo uso para ventas extraordinarias por cartera."""
+
+    ESTADO_PENDIENTE = "PEND"
+    ESTADO_APROBADA = "APR"
+    ESTADO_RECHAZADA = "RECH"
+    ESTADO_CHOICES = [
+        (ESTADO_PENDIENTE, "Pendiente"),
+        (ESTADO_APROBADA, "Aprobada"),
+        (ESTADO_RECHAZADA, "Rechazada"),
+    ]
+
+    cliente = models.ForeignKey(
+        Cliente,
+        on_delete=models.CASCADE,
+        related_name="autorizaciones_credito",
+    )
+    usuario_solicita = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="solicitudes_credito_extraordinario",
+    )
+    venta_autorizada = models.ForeignKey(
+        "inventarios.SalidaInventario",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="autorizaciones_credito_usadas",
+    )
+    token = models.CharField(max_length=96, unique=True, editable=False, db_index=True)
+    fecha_solicitud = models.DateField(default=timezone.localdate, db_index=True)
+    total_venta = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    saldo_actual = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    saldo_proyectado = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    limite_credito = models.DecimalField(max_digits=14, decimal_places=2, default=Decimal("0.00"))
+    dias_credito = models.PositiveIntegerField(default=0)
+    motivo = models.TextField(blank=True)
+    estado = models.CharField(max_length=4, choices=ESTADO_CHOICES, default=ESTADO_PENDIENTE, db_index=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    respondido_en = models.DateTimeField(null=True, blank=True)
+    usado_en = models.DateTimeField(null=True, blank=True)
+    comentario_resolucion = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "Autorización de venta extraordinaria"
+        verbose_name_plural = "Autorizaciones de ventas extraordinarias"
+        ordering = ["-creado_en", "-id"]
+        indexes = [
+            models.Index(fields=["cliente", "fecha_solicitud", "estado"]),
+            models.Index(fields=["fecha_solicitud", "estado"]),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.token:
+            self.token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+
+    @property
+    def vigente_hoy(self):
+        return self.fecha_solicitud == timezone.localdate()
+
+    @property
+    def disponible_para_venta(self):
+        return (
+            self.estado == self.ESTADO_APROBADA
+            and self.vigente_hoy
+            and self.usado_en is None
+        )
+
+    def puede_resolverse(self):
+        return self.estado == self.ESTADO_PENDIENTE and self.vigente_hoy
+
+    def aprobar(self, comentario=""):
+        self.estado = self.ESTADO_APROBADA
+        self.respondido_en = timezone.now()
+        self.comentario_resolucion = comentario or ""
+        self.save(update_fields=["estado", "respondido_en", "comentario_resolucion"])
+
+    def rechazar(self, comentario=""):
+        self.estado = self.ESTADO_RECHAZADA
+        self.respondido_en = timezone.now()
+        self.comentario_resolucion = comentario or ""
+        self.save(update_fields=["estado", "respondido_en", "comentario_resolucion"])
+
+    def marcar_usada(self, venta=None):
+        self.usado_en = timezone.now()
+        if venta is not None:
+            self.venta_autorizada = venta
+        self.save(update_fields=["usado_en", "venta_autorizada"])
+
+    def __str__(self):
+        return f"{self.cliente} | {self.get_estado_display()} | {self.fecha_solicitud}"
 
 
 # --- Inicio Almacenes ---

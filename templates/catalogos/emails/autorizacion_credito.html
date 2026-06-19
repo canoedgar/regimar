@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="es">
+  <body style="font-family: Arial, sans-serif; color:#111827; line-height:1.5;">
+    <h2 style="margin:0 0 12px;">Solicitud de autorización de venta extraordinaria</h2>
+    <p>Se detectó una venta que rebasa los parámetros de cartera configurados para el cliente.</p>
+    <table style="border-collapse:collapse; width:100%; max-width:680px;">
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Cliente</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">{{ autorizacion.cliente }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Usuario solicitante</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">{{ usuario }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Fecha</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">{{ fecha|date:"Y-m-d H:i" }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Total venta</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">${{ autorizacion.total_venta }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Saldo actual</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">${{ autorizacion.saldo_actual }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Saldo proyectado</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">${{ autorizacion.saldo_proyectado }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Límite crédito</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">${{ autorizacion.limite_credito }}</td></tr>
+      <tr><td style="padding:6px 10px; border:1px solid #e5e7eb;"><strong>Días crédito</strong></td><td style="padding:6px 10px; border:1px solid #e5e7eb;">{{ autorizacion.dias_credito }}</td></tr>
+    </table>
+    <h3>Motivo</h3>
+    <pre style="white-space:pre-wrap; background:#f9fafb; border:1px solid #e5e7eb; padding:12px;">{{ autorizacion.motivo }}</pre>
+    <p>
+      <a href="{{ url_autorizacion }}" style="display:inline-block; background:#0d6efd; color:white; padding:10px 16px; text-decoration:none; border-radius:6px;">Revisar autorización</a>
+    </p>
+    <p style="font-size:12px; color:#6b7280;">El enlace solo puede resolverse una vez y únicamente el día de creación.</p>
+  </body>
+</html>

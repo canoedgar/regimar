@@ -68,6 +68,14 @@
         <span>Dashboard</span>
       </a>
 
+      {% has_any_perm request.user "notificaciones.puede_enviar_reportes" "notificaciones.add_notificacioncorreo" as puede_menu_notificaciones %}
+      {% if puede_menu_notificaciones %}
+      <a href="{% url 'notificaciones:reporte_general_correo' %}" class="nav-link {% block active_notificaciones %}{% endblock %}">
+        <i class="bi bi-envelope-paper"></i>
+        <span>Notificaciones</span>
+      </a>
+      {% endif %}
+
       {# Permisos para pintar el menú. El backend sigue siendo la fuente de seguridad. #}
       {% has_any_perm request.user "inventarios.add_salidainventario" "inventarios.view_salidainventario" "cotizaciones.view_cotizacionprecio" "cotizaciones.add_cotizacionprecio" "cartera.view_pagocliente" "cartera.add_pagocliente" as puede_menu_ventas %}
       {% has_any_perm request.user "inventarios.view_entradainventario" "inventarios.add_entradainventario" "inventarios.view_salidainventario" "inventarios.add_salidainventario" "inventarios.view_inventariostock" "inventarios.change_inventariostock" as puede_menu_inventario %}

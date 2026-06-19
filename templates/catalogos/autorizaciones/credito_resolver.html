@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Autorización de venta extraordinaria</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <main class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-4">
+            <h1 class="h4 fw-bold mb-2">Autorización de venta extraordinaria</h1>
+            <p class="text-muted mb-4">Este enlace no requiere sesión y solo puede resolverse una vez durante el día de creación.</p>
+
+            {% if mensaje %}
+              <div class="alert alert-{{ mensaje_tipo|default:'info' }}">{{ mensaje }}</div>
+            {% endif %}
+
+            <dl class="row mb-4">
+              <dt class="col-sm-4">Cliente</dt><dd class="col-sm-8">{{ autorizacion.cliente }}</dd>
+              <dt class="col-sm-4">Estado</dt><dd class="col-sm-8">{{ autorizacion.get_estado_display }}</dd>
+              <dt class="col-sm-4">Fecha solicitud</dt><dd class="col-sm-8">{{ autorizacion.fecha_solicitud|date:"Y-m-d" }}</dd>
+              <dt class="col-sm-4">Total venta</dt><dd class="col-sm-8">${{ autorizacion.total_venta }}</dd>
+              <dt class="col-sm-4">Saldo actual</dt><dd class="col-sm-8">${{ autorizacion.saldo_actual }}</dd>
+              <dt class="col-sm-4">Saldo proyectado</dt><dd class="col-sm-8">${{ autorizacion.saldo_proyectado }}</dd>
+              <dt class="col-sm-4">Límite crédito</dt><dd class="col-sm-8">${{ autorizacion.limite_credito }}</dd>
+              <dt class="col-sm-4">Días crédito</dt><dd class="col-sm-8">{{ autorizacion.dias_credito }}</dd>
+            </dl>
+
+            <h2 class="h6 fw-bold">Motivo</h2>
+            <pre class="bg-light border rounded p-3 small text-wrap" style="white-space:pre-wrap;">{{ autorizacion.motivo }}</pre>
+
+            {% if puede_resolver %}
+              <form method="post" class="mt-4">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label class="form-label fw-semibold">Comentario opcional</label>
+                  <textarea class="form-control" name="comentario" rows="3" placeholder="Comentario de autorización o rechazo"></textarea>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                  <button class="btn btn-success" type="submit" name="accion" value="autorizar">Autorizar</button>
+                  <button class="btn btn-outline-danger" type="submit" name="accion" value="rechazar">Rechazar</button>
+                </div>
+              </form>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -54,10 +54,16 @@ def nota_venta_editar_datos(request, pk):
     if request.method == "POST":
         form = SalidaVentaEdicionForm(request.POST, instance=salida)
         if form.is_valid():
-            EditarDatosNotaService(form=form, user=request.user).execute()
-            messages.success(request, f"Datos de la nota {salida.folio} actualizados correctamente.")
-            return redirect("nota_venta_acciones", pk=salida.pk)
-        messages.error(request, "Revisa los datos capturados.")
+            service = EditarDatosNotaService(form=form, user=request.user, request=request)
+            errores = service.validar()
+            if not errores:
+                service.execute()
+                messages.success(request, f"Datos de la nota {salida.folio} actualizados correctamente.")
+                return redirect("nota_venta_acciones", pk=salida.pk)
+            for error in errores:
+                messages.error(request, error)
+        else:
+            messages.error(request, "Revisa los datos capturados.")
     else:
         form = SalidaVentaEdicionForm(instance=salida)
 
@@ -87,7 +93,7 @@ def nota_venta_ajustar_precios(request, pk):
     if request.method == "POST":
         formset = DetallePrecioFormSet(request.POST, queryset=detalles_qs, prefix="precios")
         if formset.is_valid():
-            service = AjustarPreciosNotaService(formset=formset, salida=salida, user=request.user)
+            service = AjustarPreciosNotaService(formset=formset, salida=salida, user=request.user, request=request)
             errores = service.validar()
             if not errores:
                 service.execute()

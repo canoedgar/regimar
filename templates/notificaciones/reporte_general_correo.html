@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Reporte general por correo | CPC Alimentos{% endblock %}
+{% block active_notificaciones %}active{% endblock %}
+{% block page_title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div>
+        <h5 class="sg-page-header-title mb-1">
+          <i class="bi bi-envelope-paper me-2"></i>
+          Reporte general por correo
+        </h5>
+        <p class="sg-page-header-subtitle mb-0">
+          Envía un resumen operativo de inventarios, ventas, pagos aplicados y cartera.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card mt-3">
+    <div class="card-body">
+      <form method="post" class="row g-3 align-items-end">
+        {% csrf_token %}
+        <div class="col-12 col-md-3">
+          <label class="sg-form-label" for="{{ form.fecha_inicio.id_for_label }}">{{ form.fecha_inicio.label }}</label>
+          {{ form.fecha_inicio }}
+          {% for error in form.fecha_inicio.errors %}<div class="sg-form-error small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="sg-form-label" for="{{ form.fecha_fin.id_for_label }}">{{ form.fecha_fin.label }}</label>
+          {{ form.fecha_fin }}
+          {% for error in form.fecha_fin.errors %}<div class="sg-form-error small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="sg-form-label" for="{{ form.destinatarios.id_for_label }}">{{ form.destinatarios.label }}</label>
+          {{ form.destinatarios }}
+          <div class="sg-form-help small mt-1">{{ form.destinatarios.help_text }}</div>
+          {% for error in form.destinatarios.errors %}<div class="sg-form-error small">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-2 sg-form-actions sg-form-actions-compact">
+          <button type="submit" class="sg-btn-primary sg-btn-md w-100">
+            <i class="bi bi-send me-1"></i>
+            Enviar reporte
+          </button>
+        </div>
+        {% if form.non_field_errors %}
+          <div class="col-12">
+            {% for error in form.non_field_errors %}<div class="alert alert-danger mb-0">{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  {% if reporte %}
+    <section class="card border-0 shadow-sm sg-form-card sg-table-card mt-3">
+      <div class="card-body">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+          <div>
+            <h5 class="mb-1">Vista previa del reporte de hoy</h5>
+            <div class="sg-form-help">
+              Rango {{ reporte.fecha_inicio|date:"Y-m-d" }} al {{ reporte.fecha_fin|date:"Y-m-d" }} · Generado {{ reporte.generado_en|date:"Y-m-d H:i" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <div class="text-muted small">Inventario</div>
+                <div class="fs-5 fw-bold">{{ reporte.inventario.entradas_count }} entradas</div>
+                <div class="small">Importe de entradas: ${{ reporte.inventario.entradas_importe|floatformat:2|intcomma }}</div>
+                <div class="small">Productos bajos: {{ reporte.inventario.productos_bajos_count }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <div class="text-muted small">Ventas</div>
+                <div class="fs-5 fw-bold">${{ reporte.ventas.importe|floatformat:2|intcomma }}</div>
+                <div class="small">Notas: {{ reporte.ventas.notas_count }}</div>
+                <div class="small">Margen estimado: ${{ reporte.ventas.margen|floatformat:2|intcomma }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <div class="text-muted small">Cartera y pagos</div>
+                <div class="fs-5 fw-bold">${{ reporte.cartera.pagos_importe|floatformat:2|intcomma }}</div>
+                <div class="small">Pagos aplicados: {{ reporte.cartera.pagos_count }}</div>
+                <div class="small">Por cobrar actual: ${{ reporte.cartera.total_cartera|floatformat:2|intcomma }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

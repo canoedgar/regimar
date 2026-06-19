@@ -33,7 +33,7 @@ def env_list(name, default=""):
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-insegura")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.68.101")
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.68.108")
 
 # =========================
 # APPS INSTALADAS
@@ -56,7 +56,8 @@ INSTALLED_APPS = [
     "catalogos",
     "cotizaciones",
     "inventarios",
-    "proyectos"
+    "proyectos",
+    "notificaciones",
 ]
 
 # =========================
@@ -150,6 +151,27 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# =========================
+# CORREO / NOTIFICACIONES
+# =========================
+
+# En desarrollo se usa consola por seguridad; en producción configura SMTP desde .env.
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend" if DEBUG else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "")
+EMAIL_PORT = env_int("EMAIL_PORT", 587)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 20)
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "notificaciones@cpcalimentos.com")
+SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
+NOTIFICACIONES_REPORTES_DESTINATARIOS = env_list("NOTIFICACIONES_REPORTES_DESTINATARIOS", "")
 
 # =========================
 # SEGURIDAD DE SESIÓN / PRODUCCIÓN

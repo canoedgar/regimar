@@ -34,5 +34,6 @@ urlpatterns = [
     path("salidas/venta/nueva/", v_salidas.salida_venta_create, name="salida_venta_create"),
     path("salidas/venta/precios-cliente/", v_salidas.precios_cliente_api, name="precios_cliente_api"),
     path("salidas/venta/autorizar-precio/<uuid:token>/", v_salidas.autorizar_precio_minimo, name="autorizar_precio_minimo"),
+    path("salidas/venta/autorizacion-cartera/<str:token>/", v_salidas.autorizar_venta_extraordinaria, name="autorizar_venta_extraordinaria"),
 
 ]

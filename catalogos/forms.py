@@ -294,6 +294,8 @@ class ClienteForm(forms.ModelForm):
             "telefono",
             "contacto",
             "logo",
+            "limite_credito",
+            "dias_credito",
 
             # Dirección operativa
             "calle",
@@ -344,6 +346,8 @@ class ClienteForm(forms.ModelForm):
             "telefono": forms.TextInput(attrs={"class": "form-control"}),
             "contacto": forms.TextInput(attrs={"class": "form-control", "placeholder": "Nombre de la persona de contacto"}),
             "logo": forms.Select(attrs={"class": "form-select"}),
+            "limite_credito": forms.NumberInput(attrs={"class": "form-control", "min": "0", "step": "0.01"}),
+            "dias_credito": forms.NumberInput(attrs={"class": "form-control", "min": "0", "step": "1"}),
 
             "calle": forms.TextInput(attrs={"class": "form-control"}),
             "num_ext": forms.TextInput(attrs={"class": "form-control"}),
@@ -366,9 +370,9 @@ class ClienteForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if not self.instance.pk:
-            self.fields["municipio"].initial = "Mexicali"
+            self.fields["municipio"].initial = "MEXICALI"
             self.fields["estado"].initial = "B.C."
-            self.fields["pais"].initial = "México"
+            self.fields["pais"].initial = "MÉXICO"
 
     def clean_rfc(self):
         rfc = (self.cleaned_data.get("rfc") or "").strip().upper()
@@ -380,6 +384,13 @@ class ClienteForm(forms.ModelForm):
         if mp and mp not in ("PUE", "PPD"):
             self.add_error("metodo_pago_default", ValidationError("Método de pago inválido. Usa PUE o PPD."))
         cleaned["metodo_pago_default"] = mp
+
+        limite_credito = cleaned.get("limite_credito")
+        dias_credito = cleaned.get("dias_credito")
+        if limite_credito is not None and limite_credito < 0:
+            self.add_error("limite_credito", ValidationError("El límite de crédito no puede ser negativo."))
+        if dias_credito is not None and dias_credito < 0:
+            self.add_error("dias_credito", ValidationError("Los días de crédito no pueden ser negativos."))
 
         # Los datos fiscales son opcionales, pero si se captura alguno se pide el bloque completo mínimo.
         fiscales = [
