@@ -1,6 +1,8 @@
 from django import forms
 from django.utils import timezone
 
+from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
+
 from catalogos.models import Cliente
 from cartera.models import PagoMetodoDetalle
 
@@ -14,10 +16,8 @@ class FechaPagoMixin(forms.Form):
         label="Fecha en que pagó el cliente",
         required=True,
         initial=fecha_pago_inicial,
-        widget=forms.DateInput(attrs={
-            "class": "form-control",
-            "type": "date",
-        }),
+        widget=UniversalDateInput(),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS,
         help_text="Diferente a la fecha en que se registra el movimiento en el sistema.",
     )
 
@@ -119,10 +119,8 @@ class SaldoFavorDevolucionForm(forms.Form):
         label="Fecha de liquidación/devolución",
         required=True,
         initial=fecha_pago_inicial,
-        widget=forms.DateInput(attrs={
-            "class": "form-control",
-            "type": "date",
-        }),
+        widget=UniversalDateInput(),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS,
     )
     monto = forms.DecimalField(
         label="Monto a liquidar / devolver",

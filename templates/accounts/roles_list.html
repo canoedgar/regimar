@@ -6,95 +6,126 @@
 {% block page_title %}Configuración / Roles y permisos{% endblock %}
 
 {% block content %}
-<div class="sg-page-header d-flex justify-content-between align-items-center mb-3">
-  <form class="d-flex gap-2 sg-form-actions sg-form-actions-compact sg-filter-bar" method="get">
-    <input class="form-control form-control-sm sg-form-control" name="q" value="{{ q }}" placeholder="Buscar rol…">
-    <button class="sg-btn-secondary sg-btn-sm" type="submit">
-      <i class="bi bi-search"></i>
-    </button>
-  </form>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-shield-lock me-2"></i>
+          Roles y permisos
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Administra permisos CRUD por rol y su asignación a usuarios.
+        </p>
+      </div>
 
-  <a href="{% url 'roles_create' %}" class="sg-btn-primary sg-btn-sm">
-    <i class="bi bi-shield-plus"></i> Nuevo rol
-  </a>
-</div>
-
-<div class="card border-0 shadow-sm sg-form-card sg-table-card">
-  <div class="card-body">
-    <div class="alert alert-info mb-3">
-      <strong>Permisos CRUD por rol:</strong> cada rol concentra permisos de Ver, Agregar, Modificar y Eliminar. Después asigna el rol al usuario desde Configuración / Usuarios.
+      <div class="sg-page-actions">
+        <a href="{% url 'roles_create' %}" class="sg-btn-primary sg-btn-md">
+          <i class="bi bi-shield-plus me-1"></i> Nuevo rol
+        </a>
+      </div>
     </div>
+  </section>
 
-    <div class="table-responsive d-none d-md-block">
-      <table class="table table-sm align-middle sg-table sg-no-mobile-grid">
-        <thead>
-          <tr>
-            <th>Rol</th>
-            <th class="text-end">Usuarios</th>
-            <th class="text-end">Permisos</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for role in roles %}
-          <tr>
-            <td class="fw-semibold">{{ role.name }}</td>
-            <td class="text-end">{{ role.total_usuarios }}</td>
-            <td class="text-end">{{ role.total_permisos }}</td>
-            <td class="text-end sg-table-actions">
-              <a href="{% url 'roles_update' role.pk %}" class="sg-btn-table sg-btn-sm" title="Editar permisos">
-                <i class="bi bi-pencil"></i>
+  <section class="sg-toolbar sg-list-toolbar" aria-label="Búsqueda de roles">
+    <form class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form" method="get">
+      <div class="sg-list-filter-field sg-list-filter-field-wide">
+        <label class="sg-form-label small" for="rol-q">Buscar rol</label>
+        <input id="rol-q" class="form-control form-control-sm sg-form-control" name="q" value="{{ q }}" placeholder="Nombre del rol">
+      </div>
+
+      <div class="sg-list-filter-actions">
+        <button class="sg-btn-primary sg-btn-sm" type="submit">
+          <i class="bi bi-search me-1"></i>
+          Buscar
+        </button>
+        {% if q %}
+          <a class="sg-btn-secondary sg-btn-sm" href="{% url 'roles_list' %}" title="Limpiar búsqueda">
+            <i class="bi bi-x-lg me-1"></i>
+            Limpiar
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card">
+    <div class="card-body">
+      <div class="alert alert-info mb-3">
+        <strong>Permisos CRUD por rol:</strong> cada rol concentra permisos de Ver, Agregar, Modificar y Eliminar. Después asigna el rol al usuario desde Configuración / Usuarios.
+      </div>
+
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-sm align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Rol</th>
+              <th class="text-end sg-nowrap">Usuarios</th>
+              <th class="text-end sg-nowrap">Permisos</th>
+              <th class="text-end sg-actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for role in roles %}
+            <tr>
+              <td class="fw-semibold">{{ role.name }}</td>
+              <td class="text-end sg-nowrap">{{ role.total_usuarios }}</td>
+              <td class="text-end sg-nowrap">{{ role.total_permisos }}</td>
+              <td class="text-end sg-table-actions sg-actions-cell">
+                <a href="{% url 'roles_update' role.pk %}" class="sg-btn-table sg-btn-sm" title="Editar permisos">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <form method="post" action="{% url 'roles_delete' role.pk %}" class="d-inline" onsubmit="return confirm('¿Eliminar el rol {{ role.name }}?');">
+                  {% csrf_token %}
+                  <button type="submit" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="sg-form-help sg-empty-state">No hay roles.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none" aria-label="Roles en vista móvil">
+        {% for role in roles %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Rol</span>
+                <strong class="sg-mobile-card-title">{{ role.name }}</strong>
+              </div>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Usuarios</span>
+                <span class="sg-mobile-card-value">{{ role.total_usuarios }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Permisos</span>
+                <span class="sg-mobile-card-value">{{ role.total_permisos }}</span>
+              </div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'roles_update' role.pk %}" class="sg-btn-secondary sg-btn-sm">
+                <i class="bi bi-pencil"></i> Editar
               </a>
               <form method="post" action="{% url 'roles_delete' role.pk %}" class="d-inline" onsubmit="return confirm('¿Eliminar el rol {{ role.name }}?');">
                 {% csrf_token %}
-                <button type="submit" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Eliminar">
-                  <i class="bi bi-trash"></i>
+                <button type="submit" class="sg-btn-danger sg-btn-sm">
+                  <i class="bi bi-trash"></i> Eliminar
                 </button>
               </form>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="4" class="sg-form-help sg-empty-state">No hay roles.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay roles.</div>
+        {% endfor %}
+      </div>
     </div>
-
-    <div class="sg-mobile-list d-md-none" aria-label="Roles en vista móvil">
-      {% for role in roles %}
-        <article class="sg-mobile-card">
-          <div class="sg-mobile-card-header">
-            <div class="min-w-0">
-              <span class="sg-mobile-card-label">Rol</span>
-              <strong class="sg-mobile-card-title">{{ role.name }}</strong>
-            </div>
-          </div>
-          <div class="sg-mobile-card-grid">
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Usuarios</span>
-              <span class="sg-mobile-card-value">{{ role.total_usuarios }}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Permisos</span>
-              <span class="sg-mobile-card-value">{{ role.total_permisos }}</span>
-            </div>
-          </div>
-          <div class="sg-mobile-card-actions">
-            <a href="{% url 'roles_update' role.pk %}" class="sg-btn-secondary sg-btn-sm">
-              <i class="bi bi-pencil"></i> Editar
-            </a>
-            <form method="post" action="{% url 'roles_delete' role.pk %}" class="d-inline" onsubmit="return confirm('¿Eliminar el rol {{ role.name }}?');">
-              {% csrf_token %}
-              <button type="submit" class="sg-btn-danger sg-btn-sm">
-                <i class="bi bi-trash"></i> Eliminar
-              </button>
-            </form>
-          </div>
-        </article>
-      {% empty %}
-        <div class="sg-empty-state">No hay roles.</div>
-      {% endfor %}
-    </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

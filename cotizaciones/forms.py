@@ -1,6 +1,8 @@
 from datetime import timedelta
 
 from django import forms
+
+from accounts.widgets import UniversalDateInput
 from django.utils import timezone
 
 from catalogos.models import Cliente, ParametroSistema
@@ -13,8 +15,8 @@ class CotizacionPrecioForm(forms.ModelForm):
         fields = ["cliente", "fecha", "fecha_vigencia", "observaciones"]
         widgets = {
             "cliente": forms.Select(attrs={"class": "form-select d-none"}),
-            "fecha": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
-            "fecha_vigencia": forms.DateInput(format="%Y-%m-%d", attrs={"class": "form-control", "type": "date"}),
+            "fecha": UniversalDateInput(),
+            "fecha_vigencia": UniversalDateInput(),
             "observaciones": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Condiciones comerciales u observaciones para esta cotización"}),
         }
 

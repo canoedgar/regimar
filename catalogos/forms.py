@@ -2,6 +2,8 @@
 
 #Productos
 from django import forms
+
+from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 from django.forms import inlineformset_factory
 from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ProductoMetricaConversion, ParametroSistema, ClienteProductoPrecio
 
@@ -224,9 +226,14 @@ class ProyectoForm(forms.ModelForm):
             "direccion": forms.TextInput(attrs={"class": "form-control"}),
             "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
             "estado": forms.Select(attrs={"class": "form-select"}),
-            "fecha_inicio": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d",),
-            "fecha_fin": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d",),
+            "fecha_inicio": UniversalDateInput(),
+            "fecha_fin": UniversalDateInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["fecha_inicio"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
+        self.fields["fecha_fin"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
 
     def clean(self):
         cleaned = super().clean()

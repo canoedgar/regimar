@@ -6,144 +6,161 @@
 {% block page_title %}Almacenes{% endblock %}
 
 {% block content %}
-<div class="sg-page-header sg-table-card">
-  <div>
-    <h5 class="sg-page-header-title">
-      <i class="bi bi-building me-1"></i>
-      Almacenes
-    </h5>
-    <p class="sg-page-header-subtitle">
-      Consulta y administra los almacenes físicos y virtuales.
-    </p>
-  </div>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-building me-2"></i>
+          Almacenes
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Consulta y administra los almacenes físicos y virtuales.
+        </p>
+      </div>
 
-  <div class="sg-page-actions">
-    <a href="{% url 'almacenes_create' %}" class="sg-btn-primary sg-btn-md">
-      <i class="bi bi-plus-circle me-1"></i> Nuevo almacén
-    </a>
-  </div>
-</div>
-
-<div class="sg-toolbar sg-table-card">
-  <form method="get" class="sg-filter-bar sg-filter-bar-inline">
-    <input type="text" name="q" value="{{ q }}" class="form-control sg-form-control"
-           placeholder="Buscar por código, nombre o tipo...">
-    <button class="sg-btn-outline sg-btn-icon sg-btn-md" type="submit" title="Buscar">
-      <i class="bi bi-search"></i>
-    </button>
-  </form>
-
-  <div class="sg-form-help mb-0">
-    Total: <span class="fw-semibold">{{ total }}</span>
-  </div>
-</div>
-
-<div class="sg-table-card">
-  <div class="card-body">
-    <div class="table-responsive d-none d-md-block">
-      <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-        <thead class="table-light">
-          <tr>
-            <th>Código</th>
-            <th>Nombre</th>
-            <th>Tipo</th>
-            <th>Ubicación</th>
-            <th class="text-center">Activo</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for a in almacenes %}
-          <tr>
-            <td class="fw-semibold">{{ a.codigo }}</td>
-            <td>{{ a.nombre }}</td>
-            <td>
-              {% if a.tipo == "VIRTUAL" %}
-                <span class="badge text-bg-warning">Virtual</span>
-              {% else %}
-                <span class="badge text-bg-success">Físico</span>
-              {% endif %}
-              {% if a.es_virtual_sistema %}
-                <span class="badge text-bg-secondary ms-1">Sistema</span>
-              {% endif %}
-            </td>
-            <td class="sg-form-help">{{ a.ubicacion|default:"—" }}</td>
-            <td class="text-center">
-              {% if a.es_activo %}
-                <i class="bi bi-check-circle-fill text-success"></i>
-              {% else %}
-                <i class="bi bi-x-circle-fill sg-form-error"></i>
-              {% endif %}
-            </td>
-            <td class="text-end sg-table-actions">
-              <a href="{% url 'almacenes_edit' a.id %}" class="sg-btn-table sg-btn-sm" title="Editar">
-                <i class="bi bi-pencil"></i>
-              </a>
-              <a href="{% url 'almacenes_confirm_delete' a.id %}" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Eliminar">
-                <i class="bi bi-trash"></i>
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="sg-empty-state">No hay almacenes registrados.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="sg-page-actions">
+        <a href="{% url 'almacenes_create' %}" class="sg-btn-primary sg-btn-md">
+          <i class="bi bi-plus-circle me-1"></i> Nuevo almacén
+        </a>
+      </div>
     </div>
+  </section>
 
-    <div class="sg-mobile-list d-md-none" aria-label="Almacenes en vista móvil">
-      {% for a in almacenes %}
-        <article class="sg-mobile-card">
-          <div class="sg-mobile-card-header">
-            <div class="min-w-0">
-              <span class="sg-mobile-card-label">Código</span>
-              <strong class="sg-mobile-card-title">{{ a.codigo }}</strong>
-              <span class="sg-mobile-card-subtitle">{{ a.nombre }}</span>
-            </div>
-            <div class="text-end">
-              {% if a.tipo == "VIRTUAL" %}
-                <span class="badge text-bg-warning">Virtual</span>
-              {% else %}
-                <span class="badge text-bg-success">Físico</span>
-              {% endif %}
-              {% if a.es_virtual_sistema %}
-                <span class="badge text-bg-secondary d-inline-block mt-1">Sistema</span>
-              {% endif %}
-            </div>
-          </div>
+  <section class="sg-toolbar sg-list-toolbar" aria-label="Búsqueda de almacenes">
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form">
+      <div class="sg-list-filter-field sg-list-filter-field-wide">
+        <label class="sg-form-label small" for="almacen-q">Buscar almacén</label>
+        <input id="almacen-q" type="text" name="q" value="{{ q }}" class="form-control form-control-sm sg-form-control"
+               placeholder="Código, nombre o tipo">
+      </div>
 
-          <div class="sg-mobile-card-grid">
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Ubicación</span>
-              <span class="sg-mobile-card-value">{{ a.ubicacion|default:"—" }}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Activo</span>
-              <span class="sg-mobile-card-value">
-                {% if a.es_activo %}
-                  Sí
+      <div class="sg-list-filter-actions">
+        <button class="sg-btn-primary sg-btn-sm" type="submit">
+          <i class="bi bi-search me-1"></i>
+          Buscar
+        </button>
+        {% if q %}
+          <a class="sg-btn-secondary sg-btn-sm" href="{% url 'almacenes_list' %}" title="Limpiar búsqueda">
+            <i class="bi bi-x-lg me-1"></i>
+            Limpiar
+          </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="sg-form-help mb-0">
+      Total: <span class="fw-semibold">{{ total }}</span>
+    </div>
+  </section>
+
+  <section class="sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>Ubicación</th>
+              <th class="text-center">Activo</th>
+              <th class="text-end sg-actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in almacenes %}
+            <tr>
+              <td class="fw-semibold sg-nowrap">{{ a.codigo }}</td>
+              <td>{{ a.nombre }}</td>
+              <td>
+                {% if a.tipo == "VIRTUAL" %}
+                  <span class="badge text-bg-warning">Virtual</span>
                 {% else %}
-                  No
+                  <span class="badge text-bg-success">Físico</span>
                 {% endif %}
-              </span>
-            </div>
-          </div>
+                {% if a.es_virtual_sistema %}
+                  <span class="badge text-bg-secondary ms-1">Sistema</span>
+                {% endif %}
+              </td>
+              <td class="sg-form-help">{{ a.ubicacion|default:"—" }}</td>
+              <td class="text-center">
+                {% if a.es_activo %}
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                {% else %}
+                  <i class="bi bi-x-circle-fill sg-form-error"></i>
+                {% endif %}
+              </td>
+              <td class="text-end sg-table-actions sg-actions-cell">
+                <a href="{% url 'almacenes_edit' a.id %}" class="sg-btn-table sg-btn-sm" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <a href="{% url 'almacenes_confirm_delete' a.id %}" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Eliminar">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="sg-empty-state">No hay almacenes registrados.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-          <div class="sg-mobile-card-actions">
-            <a href="{% url 'almacenes_edit' a.id %}" class="sg-btn-secondary sg-btn-sm">
-              <i class="bi bi-pencil"></i> Editar
-            </a>
-            <a href="{% url 'almacenes_confirm_delete' a.id %}" class="sg-btn-danger sg-btn-sm">
-              <i class="bi bi-trash"></i> Eliminar
-            </a>
-          </div>
-        </article>
-      {% empty %}
-        <div class="sg-empty-state">No hay almacenes registrados.</div>
-      {% endfor %}
+      <div class="sg-mobile-list d-md-none" aria-label="Almacenes en vista móvil">
+        {% for a in almacenes %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Código</span>
+                <strong class="sg-mobile-card-title">{{ a.codigo }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ a.nombre }}</span>
+              </div>
+              <div class="text-end">
+                {% if a.tipo == "VIRTUAL" %}
+                  <span class="badge text-bg-warning">Virtual</span>
+                {% else %}
+                  <span class="badge text-bg-success">Físico</span>
+                {% endif %}
+                {% if a.es_virtual_sistema %}
+                  <span class="badge text-bg-secondary d-inline-block mt-1">Sistema</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Ubicación</span>
+                <span class="sg-mobile-card-value">{{ a.ubicacion|default:"—" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Activo</span>
+                <span class="sg-mobile-card-value">
+                  {% if a.es_activo %}
+                    Sí
+                  {% else %}
+                    No
+                  {% endif %}
+                </span>
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'almacenes_edit' a.id %}" class="sg-btn-secondary sg-btn-sm">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              <a href="{% url 'almacenes_confirm_delete' a.id %}" class="sg-btn-danger sg-btn-sm">
+                <i class="bi bi-trash"></i> Eliminar
+              </a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay almacenes registrados.</div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

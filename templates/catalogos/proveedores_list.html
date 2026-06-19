@@ -5,134 +5,135 @@
 {% block page_title %}Catálogo de proveedores{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card border-0 shadow-sm sg-table-card">
-      <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
           <i class="bi bi-truck me-2"></i>
           Proveedores
         </h5>
+        <p class="mb-0 sg-form-help">
+          Consulta y administra proveedores registrados para compras e inventario.
+        </p>
+      </div>
 
-        <div class="sg-page-actions">
-          <a href="{% url 'proveedores_form' %}" class="sg-btn-primary sg-btn-sm">
-            <i class="bi bi-plus-circle me-1"></i>
-            Nuevo proveedor
-          </a>
-        </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'proveedores_form' %}" class="sg-btn-primary sg-btn-md">
+          <i class="bi bi-plus-circle me-1"></i>
+          Nuevo proveedor
+        </a>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm sg-table-card">
-      <div class="card-body">
-        <div class="table-responsive d-none d-md-block">
-          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-            <thead class="table-light">
+  <section class="sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Nombre</th>
+              <th>RFC</th>
+              <th>Contacto</th>
+              <th>Teléfono</th>
+              <th>Email</th>
+              <th class="text-center">Activo</th>
+              <th class="text-end sg-actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for proveedor in proveedores %}
               <tr>
-                <th>Nombre</th>
-                <th>RFC</th>
-                <th>Contacto</th>
-                <th>Teléfono</th>
-                <th>Email</th>
-                <th>Activo</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for proveedor in proveedores %}
-                <tr>
-                  <td>{{ proveedor.nombre }}</td>
-                  <td>{{ proveedor.rfc|default:"—" }}</td>
-                  <td>{{ proveedor.contacto|default:"—" }}</td>
-                  <td>{{ proveedor.telefono|default:"—" }}</td>
-                  <td>
-                    {% if proveedor.email %}
-                      <a href="mailto:{{ proveedor.email }}">{{ proveedor.email }}</a>
-                    {% else %}
-                      <span class="text-muted">—</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    {% if proveedor.activo %}
-                      <span class="badge bg-success">Activo</span>
-                    {% else %}
-                      <span class="badge bg-secondary">Inactivo</span>
-                    {% endif %}
-                  </td>
-                  <td class="text-end sg-table-actions">
-                    <a href="{% url 'proveedores_edit' proveedor.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
-                      <i class="bi bi-pencil"></i>
-                    </a>
-                    <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" disabled title="Eliminar no disponible">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="7" class="text-center text-muted sg-empty-state">
-                    No hay proveedores registrados aún.
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="sg-mobile-list d-md-none" aria-label="Proveedores en vista móvil">
-          {% for proveedor in proveedores %}
-            <article class="sg-mobile-card">
-              <div class="sg-mobile-card-header">
-                <div class="min-w-0">
-                  <span class="sg-mobile-card-label">Proveedor</span>
-                  <strong class="sg-mobile-card-title">{{ proveedor.nombre }}</strong>
-                  <span class="sg-mobile-card-subtitle">RFC: {{ proveedor.rfc|default:"—" }}</span>
-                </div>
-                <div>
+                <td class="fw-semibold">{{ proveedor.nombre }}</td>
+                <td class="sg-nowrap">{{ proveedor.rfc|default:"—" }}</td>
+                <td>{{ proveedor.contacto|default:"—" }}</td>
+                <td class="sg-nowrap">{{ proveedor.telefono|default:"—" }}</td>
+                <td class="sg-truncate">
+                  {% if proveedor.email %}
+                    <a href="mailto:{{ proveedor.email }}">{{ proveedor.email }}</a>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
                   {% if proveedor.activo %}
                     <span class="badge bg-success">Activo</span>
                   {% else %}
                     <span class="badge bg-secondary">Inactivo</span>
                   {% endif %}
-                </div>
-              </div>
+                </td>
+                <td class="text-end sg-table-actions sg-actions-cell">
+                  <a href="{% url 'proveedores_edit' proveedor.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" disabled title="Eliminar no disponible">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="text-center text-muted sg-empty-state">
+                  No hay proveedores registrados aún.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-              <div class="sg-mobile-card-grid">
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Contacto</span>
-                  <span class="sg-mobile-card-value">{{ proveedor.contacto|default:"—" }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Teléfono</span>
-                  <span class="sg-mobile-card-value">{{ proveedor.telefono|default:"—" }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Email</span>
-                  <span class="sg-mobile-card-value">
-                    {% if proveedor.email %}
-                      <a href="mailto:{{ proveedor.email }}">{{ proveedor.email }}</a>
-                    {% else %}—{% endif %}
-                  </span>
-                </div>
+      <div class="sg-mobile-list d-md-none" aria-label="Proveedores en vista móvil">
+        {% for proveedor in proveedores %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Proveedor</span>
+                <strong class="sg-mobile-card-title">{{ proveedor.nombre }}</strong>
+                <span class="sg-mobile-card-subtitle">RFC: {{ proveedor.rfc|default:"—" }}</span>
               </div>
+              <div>
+                {% if proveedor.activo %}
+                  <span class="badge bg-success">Activo</span>
+                {% else %}
+                  <span class="badge bg-secondary">Inactivo</span>
+                {% endif %}
+              </div>
+            </div>
 
-              <div class="sg-mobile-card-actions">
-                <a href="{% url 'proveedores_edit' proveedor.pk %}" class="sg-btn-secondary sg-btn-sm">
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                <button type="button" class="sg-btn-danger sg-btn-sm" disabled title="Eliminar no disponible">
-                  <i class="bi bi-trash"></i> Eliminar
-                </button>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Contacto</span>
+                <span class="sg-mobile-card-value">{{ proveedor.contacto|default:"—" }}</span>
               </div>
-            </article>
-          {% empty %}
-            <div class="sg-empty-state">No hay proveedores registrados aún.</div>
-          {% endfor %}
-        </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Teléfono</span>
+                <span class="sg-mobile-card-value">{{ proveedor.telefono|default:"—" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Email</span>
+                <span class="sg-mobile-card-value">
+                  {% if proveedor.email %}
+                    <a href="mailto:{{ proveedor.email }}">{{ proveedor.email }}</a>
+                  {% else %}—{% endif %}
+                </span>
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'proveedores_edit' proveedor.pk %}" class="sg-btn-secondary sg-btn-sm">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              <button type="button" class="sg-btn-danger sg-btn-sm" disabled title="Eliminar no disponible">
+                <i class="bi bi-trash"></i> Eliminar
+              </button>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay proveedores registrados aún.</div>
+        {% endfor %}
       </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

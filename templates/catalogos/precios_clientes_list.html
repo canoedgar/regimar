@@ -1,115 +1,134 @@
 {% extends "base.html" %}
+{% load formatos %}
+
 {% block title %}Precios por cliente{% endblock %}
 {% block page_title %}Precios por cliente{% endblock %}
 {% block active_clientes %}active{% endblock %}
 
 {% block content %}
-<div class="sg-page-header sg-table-card">
-  <div>
-    <h5 class="sg-page-header-title">
-      <i class="bi bi-currency-dollar me-1"></i>
-      Últimos precios otorgados por cliente
-    </h5>
-    <p class="sg-page-header-subtitle">
-      Consulta el último precio registrado por cliente y producto.
-    </p>
-  </div>
-</div>
-
-<div class="sg-toolbar sg-table-card">
-  <form method="get" class="sg-filter-bar sg-filter-bar-inline">
-    <input name="q" value="{{ q }}" class="form-control form-control-sm sg-form-control"
-           placeholder="Cliente o producto">
-    <button class="sg-btn-outline sg-btn-sm" type="submit">
-      <i class="bi bi-search me-1"></i> Buscar
-    </button>
-  </form>
-</div>
-
-<div class="sg-table-card">
-  <div class="card-body">
-    <div class="table-responsive d-none d-md-block">
-      <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-        <thead class="table-light">
-          <tr>
-            <th>Cliente</th>
-            <th>Producto</th>
-            <th>Último precio</th>
-            <th>Fecha</th>
-            <th>Días sin compra</th>
-            <th>Vigente</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for p in precios %}
-          <tr>
-            <td>{{ p.cliente }}</td>
-            <td>{{ p.producto }}</td>
-            <td>${{ p.ultimo_precio|floatformat:2 }}</td>
-            <td>{{ p.fecha_ultimo_precio|date:"Y-m-d H:i" }}</td>
-            <td>{{ p.dias_sin_compra|default:"—" }}</td>
-            <td>
-              {% if p.vigente %}
-                <span class="badge text-bg-success">Sí</span>
-              {% else %}
-                <span class="badge text-bg-warning text-dark">Vencido</span>
-              {% endif %}
-            </td>
-            <td class="text-end sg-table-actions">
-              <a class="sg-btn-table sg-btn-sm" href="{% url 'precio_cliente_edit' p.pk %}" title="Editar">
-                <i class="bi bi-pencil"></i>
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="7" class="sg-empty-state">Aún no hay historial de precios por cliente.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-currency-dollar me-2"></i>
+          Últimos precios otorgados por cliente
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Consulta el último precio registrado por cliente y producto.
+        </p>
+      </div>
     </div>
+  </section>
 
-    <div class="sg-mobile-list d-md-none" aria-label="Precios por cliente en vista móvil">
-      {% for p in precios %}
-        <article class="sg-mobile-card">
-          <div class="sg-mobile-card-header">
-            <div class="min-w-0">
-              <span class="sg-mobile-card-label">Cliente</span>
-              <strong class="sg-mobile-card-title">{{ p.cliente }}</strong>
-              <span class="sg-mobile-card-subtitle">{{ p.producto }}</span>
+  <section class="sg-toolbar sg-list-toolbar" aria-label="Búsqueda de precios por cliente">
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form">
+      <div class="sg-list-filter-field sg-list-filter-field-wide">
+        <label class="sg-form-label small" for="precio-cliente-q">Buscar</label>
+        <input id="precio-cliente-q" name="q" value="{{ q }}" class="form-control form-control-sm sg-form-control"
+               placeholder="Cliente o producto">
+      </div>
+
+      <div class="sg-list-filter-actions">
+        <button class="sg-btn-primary sg-btn-sm" type="submit">
+          <i class="bi bi-search me-1"></i>
+          Buscar
+        </button>
+        {% if q %}
+          <a class="sg-btn-secondary sg-btn-sm" href="{% url 'precios_clientes_list' %}" title="Limpiar búsqueda">
+            <i class="bi bi-x-lg me-1"></i>
+            Limpiar
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </section>
+
+  <section class="sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Cliente</th>
+              <th>Producto</th>
+              <th class="text-end sg-nowrap">Último precio</th>
+              <th class="sg-nowrap">Fecha</th>
+              <th class="text-end sg-nowrap">Días sin compra</th>
+              <th class="text-center">Vigente</th>
+              <th class="text-end sg-actions-col-sm">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in precios %}
+            <tr>
+              <td>{{ p.cliente }}</td>
+              <td>{{ p.producto }}</td>
+              <td class="text-end sg-nowrap">$ {{ p.ultimo_precio|numero_compacto }}</td>
+              <td class="sg-nowrap">{{ p.fecha_ultimo_precio|date:"Y-m-d H:i" }}</td>
+              <td class="text-end sg-nowrap">{{ p.dias_sin_compra|default:"—" }}</td>
+              <td class="text-center">
+                {% if p.vigente %}
+                  <span class="badge text-bg-success">Sí</span>
+                {% else %}
+                  <span class="badge text-bg-warning text-dark">Vencido</span>
+                {% endif %}
+              </td>
+              <td class="text-end sg-table-actions sg-actions-cell sg-actions-cell-sm">
+                <a class="sg-btn-table sg-btn-sm" href="{% url 'precio_cliente_edit' p.pk %}" title="Editar">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="sg-empty-state">Aún no hay historial de precios por cliente.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none" aria-label="Precios por cliente en vista móvil">
+        {% for p in precios %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Cliente</span>
+                <strong class="sg-mobile-card-title">{{ p.cliente }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ p.producto }}</span>
+              </div>
+              <div>
+                {% if p.vigente %}
+                  <span class="badge text-bg-success">Vigente</span>
+                {% else %}
+                  <span class="badge text-bg-warning text-dark">Vencido</span>
+                {% endif %}
+              </div>
             </div>
-            <div>
-              {% if p.vigente %}
-                <span class="badge text-bg-success">Vigente</span>
-              {% else %}
-                <span class="badge text-bg-warning text-dark">Vencido</span>
-              {% endif %}
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Último precio</span>
+                <span class="sg-mobile-card-value">$ {{ p.ultimo_precio|numero_compacto }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Fecha</span>
+                <span class="sg-mobile-card-value">{{ p.fecha_ultimo_precio|date:"Y-m-d H:i" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Días sin compra</span>
+                <span class="sg-mobile-card-value">{{ p.dias_sin_compra|default:"—" }}</span>
+              </div>
             </div>
-          </div>
-          <div class="sg-mobile-card-grid">
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Último precio</span>
-              <span class="sg-mobile-card-value">${{ p.ultimo_precio|floatformat:2 }}</span>
+            <div class="sg-mobile-card-actions">
+              <a class="sg-btn-secondary sg-btn-sm" href="{% url 'precio_cliente_edit' p.pk %}"><i class="bi bi-pencil"></i> Editar</a>
             </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Fecha</span>
-              <span class="sg-mobile-card-value">{{ p.fecha_ultimo_precio|date:"Y-m-d H:i" }}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Días sin compra</span>
-              <span class="sg-mobile-card-value">{{ p.dias_sin_compra|default:"—" }}</span>
-            </div>
-          </div>
-          <div class="sg-mobile-card-actions">
-            <a class="sg-btn-secondary sg-btn-sm" href="{% url 'precio_cliente_edit' p.pk %}"><i class="bi bi-pencil"></i> Editar</a>
-          </div>
-        </article>
-      {% empty %}
-        <div class="sg-empty-state">Aún no hay historial de precios por cliente.</div>
-      {% endfor %}
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">Aún no hay historial de precios por cliente.</div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

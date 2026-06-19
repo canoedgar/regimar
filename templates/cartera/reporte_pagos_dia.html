@@ -23,7 +23,7 @@
       <form method="get" class="row g-2 align-items-end flex-grow-1">
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
           <label class="form-label">Fecha</label>
-          <input type="date" name="fecha" value="{{ fecha|date:'Y-m-d' }}" class="form-control">
+          <input type="text" name="fecha" value="{{ fecha|date:'Y-m-d' }}" class="form-control" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off">
         </div>
         <div class="col-12 col-sm-6 col-md-4 col-lg-3">
           <label class="form-label">Pagos a mostrar</label>
@@ -62,7 +62,7 @@
           {% for pago in pagos %}
             <tr>
               <td><a href="{% url 'cartera:pago_detalle' pago.id %}" class="fw-semibold">#{{ pago.id }}</a></td>
-              <td>{{ pago.fecha|date:"d/m/Y" }}</td>
+              <td>{{ pago.fecha|date:"Y-m-d" }}</td>
               <td>{{ pago.cliente.nombre_fiscal|default:pago.cliente.nombre_comercial }}</td>
               <td>{{ pago.get_tipo_aplicacion_display }}</td>
               <td>
@@ -91,7 +91,7 @@
             </div>
           </div>
           <div class="sg-mobile-card-grid">
-            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Fecha pago</span><span class="sg-mobile-card-value">{{ pago.fecha|date:"d/m/Y" }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Fecha pago</span><span class="sg-mobile-card-value">{{ pago.fecha|date:"Y-m-d" }}</span></div>
             <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Tipo</span><span class="sg-mobile-card-value">{{ pago.get_tipo_aplicacion_display }}</span></div>
             <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Monto</span><span class="sg-mobile-card-value">${{ pago.monto_recibido|floatformat:2|intcomma }}</span></div>
             <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Notas</span><span class="sg-mobile-card-value">{% for app in pago.aplicaciones.all %}{{ app.nota_venta.folio }}{% if not forloop.last %}, {% endif %}{% empty %}Saldo a favor{% endfor %}</span></div>

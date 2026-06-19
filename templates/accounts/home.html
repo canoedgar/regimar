@@ -63,7 +63,7 @@
           <article class="sg-kpi-card">
             <div class="sg-kpi-title"><i class="bi bi-box-seam"></i> Kilos vendidos</div>
             <div class="sg-kpi-value">{{ ejecutivo.total_kilos|floatformat:2 }}</div>
-            <div class="sg-kpi-help">Del {{ fecha_inicio|date:"d/m/Y" }} al {{ fecha_fin|date:"d/m/Y" }}</div>
+            <div class="sg-kpi-help">Del {{ fecha_inicio|date:"Y-m-d" }} al {{ fecha_fin|date:"Y-m-d" }}</div>
           </article>
 
           <article class="sg-kpi-card">
@@ -424,7 +424,7 @@
               <h6>Entradas recientes</h6>
               {% for e in operativo.ultimas_entradas %}
                 <a href="{% url 'entrada_detalle' e.id %}" class="sg-dashboard-movement">
-                  <span><strong>{{ e.folio }}</strong><small>{{ e.get_tipo_display }} · {{ e.fecha|date:"d/m/Y" }}</small></span>
+                  <span><strong>{{ e.folio }}</strong><small>{{ e.get_tipo_display }} · {{ e.fecha|date:"Y-m-d" }}</small></span>
                   <i class="bi bi-chevron-right"></i>
                 </a>
               {% empty %}
@@ -436,7 +436,7 @@
               <h6 class="{% if dashboard_permisos.entradas_ver %}mt-3{% endif %}">Ventas recientes</h6>
               {% for s in operativo.ultimas_salidas %}
                 <a href="{% url 'salida_detalle' s.id %}" class="sg-dashboard-movement">
-                  <span><strong>{{ s.folio }}</strong><small>{{ s.cliente|default:"Cliente sin nombre" }} · {{ s.fecha|date:"d/m/Y" }}</small></span>
+                  <span><strong>{{ s.folio }}</strong><small>{{ s.cliente|default:"Cliente sin nombre" }} · {{ s.fecha|date:"Y-m-d" }}</small></span>
                   <i class="bi bi-chevron-right"></i>
                 </a>
               {% empty %}

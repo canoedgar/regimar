@@ -17,7 +17,7 @@
             Salida {{ salida.folio }}
           </h5>
           <div class="sg-page-header-subtitle">
-            {{ salida.fecha|date:"d/m/Y" }}
+            {{ salida.fecha|date:"Y-m-d" }}
             · {{ salida.get_tipo_display }}
           </div>
         </div>
@@ -128,7 +128,7 @@
 
           <div class="col-md-4">
             <div class="text-muted small">Creado</div>
-            <div class="fw-semibold">{{ salida.creado_en|date:"d/m/Y H:i" }}</div>
+            <div class="fw-semibold">{{ salida.creado_en|date:"Y-m-d H:i" }}</div>
           </div>
 
           <div class="col-md-4">

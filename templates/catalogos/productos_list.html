@@ -6,152 +6,171 @@
 {% block page_title %}Productos{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card border-0 shadow-sm sg-table-card">
-      <div class="card-body sg-page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <h5 class="mb-0"><i class="bi bi-box2-heart me-2"></i>Productos</h5>
-        <div class="sg-page-actions">
-          <a href="{% url 'precios_productos_list' %}" class="sg-btn-outline sg-btn-sm"><i class="bi bi-currency-dollar me-1"></i>Lista de precios</a>
-          <a href="{% url 'productos_form' %}" class="sg-btn-primary sg-btn-sm"><i class="bi bi-plus-circle me-1"></i>Nuevo producto</a>
-        </div>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-box2-heart me-2"></i>
+          Productos
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Consulta productos, costos, conversiones y existencia disponible.
+        </p>
+      </div>
+
+      <div class="sg-page-actions">
+        <a href="{% url 'precios_productos_list' %}" class="sg-btn-outline sg-btn-md">
+          <i class="bi bi-currency-dollar me-1"></i>Lista de precios
+        </a>
+        <a href="{% url 'productos_form' %}" class="sg-btn-primary sg-btn-md">
+          <i class="bi bi-plus-circle me-1"></i>Nuevo producto
+        </a>
       </div>
     </div>
-  </div>
+  </section>
 
-  <div class="col-12 mt-3">
-    <div class="card border-0 shadow-sm sg-table-card">
-      <div class="card-body">
-        <div class="table-responsive d-none d-md-block">
-          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-            <thead class="table-light">
+  <section class="sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Nombre</th>
+              <th>Métrica</th>
+              <th class="text-center">Peso variable</th>
+              <th class="text-end sg-nowrap">Precio mínimo</th>
+              <th class="text-end sg-nowrap">Costo prom.</th>
+              <th class="text-end sg-nowrap">Último costo</th>
+              <th class="text-end sg-nowrap">Stock en kg</th>
+              <th class="text-end sg-nowrap">Stock en cajas</th>
+              <th>Conversiones</th>
+              <th class="text-end sg-actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for producto in productos %}
               <tr>
-                <th>Nombre</th>
-                <th>Métrica</th>
-                <th>Peso variable</th>
-                <th>Precio venta</th>
-                <th>Precio mínimo</th>
-                <th>Costo prom.</th>
-                <th>Último costo</th>
-                <th>Stock</th>
-                <th>Mín.</th>
-                <th>Máx.</th>
-                <th>Conversiones</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for producto in productos %}
-                <tr>
-                  <td>{{ producto.nombre }}</td>
-                  <td>{{ producto.metrica }}</td>
-                  <td>{% if producto.maneja_peso_variable %}<span class="badge text-bg-warning text-dark">Sí</span>{% else %}<span class="text-muted">No</span>{% endif %}</td>
-                  <td>${{ producto.precio|precio_entero }}</td>
-                  <td>${{ producto.precio_minimo|precio_entero }}</td>
-                  <td>${{ producto.costo_promedio|precio_entero }}</td>
-                  <td>${{ producto.ultimo_costo_compra|precio_entero }}</td>
-                  <td>{{ producto.stock|floatformat:2 }}</td>
-                  <td>{{ producto.stock_minimo|floatformat:2 }}</td>
-                  <td>{{ producto.stock_maximo|floatformat:2 }}</td>
-                  <td>
-                    {% with conversiones=producto.conversiones_metricas.all %}
-                      {% if conversiones %}
-                        <div class="small">{% for conversion in conversiones %}<div>{{ conversion.equivalencia_texto }}</div>{% endfor %}</div>
-                      {% else %}<span class="text-muted">—</span>{% endif %}
-                    {% endwith %}
-                  </td>
-                  <td class="text-end sg-table-actions">
-                    <a href="{% url 'productos_edit' producto.pk %}" class="sg-btn-table sg-btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>
-                    {% if producto.stock == 0 %}
-                      <a href="{% url 'productos_delete' producto.pk %}" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Eliminar"><i class="bi bi-trash"></i></a>
-                    {% else %}
-                      <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" disabled title="Solo puedes eliminar productos con stock 0"><i class="bi bi-trash"></i></button>
-                    {% endif %}
-                  </td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="12" class="text-center text-muted sg-empty-state">No hay productos registrados aún.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="sg-mobile-list d-md-none" aria-label="Productos en vista móvil">
-          {% for producto in productos %}
-            <article class="sg-mobile-card">
-              <div class="sg-mobile-card-header">
-                <div class="min-w-0">
-                  <span class="sg-mobile-card-label">Nombre</span>
-                  <strong class="sg-mobile-card-title">{{ producto.nombre }}</strong>
-                  <span class="sg-mobile-card-subtitle">{{ producto.metrica }}</span>
-                </div>
-                <div>
+                <td class="fw-semibold">{{ producto.nombre }}</td>
+                <td class="sg-nowrap">{{ producto.metrica }}</td>
+                <td class="text-center">
                   {% if producto.maneja_peso_variable %}
-                    <span class="badge text-bg-warning text-dark">Peso variable</span>
+                    <span class="badge text-bg-warning text-dark">Sí</span>
                   {% else %}
-                    <span class="badge text-bg-secondary">Peso fijo</span>
+                    <span class="text-muted">No</span>
                   {% endif %}
-                </div>
-              </div>
+                </td>
+                <td class="text-end sg-nowrap">$ {{ producto.precio_minimo|numero_compacto }}</td>
+                <td class="text-end sg-nowrap">$ {{ producto.costo_promedio|numero_compacto }}</td>
+                <td class="text-end sg-nowrap">$ {{ producto.ultimo_costo_compra|numero_compacto }}</td>
+                <td class="text-end sg-nowrap">{{ producto.stock|numero_compacto }}</td>
+                <td class="text-end sg-nowrap">
+                  {% if producto.stock_cajas_disponible %}
+                    {{ producto.stock_cajas|numero_compacto }}
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% with conversiones=producto.conversiones_metricas.all %}
+                    {% if conversiones %}
+                      <div class="small">{% for conversion in conversiones %}<div>{{ conversion.equivalencia_texto }}</div>{% endfor %}</div>
+                    {% else %}<span class="text-muted">—</span>{% endif %}
+                  {% endwith %}
+                </td>
+                <td class="text-end sg-table-actions sg-actions-cell">
+                  <a href="{% url 'productos_edit' producto.pk %}" class="sg-btn-table sg-btn-sm" title="Editar"><i class="bi bi-pencil"></i></a>
+                  {% if producto.stock == 0 %}
+                    <a href="{% url 'productos_delete' producto.pk %}" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Eliminar"><i class="bi bi-trash"></i></a>
+                  {% else %}
+                    <button type="button" class="sg-btn-table sg-btn-danger sg-btn-sm" disabled title="Solo puedes eliminar productos con stock 0"><i class="bi bi-trash"></i></button>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="10" class="text-center text-muted sg-empty-state">No hay productos registrados aún.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-              <div class="sg-mobile-card-grid">
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Precio venta</span>
-                  <span class="sg-mobile-card-value">${{ producto.precio|precio_entero }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Precio mínimo</span>
-                  <span class="sg-mobile-card-value">${{ producto.precio_minimo|precio_entero }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Costo prom.</span>
-                  <span class="sg-mobile-card-value">${{ producto.costo_promedio|precio_entero }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Último costo</span>
-                  <span class="sg-mobile-card-value">${{ producto.ultimo_costo_compra|precio_entero }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Stock</span>
-                  <span class="sg-mobile-card-value">{{ producto.stock|floatformat:2 }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Mín. / Máx.</span>
-                  <span class="sg-mobile-card-value">{{ producto.stock_minimo|floatformat:2 }} / {{ producto.stock_maximo|floatformat:2 }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Conversiones</span>
-                  <span class="sg-mobile-card-value">
-                    {% with conversiones=producto.conversiones_metricas.all %}
-                      {% if conversiones %}
-                        {% for conversion in conversiones %}<span class="d-block">{{ conversion.equivalencia_texto }}</span>{% endfor %}
-                      {% else %}—{% endif %}
-                    {% endwith %}
-                  </span>
-                </div>
+      <div class="sg-mobile-list d-md-none" aria-label="Productos en vista móvil">
+        {% for producto in productos %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Nombre</span>
+                <strong class="sg-mobile-card-title">{{ producto.nombre }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ producto.metrica }}</span>
               </div>
-
-              <div class="sg-mobile-card-actions">
-                <a href="{% url 'productos_edit' producto.pk %}" class="sg-btn-secondary sg-btn-sm">
-                  <i class="bi bi-pencil"></i> Editar
-                </a>
-                {% if producto.stock == 0 %}
-                  <a href="{% url 'productos_delete' producto.pk %}" class="sg-btn-danger sg-btn-sm">
-                    <i class="bi bi-trash"></i> Eliminar
-                  </a>
+              <div>
+                {% if producto.maneja_peso_variable %}
+                  <span class="badge text-bg-warning text-dark">Peso variable</span>
                 {% else %}
-                  <button type="button" class="sg-btn-danger sg-btn-sm" disabled title="Solo puedes eliminar productos con stock 0">
-                    <i class="bi bi-trash"></i> Eliminar
-                  </button>
+                  <span class="badge text-bg-secondary">Peso fijo</span>
                 {% endif %}
               </div>
-            </article>
-          {% empty %}
-            <div class="sg-empty-state">No hay productos registrados aún.</div>
-          {% endfor %}
-        </div>
+            </div>
+
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Precio mínimo</span>
+                <span class="sg-mobile-card-value">$ {{ producto.precio_minimo|numero_compacto }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Costo prom.</span>
+                <span class="sg-mobile-card-value">$ {{ producto.costo_promedio|numero_compacto }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Último costo</span>
+                <span class="sg-mobile-card-value">$ {{ producto.ultimo_costo_compra|numero_compacto }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Stock en kg</span>
+                <span class="sg-mobile-card-value">{{ producto.stock|numero_compacto }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Stock en cajas</span>
+                <span class="sg-mobile-card-value">
+                  {% if producto.stock_cajas_disponible %}
+                    {{ producto.stock_cajas|numero_compacto }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Conversiones</span>
+                <span class="sg-mobile-card-value">
+                  {% with conversiones=producto.conversiones_metricas.all %}
+                    {% if conversiones %}
+                      {% for conversion in conversiones %}<span class="d-block">{{ conversion.equivalencia_texto }}</span>{% endfor %}
+                    {% else %}—{% endif %}
+                  {% endwith %}
+                </span>
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'productos_edit' producto.pk %}" class="sg-btn-secondary sg-btn-sm">
+                <i class="bi bi-pencil"></i> Editar
+              </a>
+              {% if producto.stock == 0 %}
+                <a href="{% url 'productos_delete' producto.pk %}" class="sg-btn-danger sg-btn-sm">
+                  <i class="bi bi-trash"></i> Eliminar
+                </a>
+              {% else %}
+                <button type="button" class="sg-btn-danger sg-btn-sm" disabled title="Solo puedes eliminar productos con stock 0">
+                  <i class="bi bi-trash"></i> Eliminar
+                </button>
+              {% endif %}
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay productos registrados aún.</div>
+        {% endfor %}
       </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

@@ -271,3 +271,52 @@
     width: 100%;
   }
 }
+
+/* Estado de cuenta — historial de pagos */
+.cartera-estado-movimientos-grid {
+  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, .75fr);
+}
+
+.cartera-payment-history-table {
+  table-layout: fixed;
+}
+
+.cartera-payment-history-table .cartera-payment-col-id {
+  width: 10%;
+}
+
+.cartera-payment-history-table .cartera-payment-col-date {
+  width: 15%;
+}
+
+.cartera-payment-history-table .cartera-payment-col-type {
+  width: 20%;
+}
+
+.cartera-payment-history-table .cartera-payment-col-reference {
+  width: 25%;
+}
+
+.cartera-payment-history-table .cartera-payment-col-amount {
+  width: 15%;
+}
+
+.cartera-payment-history-table th,
+.cartera-payment-history-table td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.cartera-payment-history-table th.text-end,
+.cartera-payment-history-table td.text-end,
+.cartera-payment-history-table .sg-nowrap {
+  white-space: nowrap !important;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 1399.98px) {
+  .cartera-estado-movimientos-grid {
+    grid-template-columns: 1fr;
+  }
+}

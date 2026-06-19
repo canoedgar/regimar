@@ -26,7 +26,7 @@
 
   <section class="ventas-summary-grid mb-3">
     <article class="ventas-summary-card"><span class="ventas-summary-label">Cliente</span><strong class="ventas-summary-value">{{ salida.cliente|default:'MOSTRADOR' }}</strong></article>
-    <article class="ventas-summary-card"><span class="ventas-summary-label">Fecha</span><strong class="ventas-summary-value">{{ salida.fecha|date:'d/m/Y' }}</strong></article>
+    <article class="ventas-summary-card"><span class="ventas-summary-label">Fecha</span><strong class="ventas-summary-value">{{ salida.fecha|date:'Y-m-d' }}</strong></article>
     <article class="ventas-summary-card"><span class="ventas-summary-label">Pago</span><strong class="ventas-summary-value">{{ salida.get_estado_pago_display }}</strong></article>
     <article class="ventas-summary-card ventas-summary-card-soft"><span class="ventas-summary-label">Total</span><strong class="ventas-summary-value">$ {{ salida.total_importe|default:0|dinero_decimal }}</strong></article>
   </section>

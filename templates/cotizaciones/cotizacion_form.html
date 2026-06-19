@@ -56,12 +56,12 @@
             <div class="row g-3">
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Fecha</label>
-                <input type="date" class="form-control" id="fechaCotizacion" value="{{ fecha_actual_value }}" readonly>
+                <input type="text" class="form-control" id="fechaCotizacion" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off" value="{{ fecha_actual_value }}" readonly>
                 <div class="form-text">Se toma la fecha actual.</div>
               </div>
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Fecha de vencimiento</label>
-                <input type="date" class="form-control" name="fecha_vigencia" id="id_fecha_vigencia" value="{{ fecha_vigencia_value }}">
+                <input type="text" class="form-control" name="fecha_vigencia" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off" id="id_fecha_vigencia" value="{{ fecha_vigencia_value }}">
                 <div class="form-text">Sugerida automáticamente por PRECIO_VIGENCIA_COTIZACIONES; puede modificarse.</div>
               </div>
               <div class="col-md-4">

@@ -47,21 +47,21 @@
       <div class="ventas-filter-field">
         <label class="sg-form-label small" for="fecha_inicio">Inicio</label>
         <input
-          type="date"
+          type="text"
           id="fecha_inicio"
           name="fecha_inicio"
           value="{{ filtros.fecha_inicio }}"
-          class="form-control form-control-sm sg-form-control">
+          class="form-control form-control-sm sg-form-control" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off">
       </div>
 
       <div class="ventas-filter-field">
         <label class="sg-form-label small" for="fecha_fin">Fin</label>
         <input
-          type="date"
+          type="text"
           id="fecha_fin"
           name="fecha_fin"
           value="{{ filtros.fecha_fin }}"
-          class="form-control form-control-sm sg-form-control">
+          class="form-control form-control-sm sg-form-control" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off">
       </div>
 
       <div class="ventas-filter-field">
@@ -163,7 +163,7 @@
                   aria-label="Seleccionar {{ venta.folio }}">
               </td>
               <td class="fw-bold">{{ venta.folio }}</td>
-              <td>{{ venta.fecha|date:'d/m/Y' }}</td>
+              <td>{{ venta.fecha|date:'Y-m-d' }}</td>
               <td>{{ venta.cliente|default:'MOSTRADOR' }}</td>
               <td class="sg-nowrap">
                 {% if venta.almacen_es_multiple %}
@@ -191,7 +191,7 @@
               </td>
               <td class="text-center">
                 {% if venta.editada_en %}
-                  <span class="small text-muted text-nowrap">{{ venta.editada_en|date:'d/m/Y H:i' }}</span>
+                  <span class="small text-muted text-nowrap">{{ venta.editada_en|date:'Y-m-d H:i' }}</span>
                 {% else %}
                   <span class="text-muted small">—</span>
                 {% endif %}
@@ -262,7 +262,7 @@
             <div>
               <span class="sg-mobile-card-label">Folio</span>
               <strong class="sg-mobile-card-title">{{ venta.folio }}</strong>
-              <span class="sg-mobile-card-subtitle">{{ venta.fecha|date:'d/m/Y' }} · {{ venta.cliente|default:'MOSTRADOR' }}</span>
+              <span class="sg-mobile-card-subtitle">{{ venta.fecha|date:'Y-m-d' }} · {{ venta.cliente|default:'MOSTRADOR' }}</span>
             </div>
             <div class="d-flex flex-column align-items-end gap-1">
               {% if venta.estado == 'CAN' %}
@@ -296,7 +296,7 @@
             <div class="sg-mobile-card-field">
               <span class="sg-mobile-card-label">Editada</span>
               <span class="sg-mobile-card-value">
-                {% if venta.editada_en %}{{ venta.editada_en|date:'d/m/Y H:i' }}{% else %}—{% endif %}
+                {% if venta.editada_en %}{{ venta.editada_en|date:'Y-m-d H:i' }}{% else %}—{% endif %}
               </span>
             </div>
           </div>

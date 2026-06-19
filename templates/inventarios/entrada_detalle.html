@@ -16,7 +16,7 @@
             Entrada {{ entrada.folio }}
           </h5>
           <div class="sg-page-header-subtitle">
-            {{ entrada.fecha|date:"d/m/Y" }}
+            {{ entrada.fecha|date:"Y-m-d" }}
             · {{ entrada.get_tipo_display }}
           </div>
         </div>
@@ -117,7 +117,7 @@
 
           <div class="col-md-4">
             <div class="text-muted small">Creado</div>
-            <div class="fw-semibold">{{ entrada.creado_en|date:"d/m/Y H:i" }}</div>
+            <div class="fw-semibold">{{ entrada.creado_en|date:"Y-m-d H:i" }}</div>
           </div>
 
           <div class="col-md-4">

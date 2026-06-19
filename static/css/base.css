@@ -2198,3 +2198,240 @@ td.sg-table-actions > button {
   white-space: nowrap;
 }
 
+
+/* ==========================================================
+   UI/UX — listados profesionales reutilizables
+   ========================================================== */
+.sg-list-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.sg-list-header-card {
+  margin-bottom: 0;
+}
+
+.sg-list-header-card .sg-page-header,
+.sg-list-header-card .card-body.sg-page-header {
+  margin-bottom: 0;
+  padding: 1rem 1.1rem;
+}
+
+.sg-list-header-card h5,
+.sg-list-header-card .sg-page-header-title {
+  margin-bottom: 0.25rem;
+  font-weight: 800;
+}
+
+.sg-page-header-subtitle {
+  margin-bottom: 0;
+  color: var(--color-text-soft);
+  font-size: 0.86rem;
+}
+
+.sg-list-toolbar {
+  margin-bottom: 0;
+}
+
+.sg-list-filter-form {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.sg-list-filter-field {
+  flex: 1 1 13rem;
+  min-width: 12rem;
+}
+
+.sg-list-filter-field-wide {
+  flex: 2 1 20rem;
+}
+
+.sg-list-filter-actions,
+.sg-list-toolbar-actions {
+  display: flex;
+  align-items: end;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sg-list-toolbar-actions {
+  flex: 1 1 100%;
+  justify-content: flex-start;
+}
+
+.sg-actions-col {
+  width: 8.5rem;
+  min-width: 8.5rem;
+  white-space: nowrap;
+}
+
+.sg-actions-col-sm {
+  width: 6.5rem;
+  min-width: 6.5rem;
+}
+
+.sg-actions-cell {
+  min-width: 8.5rem;
+  white-space: nowrap;
+}
+
+.sg-actions-cell.sg-actions-cell-sm {
+  min-width: 6.5rem;
+}
+
+.sg-table td.sg-table-actions,
+.sg-table td.sg-actions-cell {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.sg-table td.sg-table-actions > *,
+.sg-table td.sg-actions-cell > * {
+  margin-left: 0.35rem;
+}
+
+.sg-table td.sg-table-actions > *:first-child,
+.sg-table td.sg-actions-cell > *:first-child {
+  margin-left: 0;
+}
+
+.sg-fit-table {
+  width: 100%;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+
+.sg-fit-table th,
+.sg-fit-table td {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.sg-fit-table .sg-nowrap,
+.sg-nowrap {
+  white-space: nowrap;
+}
+
+.sg-fit-table .sg-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767.98px) {
+  .sg-list-header-card .sg-page-header,
+  .sg-list-header-card .card-body.sg-page-header {
+    padding: 0.85rem;
+  }
+
+  .sg-list-filter-field,
+  .sg-list-filter-field-wide,
+  .sg-list-filter-actions,
+  .sg-list-toolbar-actions,
+  .sg-list-filter-actions > *,
+  .sg-list-toolbar-actions > * {
+    width: 100%;
+  }
+}
+
+/* ==========================================================
+   FIX UI/UX — tablas compactas sin encimar textos largos
+   ========================================================== */
+/*
+  Las tablas marcadas como sg-fit-table deben caber en el ancho de la card,
+  pero los textos largos no deben invadir otras columnas. Se permite el salto
+  de línea en encabezados y celdas descriptivas, conservando nowrap únicamente
+  en datos cortos/números/acciones marcados explícitamente.
+*/
+.sg-fit-table {
+  width: 100%;
+  min-width: 0 !important;
+  table-layout: fixed;
+}
+
+.sg-fit-table th,
+.sg-fit-table td {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  line-height: 1.25;
+}
+
+.sg-fit-table thead th {
+  vertical-align: middle;
+  line-height: 1.2;
+}
+
+.sg-fit-table tbody td {
+  vertical-align: top;
+}
+
+/* Los encabezados deben poder partirse aunque la columna sea numérica. */
+.sg-fit-table thead th.sg-nowrap,
+.sg-fit-table thead th.text-end:not(.sg-actions-col):not(.sg-actions-col-sm) {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* En registros se conservan compactos los datos numéricos/cortos marcados. */
+.sg-fit-table tbody td.sg-nowrap,
+.sg-fit-table tbody td.text-end:not(.sg-table-actions):not(.sg-actions-cell),
+.sg-fit-table tbody td .sg-nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: manual;
+}
+
+/* La primera columna no debe quedar globalmente forzada a una sola línea;
+   folios/códigos que sí lo requieren ya usan sg-nowrap de forma explícita. */
+.sg-fit-table tbody td:first-child:not(.sg-nowrap),
+.sg-fit-table thead th:first-child:not(.sg-nowrap) {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Badges, códigos y enlaces largos dentro de tablas compactas no deben
+   salirse de su celda. */
+.sg-fit-table .badge,
+.sg-fit-table code,
+.sg-fit-table a,
+.sg-fit-table .sg-form-help,
+.sg-fit-table .small,
+.sg-fit-table small {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.sg-fit-table .badge {
+  white-space: normal;
+  line-height: 1.15;
+  text-align: inherit;
+}
+
+/* La columna de acciones mantiene ancho estable y no participa en el wrapping
+   de textos largos de otras columnas. */
+.sg-fit-table th.sg-actions-col,
+.sg-fit-table td.sg-actions-cell,
+.sg-fit-table th.sg-table-actions,
+.sg-fit-table td.sg-table-actions {
+  width: 8.5rem;
+  min-width: 8.5rem;
+  white-space: nowrap !important;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.sg-fit-table th.sg-actions-col-sm,
+.sg-fit-table td.sg-actions-cell-sm {
+  width: 6.5rem;
+  min-width: 6.5rem;
+}

@@ -5,291 +5,304 @@
 {% block page_title %}Entradas de inventario{% endblock %}
 
 {% block content %}
-<div class="sg-page-header sg-table-card">
-  <div>
-    <h5 class="sg-page-header-title">
-      <i class="bi bi-box-arrow-in-down me-1"></i>
-      Entradas de inventario
-    </h5>
-    <p class="sg-page-header-subtitle">
-      Consulta entradas, ajustes positivos y traspasos recibidos en inventario.
-    </p>
-  </div>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-box-arrow-in-down me-2"></i>
+          Entradas de inventario
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Consulta entradas, ajustes positivos y traspasos recibidos en inventario.
+        </p>
+      </div>
 
-  <div class="sg-page-actions">
-    <div class="btn-group">
-      <button type="button" class="sg-btn-primary sg-btn-md dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-plus-circle me-1"></i>
-        Nueva entrada
-      </button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li>
-          <a class="dropdown-item" href="{% url 'entrada_ocf_create' %}">
-            <i class="bi bi-file-earmark-text me-2"></i>
-            Factura XML (OCF)
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="{% url 'entrada_manual_create' %}">
-            <i class="bi bi-journal-text me-2"></i>
-            Nota / remisión (Manual)
-          </a>
-        </li>
-        <li><hr class="dropdown-divider"></li>
-        <li>
-          <a class="dropdown-item" href="{% url 'traspaso_inventario' %}">
-            <i class="bi bi-arrow-left-right me-2"></i>
-            Traspaso entre almacenes
-          </a>
-        </li>
-      </ul>
+      <div class="sg-page-actions">
+        <div class="btn-group">
+          <button type="button" class="sg-btn-primary sg-btn-md dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nueva entrada
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <a class="dropdown-item" href="{% url 'entrada_ocf_create' %}">
+                <i class="bi bi-file-earmark-text me-2"></i>
+                Factura XML (OCF)
+              </a>
+            </li>
+            <li>
+              <a class="dropdown-item" href="{% url 'entrada_manual_create' %}">
+                <i class="bi bi-journal-text me-2"></i>
+                Nota / remisión (Manual)
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item" href="{% url 'traspaso_inventario' %}">
+                <i class="bi bi-arrow-left-right me-2"></i>
+                Traspaso entre almacenes
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+  </section>
 
-<div class="sg-toolbar sg-table-card">
-  <div class="d-flex flex-wrap align-items-center gap-2">
-    <span class="fw-semibold me-1">Filtrar:</span>
-
-    <form method="get" class="sg-filter-bar sg-filter-bar-inline">
+  <section class="sg-toolbar sg-list-toolbar" aria-label="Filtros de entradas de inventario">
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form">
       <input type="hidden" name="tipo" value="{{ tipo_actual|default:'' }}">
-      <select name="almacen" class="form-select form-select-sm sg-form-control" style="min-width: 220px;">
-        <option value="">Todos los almacenes</option>
-        {% for a in almacenes %}
-          <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
-            {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
-          </option>
-        {% endfor %}
-      </select>
 
-      <button class="sg-btn-outline sg-btn-icon sg-btn-sm" type="submit" title="Aplicar filtro">
-        <i class="bi bi-funnel"></i>
-      </button>
+      <div class="sg-list-filter-field sg-list-filter-field-wide">
+        <label class="sg-form-label small" for="entrada-almacen">Almacén</label>
+        <select id="entrada-almacen" name="almacen" class="form-select form-select-sm sg-form-control">
+          <option value="">Todos los almacenes</option>
+          {% for a in almacenes %}
+            <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
+              {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="sg-list-filter-actions">
+        <button class="sg-btn-primary sg-btn-sm" type="submit">
+          <i class="bi bi-funnel me-1"></i>
+          Filtrar
+        </button>
+        {% if tipo_actual or almacen_id %}
+          <a class="sg-btn-secondary sg-btn-sm" href="{% url 'entradas_list' %}" title="Limpiar filtros">
+            <i class="bi bi-x-lg me-1"></i>
+            Limpiar
+          </a>
+        {% endif %}
+      </div>
     </form>
-  </div>
 
-  <div class="sg-toolbar-actions">
-    <a href="{% url 'entradas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
-       class="sg-btn-sm {% if not tipo_actual %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
-      Todas
-    </a>
-
-    {% for value, label in TIPO_CHOICES %}
-      <a href="{% url 'entradas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
-         class="sg-btn-sm {% if tipo_actual == value %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
-        {{ label }}
+    <div class="sg-list-toolbar-actions" aria-label="Tipos de entrada">
+      <a href="{% url 'entradas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
+         class="sg-btn-sm {% if not tipo_actual %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
+        Todas
       </a>
-    {% endfor %}
-  </div>
-</div>
 
-<div class="sg-table-card">
-  <div class="card-body">
-    <div class="table-responsive d-none d-md-block">
-      <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-        <thead class="table-light">
-          <tr>
-            <th>Folio</th>
-            <th>Fecha</th>
-            <th>Almacén / traspaso</th>
-            <th>Tipo</th>
-            <th>Proveedor</th>
-            <th>Usuario</th>
-            <th class="text-end">Kilogramos</th>
-            <th class="text-end">Importe total</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entrada in entradas %}
+      {% for value, label in TIPO_CHOICES %}
+        <a href="{% url 'entradas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
+           class="sg-btn-sm {% if tipo_actual == value %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
             <tr>
-              <td class="fw-semibold">{{ entrada.folio }}</td>
-              <td>{{ entrada.fecha|date:"d/m/Y" }}</td>
-              <td>
-                {% if entrada.tipo == "TRE" %}
-                  <span class="badge text-bg-light border">{{ entrada.almacen_origen.codigo|default:"—" }}</span>
-                  <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                  <span class="badge text-bg-success">{{ entrada.almacen_destino.codigo|default:"—" }}</span>
-                  <div class="sg-form-help">
-                    {{ entrada.almacen_origen.nombre|default:"Origen no definido" }} → {{ entrada.almacen_destino.nombre|default:"Destino no definido" }}
-                  </div>
-                {% elif entrada.num_almacenes|default:0 > 1 %}
-                  <span class="badge text-bg-warning">Varios</span>
-                  <span class="sg-form-help">({{ entrada.num_almacenes }})</span>
+              <th>Folio</th>
+              <th>Fecha</th>
+              <th>Almacén / traspaso</th>
+              <th>Tipo</th>
+              <th>Proveedor</th>
+              <th>Usuario</th>
+              <th class="text-end sg-nowrap">Kilogramos</th>
+              <th class="text-end sg-nowrap">Importe total</th>
+              <th class="text-end sg-actions-col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for entrada in entradas %}
+              <tr>
+                <td class="fw-semibold sg-nowrap">{{ entrada.folio }}</td>
+                <td class="sg-nowrap">{{ entrada.fecha|date:"Y-m-d" }}</td>
+                <td>
+                  {% if entrada.tipo == "TRE" %}
+                    <span class="badge text-bg-light border">{{ entrada.almacen_origen.codigo|default:"—" }}</span>
+                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                    <span class="badge text-bg-success">{{ entrada.almacen_destino.codigo|default:"—" }}</span>
+                    <div class="sg-form-help">
+                      {{ entrada.almacen_origen.nombre|default:"Origen no definido" }} → {{ entrada.almacen_destino.nombre|default:"Destino no definido" }}
+                    </div>
+                  {% elif entrada.num_almacenes|default:0 > 1 %}
+                    <span class="badge text-bg-warning">Varios</span>
+                    <span class="sg-form-help">({{ entrada.num_almacenes }})</span>
 
-                {% elif entrada.num_almacenes|default:0 == 1 %}
-                  {% with det=entrada.detalles.all|first %}
-                    {% if det and det.almacen %}
-                      <span class="badge text-bg-light border">{{ det.almacen.codigo }}</span>
-                      <span class="sg-form-help">{{ det.almacen.nombre }}</span>
-                    {% elif entrada.almacen %}
+                  {% elif entrada.num_almacenes|default:0 == 1 %}
+                    {% with det=entrada.detalles.all|first %}
+                      {% if det and det.almacen %}
+                        <span class="badge text-bg-light border">{{ det.almacen.codigo }}</span>
+                        <span class="sg-form-help">{{ det.almacen.nombre }}</span>
+                      {% elif entrada.almacen %}
+                        <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
+                        <span class="sg-form-help">{{ entrada.almacen.nombre }}</span>
+                      {% else %}
+                        <span class="sg-form-help">—</span>
+                      {% endif %}
+                    {% endwith %}
+
+                  {% else %}
+                    {% if entrada.almacen %}
                       <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
                       <span class="sg-form-help">{{ entrada.almacen.nombre }}</span>
                     {% else %}
                       <span class="sg-form-help">—</span>
                     {% endif %}
-                  {% endwith %}
+                  {% endif %}
+                </td>
 
-                {% else %}
-                  {% if entrada.almacen %}
-                    <span class="badge text-bg-light border">{{ entrada.almacen.codigo }}</span>
-                    <span class="sg-form-help">{{ entrada.almacen.nombre }}</span>
+                <td>
+                  {% if entrada.tipo == "OCF" %}
+                    <span class="badge text-bg-success">
+                      <i class="bi bi-file-earmark-text me-1"></i>
+                      Entrada Factura
+                    </span>
+                  {% elif entrada.tipo == "MAN" %}
+                    <span class="badge text-bg-warning text-dark">
+                      <i class="bi bi-file-earmark-excel me-1"></i>
+                      Entrada Manual
+                    </span>
+                  {% elif entrada.tipo == "TRE" %}
+                    <span class="badge text-bg-success">
+                      <i class="bi bi-arrow-left-right me-1"></i>
+                      Traspaso (+)
+                    </span>
+                  {% else %}
+                    <span class="badge text-bg-info text-dark">
+                      <i class="bi bi-sliders me-1"></i>
+                      Ajuste
+                    </span>
+                  {% endif %}
+                </td>
+                <td>{{ entrada.proveedor|default:"-" }}</td>
+                <td>
+                  {% if entrada.registrado_por %}
+                    {{ entrada.registrado_por.get_username }}
                   {% else %}
                     <span class="sg-form-help">—</span>
                   {% endif %}
-                {% endif %}
-              </td>
+                </td>
+                <td class="text-end sg-nowrap">
+                  {{ entrada.total_productos|default:"0" }}
+                </td>
+                <td class="text-end sg-nowrap">
+                  $ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}
+                </td>
+                <td class="text-end sg-table-actions sg-actions-cell">
+                  <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  {% if entrada.tipo == "MAN" and not entrada.reversada and not entrada.es_reversa %}
+                    <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
+                      {% csrf_token %}
+                      <button type="submit" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Reversar entrada">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                      </button>
+                    </form>
+                  {% elif entrada.reversada %}
+                    <span class="badge text-bg-secondary">Reversada</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="sg-empty-state">
+                  No hay entradas registradas.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-              <td>
+      <div class="sg-mobile-list d-md-none">
+        {% for entrada in entradas %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div>
+                <span class="sg-mobile-card-label">Folio</span>
+                <strong class="sg-mobile-card-title">{{ entrada.folio }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ entrada.fecha|date:"Y-m-d" }}</span>
+              </div>
+              <div>
                 {% if entrada.tipo == "OCF" %}
-                  <span class="badge text-bg-success">
-                    <i class="bi bi-file-earmark-text me-1"></i>
-                    Entrada Factura
-                  </span>
+                  <span class="badge text-bg-success">Factura</span>
                 {% elif entrada.tipo == "MAN" %}
-                  <span class="badge text-bg-warning text-dark">
-                    <i class="bi bi-file-earmark-excel me-1"></i>
-                    Entrada Manual
-                  </span>
+                  <span class="badge text-bg-warning text-dark">Manual</span>
                 {% elif entrada.tipo == "TRE" %}
-                  <span class="badge text-bg-success">
-                    <i class="bi bi-arrow-left-right me-1"></i>
-                    Traspaso (+)
-                  </span>
+                  <span class="badge text-bg-success">Traspaso (+)</span>
                 {% else %}
-                  <span class="badge text-bg-info text-dark">
-                    <i class="bi bi-sliders me-1"></i>
-                    Ajuste
-                  </span>
+                  <span class="badge text-bg-info text-dark">Ajuste</span>
                 {% endif %}
-              </td>
-              <td>{{ entrada.proveedor|default:"-" }}</td>
-              <td>
-                {% if entrada.registrado_por %}
-                  {{ entrada.registrado_por.get_username }}
-                {% else %}
-                  <span class="sg-form-help">—</span>
-                {% endif %}
-              </td>
-              <td class="text-end">
-                {{ entrada.total_productos|default:"0" }}
-              </td>
-              <td class="text-end">
-                $ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}
-              </td>
-              <td class="text-end sg-table-actions">
-                <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
-                  <i class="bi bi-eye"></i>
-                </a>
-                {% if entrada.tipo == "MAN" and not entrada.reversada and not entrada.es_reversa %}
-                  <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
-                    {% csrf_token %}
-                    <button type="submit" class="sg-btn-table sg-btn-danger sg-btn-sm" title="Reversar entrada">
-                      <i class="bi bi-arrow-counterclockwise"></i>
-                    </button>
-                  </form>
-                {% elif entrada.reversada %}
-                  <span class="badge text-bg-secondary">Reversada</span>
-                {% endif %}
-              </td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="9" class="sg-empty-state">
-                No hay entradas registradas.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <div class="sg-mobile-list d-md-none">
-      {% for entrada in entradas %}
-        <article class="sg-mobile-card">
-          <div class="sg-mobile-card-header">
-            <div>
-              <span class="sg-mobile-card-label">Folio</span>
-              <strong class="sg-mobile-card-title">{{ entrada.folio }}</strong>
-              <span class="sg-mobile-card-subtitle">{{ entrada.fecha|date:"d/m/Y" }}</span>
+              </div>
             </div>
-            <div>
-              {% if entrada.tipo == "OCF" %}
-                <span class="badge text-bg-success">Factura</span>
-              {% elif entrada.tipo == "MAN" %}
-                <span class="badge text-bg-warning text-dark">Manual</span>
-              {% elif entrada.tipo == "TRE" %}
-                <span class="badge text-bg-success">Traspaso (+)</span>
-              {% else %}
-                <span class="badge text-bg-info text-dark">Ajuste</span>
+
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Almacén</span>
+                <span class="sg-mobile-card-value">
+                  {% if entrada.tipo == "TRE" %}
+                    {{ entrada.almacen_origen.codigo|default:"—" }} - {{ entrada.almacen_origen.nombre|default:"Origen" }} → {{ entrada.almacen_destino.codigo|default:"—" }} - {{ entrada.almacen_destino.nombre|default:"Destino" }}
+                  {% elif entrada.num_almacenes|default:0 > 1 %}
+                    Varios ({{ entrada.num_almacenes }})
+                  {% elif entrada.num_almacenes|default:0 == 1 %}
+                    {% with det=entrada.detalles.all|first %}
+                      {% if det and det.almacen %}
+                        {{ det.almacen.codigo }} - {{ det.almacen.nombre }}
+                      {% elif entrada.almacen %}
+                        {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    {% endwith %}
+                  {% elif entrada.almacen %}
+                    {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Proveedor</span>
+                <span class="sg-mobile-card-value">{{ entrada.proveedor|default:"—" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Usuario</span>
+                <span class="sg-mobile-card-value">{% if entrada.registrado_por %}{{ entrada.registrado_por.get_username }}{% else %}—{% endif %}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Kilogramos</span>
+                <span class="sg-mobile-card-value">{{ entrada.total_productos|default:"0" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Importe total</span>
+                <span class="sg-mobile-card-value">$ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}</span>
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-outline sg-btn-sm">
+                <i class="bi bi-eye"></i>
+                Ver detalle
+              </a>
+              {% if entrada.tipo == "MAN" and not entrada.reversada and not entrada.es_reversa %}
+                <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
+                  {% csrf_token %}
+                  <button type="submit" class="sg-btn-danger sg-btn-sm">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Reversar
+                  </button>
+                </form>
+              {% elif entrada.reversada %}
+                <span class="badge text-bg-secondary">Reversada</span>
               {% endif %}
             </div>
-          </div>
-
-          <div class="sg-mobile-card-grid">
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Almacén</span>
-              <span class="sg-mobile-card-value">
-                {% if entrada.tipo == "TRE" %}
-                  {{ entrada.almacen_origen.codigo|default:"—" }} - {{ entrada.almacen_origen.nombre|default:"Origen" }} → {{ entrada.almacen_destino.codigo|default:"—" }} - {{ entrada.almacen_destino.nombre|default:"Destino" }}
-                {% elif entrada.num_almacenes|default:0 > 1 %}
-                  Varios ({{ entrada.num_almacenes }})
-                {% elif entrada.num_almacenes|default:0 == 1 %}
-                  {% with det=entrada.detalles.all|first %}
-                    {% if det and det.almacen %}
-                      {{ det.almacen.codigo }} - {{ det.almacen.nombre }}
-                    {% elif entrada.almacen %}
-                      {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
-                    {% else %}
-                      —
-                    {% endif %}
-                  {% endwith %}
-                {% elif entrada.almacen %}
-                  {{ entrada.almacen.codigo }} - {{ entrada.almacen.nombre }}
-                {% else %}
-                  —
-                {% endif %}
-              </span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Proveedor</span>
-              <span class="sg-mobile-card-value">{{ entrada.proveedor|default:"—" }}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Usuario</span>
-              <span class="sg-mobile-card-value">{% if entrada.registrado_por %}{{ entrada.registrado_por.get_username }}{% else %}—{% endif %}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Kilogramos</span>
-              <span class="sg-mobile-card-value">{{ entrada.total_productos|default:"0" }}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Importe total</span>
-              <span class="sg-mobile-card-value">$ {{ entrada.total_importe|default:"0.00"|dinero_decimal }}</span>
-            </div>
-          </div>
-
-          <div class="sg-mobile-card-actions">
-            <a href="{% url 'entrada_detalle' entrada.id %}" class="sg-btn-outline sg-btn-sm">
-              <i class="bi bi-eye"></i>
-              Ver detalle
-            </a>
-            {% if entrada.tipo == "MAN" and not entrada.reversada and not entrada.es_reversa %}
-              <form method="post" action="{% url 'deshacer_entrada_manual' entrada.id %}" class="d-inline sg-inventory-form" data-sg-confirm="¿Confirmas que deseas reversar esta entrada manual generando una salida inversa?">
-                {% csrf_token %}
-                <button type="submit" class="sg-btn-danger sg-btn-sm">
-                  <i class="bi bi-arrow-counterclockwise me-1"></i>Reversar
-                </button>
-              </form>
-            {% elif entrada.reversada %}
-              <span class="badge text-bg-secondary">Reversada</span>
-            {% endif %}
-          </div>
-        </article>
-      {% empty %}
-        <div class="sg-empty-state">No hay entradas registradas.</div>
-      {% endfor %}
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay entradas registradas.</div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

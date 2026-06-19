@@ -46,7 +46,7 @@
             <tbody>
               {% for row in bitacora %}
                 <tr>
-                  <td>{{ row.fecha }}</td>
+                  <td>{{ row.fecha|date:"Y-m-d" }}</td>
                   <td class="text-end">${{ row.precio_venta|precio_entero }}</td>
                   <td class="text-end">${{ row.precio_minimo|precio_entero }}</td>
                   <td class="text-end">${{ row.ultimo_costo_compra|precio_entero }}</td>
@@ -70,7 +70,7 @@
               <div class="sg-mobile-card-header">
                 <div class="min-w-0">
                   <span class="sg-mobile-card-label">Fecha</span>
-                  <strong class="sg-mobile-card-title">{{ row.fecha }}</strong>
+                  <strong class="sg-mobile-card-title">{{ row.fecha|date:"Y-m-d" }}</strong>
                   <span class="sg-mobile-card-subtitle">{{ row.motivo|default:"Sin motivo" }}</span>
                 </div>
               </div>

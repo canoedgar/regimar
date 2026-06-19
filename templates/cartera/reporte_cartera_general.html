@@ -7,23 +7,121 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/cartera.css' %}">{% endblock %}
 
 {% block content %}
-<div class="cartera-detail-page">
-  <section class="card border-0 shadow-sm sg-form-card sg-table-card"><div class="card-body sg-page-header d-flex justify-content-between align-items-center"><div><h5 class="sg-page-header-title"><i class="bi bi-file-earmark-bar-graph"></i>Reporte general de cartera</h5><p class="sg-page-header-subtitle">Vista interna para seguimiento de clientes con adeudo y saldo a favor.</p></div><div class="sg-page-actions"><a class="sg-btn-outline sg-btn-md" target="_blank" href="{% url 'cartera:reporte_cartera_general_print' %}{% if query %}?q={{ query|urlencode }}{% endif %}">Imprimir</a><a href="{% url 'cartera:dashboard' %}" class="sg-btn-secondary sg-btn-md">Volver</a></div></div></section>
+<div class="cartera-detail-page sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-file-earmark-bar-graph me-2"></i>
+          Reporte general de cartera
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Vista interna para seguimiento de clientes con adeudo y saldo a favor.
+        </p>
+      </div>
+
+      <div class="sg-page-actions">
+        <a
+          class="sg-btn-outline sg-btn-md"
+          target="_blank"
+          href="{% url 'cartera:reporte_cartera_general_print' %}{% if query %}?q={{ query|urlencode }}{% endif %}">
+          <i class="bi bi-printer me-1"></i>
+          Imprimir
+        </a>
+        <a href="{% url 'cartera:dashboard' %}" class="sg-btn-secondary sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Volver
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sg-toolbar sg-list-toolbar cartera-filter-card" aria-label="Filtros de reporte general de cartera">
+    <div class="cartera-filter-heading">
+      <h5 class="mb-1">
+        <i class="bi bi-search me-2"></i>
+        Filtros de búsqueda
+      </h5>
+      <p class="mb-0 sg-form-help">
+        Busca clientes por nombre comercial, razón social o RFC.
+      </p>
+    </div>
+
+    <form class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form cartera-report-filter" method="get">
+      <div class="cartera-filter-field cartera-filter-field-wide">
+        <label class="sg-form-label small" for="q">Cliente o RFC</label>
+        <input
+          id="q"
+          class="form-control sg-form-control"
+          name="q"
+          value="{{ query }}"
+          placeholder="Buscar cliente o RFC">
+      </div>
+
+      <div class="cartera-filter-actions">
+        <button class="sg-btn-primary sg-btn-md" type="submit">
+          <i class="bi bi-search me-1"></i>
+          Buscar
+        </button>
+      </div>
+    </form>
+  </section>
 
   <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
-    <div class="card-header sg-toolbar mb-0"><h5 class="sg-page-header-title"><i class="bi bi-people"></i>Clientes</h5><form class="sg-filter-bar sg-filter-bar-inline" method="get"><input class="form-control sg-form-control" name="q" value="{{ query }}" placeholder="Buscar cliente o RFC"><button class="sg-btn-primary sg-btn-md">Buscar</button></form></div>
+    <div class="card-header d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center">
+      <div>
+        <h5 class="mb-0">
+          <i class="bi bi-people me-2"></i>
+          Clientes
+        </h5>
+        <small class="sg-form-help">Listado de saldos por cliente.</small>
+      </div>
+    </div>
+
     <div class="table-responsive d-none d-md-block sg-no-mobile-grid">
-      <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid">
-        <thead class="table-light"><tr><th>Cliente</th><th>RFC</th><th class="text-end">Notas pendientes</th><th class="text-end">Adeudo</th><th class="text-end">Saldo a favor</th><th class="text-end">Acción</th></tr></thead>
+      <table class="table table-hover align-middle mb-0 sg-table sg-fit-table sg-no-mobile-grid">
+        <colgroup>
+          <col style="width: 34%;">
+          <col style="width: 18%;">
+          <col style="width: 14%;">
+          <col style="width: 14%;">
+          <col style="width: 14%;">
+          <col style="width: 6%;">
+        </colgroup>
+        <thead class="table-light">
+          <tr>
+            <th>Cliente</th>
+            <th>RFC</th>
+            <th class="text-end">Notas pendientes</th>
+            <th class="text-end">Adeudo</th>
+            <th class="text-end">Saldo a favor</th>
+            <th class="text-end sg-actions-col-sm">Acción</th>
+          </tr>
+        </thead>
         <tbody>
           {% for item in filas %}
-            <tr><td><div class="fw-semibold">{{ item.cliente.nombre_fiscal|default:item.cliente.nombre_comercial }}</div>{% if item.cliente.nombre_comercial %}<div class="sg-form-help">{{ item.cliente.nombre_comercial }}</div>{% endif %}</td><td>{{ item.cliente.rfc|default:"—" }}</td><td class="text-end">{{ item.notas }}</td><td class="text-end fw-semibold">${{ item.adeudo|floatformat:2|intcomma }}</td><td class="text-end">${{ item.saldo_favor|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:estado_cuenta_cliente' item.cliente.id %}" title="Estado"><i class="bi bi-file-text"></i></a></td></tr>
+            <tr>
+              <td>
+                <div class="fw-semibold">{{ item.cliente.nombre_fiscal|default:item.cliente.nombre_comercial }}</div>
+                {% if item.cliente.nombre_comercial %}<div class="sg-form-help">{{ item.cliente.nombre_comercial }}</div>{% endif %}
+              </td>
+              <td>{{ item.cliente.rfc|default:"—" }}</td>
+              <td class="text-end">{{ item.notas }}</td>
+              <td class="text-end fw-semibold">${{ item.adeudo|floatformat:2|intcomma }}</td>
+              <td class="text-end">${{ item.saldo_favor|floatformat:2|intcomma }}</td>
+              <td class="text-end sg-table-actions sg-actions-cell-sm">
+                <a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:estado_cuenta_cliente' item.cliente.id %}" title="Estado de cuenta">
+                  <i class="bi bi-file-text"></i>
+                </a>
+              </td>
+            </tr>
           {% empty %}
             <tr><td colspan="6" class="sg-empty-state">No hay datos para mostrar.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+
     <div class="sg-mobile-list d-md-none">
       {% for item in filas %}
         <article class="sg-mobile-card">

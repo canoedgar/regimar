@@ -3,57 +3,86 @@
 {% block page_title %}Parámetros de sistema{% endblock %}
 {% block active_config %}active{% endblock %}
 {% block content %}
-<div class="card border-0 shadow-sm sg-table-card">
-  <div class="card-body">
-    <div class="sg-page-header d-flex justify-content-between align-items-center mb-3">
-      <h5 class="fw-bold mb-0"><i class="bi bi-sliders me-2"></i>Parámetros de sistema</h5>
-      <a class="btn btn-primary btn-sm" href="{% url 'parametros_sistema_create' %}"><i class="bi bi-plus-circle me-1"></i>Nuevo parámetro</a>
-    </div>
-    <div class="table-responsive d-none d-md-block">
-      <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-        <thead class="table-light"><tr><th>Clave</th><th>Nombre</th><th>Valor</th><th>Descripción</th><th>Activo</th><th></th></tr></thead>
-        <tbody>
-          {% for p in parametros %}
-            <tr>
-              <td><code>{{ p.clave }}</code></td>
-              <td>{{ p.nombre }}</td>
-              <td>{{ p.valor }}</td>
-              <td class="small text-muted">{{ p.descripcion|default:"—" }}</td>
-              <td>{% if p.activo %}<span class="badge text-bg-success">Sí</span>{% else %}<span class="badge text-bg-secondary">No</span>{% endif %}</td>
-              <td class="text-end sg-table-actions"><a class="sg-btn-secondary sg-btn-sm" href="{% url 'parametros_sistema_edit' p.pk %}" title="Editar"><i class="bi bi-pencil"></i></a></td>
-            </tr>
-          {% empty %}<tr><td colspan="6" class="text-center text-muted sg-empty-state">Sin parámetros.</td></tr>{% endfor %}
-        </tbody>
-      </table>
-    </div>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-sliders me-2"></i>
+          Parámetros de sistema
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Administra claves de configuración utilizadas por procesos del sistema.
+        </p>
+      </div>
 
-    <div class="sg-mobile-list d-md-none" aria-label="Parámetros en vista móvil">
-      {% for p in parametros %}
-        <article class="sg-mobile-card">
-          <div class="sg-mobile-card-header">
-            <div class="min-w-0">
-              <span class="sg-mobile-card-label">Clave</span>
-              <strong class="sg-mobile-card-title"><code>{{ p.clave }}</code></strong>
-              <span class="sg-mobile-card-subtitle">{{ p.nombre }}</span>
-            </div>
-            <div>{% if p.activo %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</div>
-          </div>
-          <div class="sg-mobile-card-grid">
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Valor</span>
-              <span class="sg-mobile-card-value">{{ p.valor }}</span>
-            </div>
-            <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Descripción</span>
-              <span class="sg-mobile-card-value">{{ p.descripcion|default:"—" }}</span>
-            </div>
-          </div>
-          <div class="sg-mobile-card-actions">
-            <a class="sg-btn-secondary sg-btn-sm" href="{% url 'parametros_sistema_edit' p.pk %}"><i class="bi bi-pencil"></i> Editar</a>
-          </div>
-        </article>
-      {% empty %}<div class="sg-empty-state">Sin parámetros.</div>{% endfor %}
+      <div class="sg-page-actions">
+        <a class="sg-btn-primary sg-btn-md" href="{% url 'parametros_sistema_create' %}">
+          <i class="bi bi-plus-circle me-1"></i>Nuevo parámetro
+        </a>
+      </div>
     </div>
-  </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Clave</th>
+              <th>Nombre</th>
+              <th>Valor</th>
+              <th>Descripción</th>
+              <th class="text-center">Activo</th>
+              <th class="text-end sg-actions-col-sm">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in parametros %}
+              <tr>
+                <td><code>{{ p.clave }}</code></td>
+                <td>{{ p.nombre }}</td>
+                <td>{{ p.valor }}</td>
+                <td class="small text-muted">{{ p.descripcion|default:"—" }}</td>
+                <td class="text-center">{% if p.activo %}<span class="badge text-bg-success">Sí</span>{% else %}<span class="badge text-bg-secondary">No</span>{% endif %}</td>
+                <td class="text-end sg-table-actions sg-actions-cell sg-actions-cell-sm">
+                  <a class="sg-btn-table sg-btn-sm" href="{% url 'parametros_sistema_edit' p.pk %}" title="Editar"><i class="bi bi-pencil"></i></a>
+                </td>
+              </tr>
+            {% empty %}<tr><td colspan="6" class="text-center text-muted sg-empty-state">Sin parámetros.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none" aria-label="Parámetros en vista móvil">
+        {% for p in parametros %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Clave</span>
+                <strong class="sg-mobile-card-title"><code>{{ p.clave }}</code></strong>
+                <span class="sg-mobile-card-subtitle">{{ p.nombre }}</span>
+              </div>
+              <div>{% if p.activo %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</div>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Valor</span>
+                <span class="sg-mobile-card-value">{{ p.valor }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Descripción</span>
+                <span class="sg-mobile-card-value">{{ p.descripcion|default:"—" }}</span>
+              </div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              <a class="sg-btn-secondary sg-btn-sm" href="{% url 'parametros_sistema_edit' p.pk %}"><i class="bi bi-pencil"></i> Editar</a>
+            </div>
+          </article>
+        {% empty %}<div class="sg-empty-state">Sin parámetros.</div>{% endfor %}
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

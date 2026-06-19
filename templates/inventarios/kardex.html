@@ -75,13 +75,13 @@
 
           <div class="col-12 col-md-3">
             <label class="sg-form-label">Fecha inicial</label>
-            <input type="date" name="fecha_ini" class="form-control sg-form-control"
+            <input type="text" name="fecha_ini" class="form-control sg-form-control" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off"
                    value="{{ fecha_ini|default:'' }}">
           </div>
 
           <div class="col-12 col-md-3">
             <label class="sg-form-label">Fecha final</label>
-            <input type="date" name="fecha_fin" class="form-control sg-form-control"
+            <input type="text" name="fecha_fin" class="form-control sg-form-control" placeholder="YYYY-MM-DD" pattern="\d{4}-\d{2}-\d{2}" inputmode="numeric" autocomplete="off"
                    value="{{ fecha_fin|default:'' }}">
           </div>
 
@@ -191,7 +191,7 @@
                 {% for m in movimientos %}
                   <tr>
                     <td class="ps-3">
-                      <div class="fw-semibold">{{ m.fecha|date:"d/m/Y" }}</div>
+                      <div class="fw-semibold">{{ m.fecha|date:"Y-m-d" }}</div>
                       <div class="sg-form-help">
                         {{ m.creado_en|date:"H:i" }}
                       </div>
@@ -295,7 +295,7 @@
                 <div class="sg-mobile-card-header">
                   <div>
                     <span class="sg-mobile-card-label">Fecha</span>
-                    <strong class="sg-mobile-card-title">{{ m.fecha|date:"d/m/Y" }}</strong>
+                    <strong class="sg-mobile-card-title">{{ m.fecha|date:"Y-m-d" }}</strong>
                     <span class="sg-mobile-card-subtitle">{{ m.creado_en|date:"H:i" }} · <code>{{ m.folio }}</code></span>
                   </div>
                   <div>

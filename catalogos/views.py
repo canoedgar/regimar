@@ -2,7 +2,7 @@
 from openpyxl import load_workbook
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from django.http import JsonResponse, HttpResponseForbidden
 
@@ -76,9 +76,49 @@ def categorias_edit(request, pk):
 
 # Inicio Productos
 
+def _parametro_decimal(clave, default="0"):
+    parametro = ParametroSistema.objects.filter(clave=clave, activo=True).first()
+    if not parametro:
+        return Decimal(str(default))
+    try:
+        return Decimal(str(parametro.valor))
+    except (InvalidOperation, TypeError, ValueError):
+        return Decimal(str(default))
+
+
+def _redondear_cajas(value):
+    return Decimal(value or 0).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+
+
+def _preparar_stock_cajas(producto, promedio_peso_variable):
+    stock = Decimal(producto.stock or 0)
+    factor = None
+
+    if producto.maneja_peso_variable:
+        factor = promedio_peso_variable
+    else:
+        conversiones = list(producto.conversiones_metricas.all())
+        conversion = next((c for c in conversiones if c.activo), conversiones[0] if conversiones else None)
+        if conversion:
+            factor = conversion.factor_conversion
+
+    if not factor or Decimal(factor) <= 0:
+        producto.stock_cajas = None
+        producto.stock_cajas_disponible = False
+        return
+
+    producto.stock_cajas = _redondear_cajas(stock / Decimal(factor))
+    producto.stock_cajas_disponible = True
+
+
 @permiso_requerido("catalogos.view_producto")
 def productos_list(request):
     productos = Producto.objects.all().prefetch_related("conversiones_metricas").order_by("nombre")
+    promedio_peso_variable = _parametro_decimal("ARRACHERA_PROM_CAJA", "0")
+
+    for producto in productos:
+        _preparar_stock_cajas(producto, promedio_peso_variable)
+
     return render(request, "catalogos/productos_list.html", {
         "productos": productos
     })

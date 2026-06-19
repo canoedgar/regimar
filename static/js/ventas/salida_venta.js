@@ -820,9 +820,12 @@
 
   function formatDate(value){
     if (!value) return "";
-    const d = new Date(`${value}T00:00:00`);
-    if (Number.isNaN(d.getTime())) return value;
-    return d.toLocaleDateString("es-MX", { year: "numeric", month: "2-digit", day: "2-digit" });
+    const text = String(value).trim();
+    const iso = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+    const dmy = text.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+    if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
+    return text;
   }
 
   function formatQty(value){

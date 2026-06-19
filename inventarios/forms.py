@@ -1,5 +1,7 @@
 # inventarios/forms.py
 from django import forms
+
+from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 from django.forms import inlineformset_factory, formset_factory
 from catalogos.models import Producto, Categoria, Proveedor, Cliente, Almacen
 from .models import EntradaInventario, EntradaInventarioDetalle
@@ -25,7 +27,8 @@ class EntradaOCFacturaForm(forms.Form):
     )
     fecha = forms.DateField(
         label="Fecha",
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"})
+        widget=UniversalDateInput(),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS,
     )
     proveedor = forms.CharField(
         label="Proveedor",
@@ -191,7 +194,7 @@ class EntradaManualForm(forms.ModelForm):
         ]
         widgets = {
             "folio": forms.TextInput(attrs={"class": "form-control", "readonly": "readonly"}),
-            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha": UniversalDateInput(),
             "proveedor": forms.Select(attrs={"class": "form-select", "id": "proveedorSelect"}),
             "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
             "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
@@ -255,14 +258,8 @@ class AjusteInventarioForm(forms.Form):
 
     fecha = forms.DateField(
         required=True,
-        widget=forms.DateInput(
-            format="%Y-%m-%d",
-            attrs={
-                "type": "date",
-                "class": "form-control",
-            }
-        ),
-        input_formats=["%Y-%m-%d"], 
+        widget=UniversalDateInput(),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS, 
     )
 
     producto = forms.ModelChoiceField(
@@ -324,8 +321,8 @@ class TraspasoInventarioForm(forms.Form):
     fecha = forms.DateField(
         label="Fecha de aplicación",
         required=True,
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
-        input_formats=["%Y-%m-%d"],
+        widget=UniversalDateInput(),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS,
     )
     almacen_origen = forms.ModelChoiceField(
         label="Almacén origen",
@@ -401,7 +398,7 @@ class SalidaProyectoForm(forms.ModelForm):
         fields = ["folio", "fecha", "proyecto", "documento_referencia", "motivo", "observaciones"]
         widgets = {
             "folio": forms.TextInput(attrs={"class": "form-control"}),
-            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha": UniversalDateInput(),
             "proyecto": forms.Select(attrs={"class": "form-select"}),
             "documento_referencia": forms.TextInput(attrs={"class": "form-control"}),
             "motivo": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
@@ -450,7 +447,7 @@ class SalidaVentaForm(forms.ModelForm):
         fields = ["folio", "fecha", "cliente_ref", "forma_pago_venta", "estado_pago", "cliente", "cliente_direccion", "cliente_contacto", "logo_nota", "documento_referencia", "motivo", "observaciones"]
         widgets = {
             "folio": forms.TextInput(attrs={"class": "form-control"}),
-            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha": UniversalDateInput(),
             "cliente_ref": forms.Select(attrs={"class": "form-select"}),
             "forma_pago_venta": forms.Select(attrs={"class": "form-select"}),
             "estado_pago": forms.Select(attrs={"class": "form-select"}),
@@ -530,7 +527,7 @@ class SalidaVentaEdicionForm(forms.ModelForm):
             "observaciones",
         ]
         widgets = {
-            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha": UniversalDateInput(),
             "cliente_ref": forms.Select(attrs={"class": "form-select"}),
             "forma_pago_venta": forms.Select(attrs={"class": "form-select"}),
             "estado_pago": forms.Select(attrs={"class": "form-select"}),

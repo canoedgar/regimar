@@ -38,7 +38,7 @@
         <thead class="table-light"><tr><th>Folio</th><th>Fecha</th><th class="text-end">Total nota</th><th class="text-end">Pagado</th><th class="text-end">Saldo pendiente</th><th class="text-end">Acciones</th></tr></thead>
         <tbody>
           {% for nota in estado.notas_pendientes %}
-            <tr><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"d/m/Y" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-table sg-btn-sm" title="Pagar nota"><i class="bi bi-cash"></i></a>{% if estado.saldo_favor > 0 %}<a href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}" class="sg-btn-table sg-btn-sm" title="Aplicar saldo"><i class="bi bi-check2-circle"></i></a>{% endif %}</td></tr>
+            <tr><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"Y-m-d" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-table sg-btn-sm" title="Pagar nota"><i class="bi bi-cash"></i></a>{% if estado.saldo_favor > 0 %}<a href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}" class="sg-btn-table sg-btn-sm" title="Aplicar saldo"><i class="bi bi-check2-circle"></i></a>{% endif %}</td></tr>
           {% empty %}
             <tr><td colspan="6" class="sg-empty-state">El cliente no tiene notas pendientes.</td></tr>
           {% endfor %}
@@ -48,7 +48,7 @@
     <div class="sg-mobile-list d-md-none">
       {% for nota in estado.notas_pendientes %}
         <article class="sg-mobile-card">
-          <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Folio</span><span class="sg-mobile-card-title">{{ nota.folio }}</span><span class="sg-mobile-card-subtitle">{{ nota.fecha|date:"d/m/Y" }}</span></div></div>
+          <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Folio</span><span class="sg-mobile-card-title">{{ nota.folio }}</span><span class="sg-mobile-card-subtitle">{{ nota.fecha|date:"Y-m-d" }}</span></div></div>
           <div class="sg-mobile-card-grid">
             <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Total nota</span><span class="sg-mobile-card-value">${{ nota.total_nota|floatformat:2|intcomma }}</span></div>
             <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Pagado</span><span class="sg-mobile-card-value">${{ nota.total_aplicado|floatformat:2|intcomma }}</span></div>
@@ -86,18 +86,48 @@
     </div>
   </section>
 
-  <div class="cartera-grid-2">
+  <div class="cartera-grid-2 cartera-estado-movimientos-grid">
     <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
       <div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-clock-history"></i>Historial de pagos</h5><p class="sg-page-header-subtitle mb-0">Mostrando {% if movimientos_opcion == 'todos' %}todos{% else %}máximo {{ movimientos_opcion }}{% endif %} de {{ total_pagos }} pagos.</p></div>
       <div class="table-responsive d-none d-md-block sg-no-mobile-grid">
-        <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid"><thead class="table-light"><tr><th>Pago</th><th>Fecha pago</th><th>Tipo</th><th>Referencia</th><th class="text-end">Recibido</th><th class="text-end">Aplicado</th></tr></thead><tbody>
-          {% for pago in estado.pagos %}<tr><td><a href="{% url 'cartera:pago_detalle' pago.id %}" class="fw-semibold">#{{ pago.id }}</a></td><td>{{ pago.fecha|date:"d/m/Y" }}</td><td>{{ pago.get_tipo_aplicacion_display }}</td><td>{{ pago.referencia|default:"—" }}</td><td class="text-end">${{ pago.monto_recibido|floatformat:2|intcomma }}</td><td class="text-end">${{ pago.total_aplicado|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td colspan="6" class="sg-empty-state">Sin pagos registrados.</td></tr>{% endfor %}
+        <table class="table table-hover align-middle mb-0 sg-table sg-fit-table sg-no-mobile-grid cartera-payment-history-table">
+          <colgroup>
+            <col class="cartera-payment-col-id">
+            <col class="cartera-payment-col-date">
+            <col class="cartera-payment-col-type">
+            <col class="cartera-payment-col-reference">
+            <col class="cartera-payment-col-amount">
+            <col class="cartera-payment-col-amount">
+          </colgroup>
+          <thead class="table-light">
+            <tr>
+              <th class="sg-nowrap">Pago</th>
+              <th class="sg-nowrap">Fecha pago</th>
+              <th>Tipo</th>
+              <th>Referencia</th>
+              <th class="text-end">Recibido</th>
+              <th class="text-end">Aplicado</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for pago in estado.pagos %}
+            <tr>
+              <td class="sg-nowrap"><a href="{% url 'cartera:pago_detalle' pago.id %}" class="fw-semibold">#{{ pago.id }}</a></td>
+              <td class="sg-nowrap">{{ pago.fecha|date:"Y-m-d" }}</td>
+              <td>{{ pago.get_tipo_aplicacion_display }}</td>
+              <td>{{ pago.referencia|default:"—" }}</td>
+              <td class="text-end">${{ pago.monto_recibido|floatformat:2|intcomma }}</td>
+              <td class="text-end">${{ pago.total_aplicado|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6" class="sg-empty-state">Sin pagos registrados.</td></tr>
+          {% endfor %}
         </tbody></table>
       </div>
       <div class="sg-mobile-list d-md-none">
         {% for pago in estado.pagos %}
           <article class="sg-mobile-card">
-            <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Pago</span><a href="{% url 'cartera:pago_detalle' pago.id %}" class="sg-mobile-card-title">#{{ pago.id }}</a><span class="sg-mobile-card-subtitle">{{ pago.fecha|date:"d/m/Y" }}</span></div></div>
+            <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Pago</span><a href="{% url 'cartera:pago_detalle' pago.id %}" class="sg-mobile-card-title">#{{ pago.id }}</a><span class="sg-mobile-card-subtitle">{{ pago.fecha|date:"Y-m-d" }}</span></div></div>
             <div class="sg-mobile-card-grid">
               <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Tipo</span><span class="sg-mobile-card-value">{{ pago.get_tipo_aplicacion_display }}</span></div>
               <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Referencia</span><span class="sg-mobile-card-value">{{ pago.referencia|default:"—" }}</span></div>
@@ -114,12 +144,12 @@
     <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
       <div class="card-header"><h5 class="sg-page-header-title"><i class="bi bi-arrow-left-right"></i>Movimientos de saldo a favor</h5><p class="sg-page-header-subtitle mb-0">Mostrando {% if movimientos_opcion == 'todos' %}todos{% else %}máximo {{ movimientos_opcion }}{% endif %} de {{ total_movimientos_saldo }} movimientos.</p></div>
       <div class="table-responsive d-none d-md-block sg-no-mobile-grid"><table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid"><thead class="table-light"><tr><th>Fecha pago</th><th>Tipo</th><th>Referencia</th><th class="text-end">Monto</th></tr></thead><tbody>
-        {% for mov in movimientos_saldo %}<tr><td>{{ mov.fecha|date:"d/m/Y H:i" }}</td><td>{{ mov.get_tipo_display }}</td><td>{{ mov.referencia|default:"—" }}</td><td class="text-end fw-semibold">${{ mov.monto|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td colspan="4" class="sg-empty-state">Sin movimientos de saldo a favor.</td></tr>{% endfor %}
+        {% for mov in movimientos_saldo %}<tr><td>{{ mov.fecha|date:"Y-m-d H:i" }}</td><td>{{ mov.get_tipo_display }}</td><td>{{ mov.referencia|default:"—" }}</td><td class="text-end fw-semibold">${{ mov.monto|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td colspan="4" class="sg-empty-state">Sin movimientos de saldo a favor.</td></tr>{% endfor %}
       </tbody></table></div>
       <div class="sg-mobile-list d-md-none">
         {% for mov in movimientos_saldo %}
           <article class="sg-mobile-card">
-            <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Movimiento</span><span class="sg-mobile-card-title">{{ mov.get_tipo_display }}</span><span class="sg-mobile-card-subtitle">{{ mov.fecha|date:"d/m/Y H:i" }}</span></div></div>
+            <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Movimiento</span><span class="sg-mobile-card-title">{{ mov.get_tipo_display }}</span><span class="sg-mobile-card-subtitle">{{ mov.fecha|date:"Y-m-d H:i" }}</span></div></div>
             <div class="sg-mobile-card-grid">
               <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Referencia</span><span class="sg-mobile-card-value">{{ mov.referencia|default:"—" }}</span></div>
               <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Monto</span><span class="sg-mobile-card-value">${{ mov.monto|floatformat:2|intcomma }}</span></div>

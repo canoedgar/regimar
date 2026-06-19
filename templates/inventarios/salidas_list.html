@@ -5,254 +5,218 @@
 {% block page_title %}Salidas de inventario{% endblock %}
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <div class="card border-0 shadow-sm mb-3 sg-form-card sg-table-card">
-      <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="mb-1">
-            <i class="bi bi-box-arrow-up me-2"></i>
-            Salidas de inventario
-          </h5>
-          <p class="mb-0 sg-form-help">
-            Consulta las salidas por ventas, ajustes negativos y traspasos enviados entre almacenes.
-          </p>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" class="sg-btn-primary sg-btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-plus-circle me-1"></i>
-            Nueva salida
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <a class="dropdown-item" href="{% url 'salida_venta_create' %}">
-                <i class="bi bi-cart-check me-2"></i>Venta
-              </a>
-            </li>            
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{% url 'ajuste_inventario' %}">
-                <i class="bi bi-sliders me-2"></i>Ajuste
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'traspaso_inventario' %}">
-                <i class="bi bi-arrow-left-right me-2"></i>Traspaso
-              </a>
-            </li>
-          </ul>
-        </div>
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="mb-1">
+          <i class="bi bi-box-arrow-up me-2"></i>
+          Salidas de inventario
+        </h5>
+        <p class="mb-0 sg-form-help">
+          Consulta las salidas por ventas, ajustes negativos y traspasos enviados entre almacenes.
+        </p>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Filtros -->
-  <div class="col-12 mb-3">
-    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
-      <div class="card-body d-flex flex-wrap align-items-center gap-2">
-        <span class="fw-semibold me-2">Filtrar:</span>
+  <section class="sg-toolbar sg-list-toolbar" aria-label="Filtros de salidas de inventario">
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form">
+      <input type="hidden" name="tipo" value="{{ tipo_actual|default:'' }}">
 
-        <form method="get" class="d-flex flex-wrap align-items-center gap-2 sg-form-actions sg-form-actions">
-          <input type="hidden" name="tipo" value="{{ tipo_actual|default:'' }}">
-          <select name="almacen" class="form-select form-select-sm sg-form-control"">
-            <option value="">Todos los almacenes</option>
-            {% for a in almacenes %}
-              <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
-                {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
-              </option>
-            {% endfor %}
-          </select>
+      <div class="sg-list-filter-field sg-list-filter-field-wide">
+        <label class="sg-form-label small" for="salida-almacen">Almacén</label>
+        <select id="salida-almacen" name="almacen" class="form-select form-select-sm sg-form-control">
+          <option value="">Todos los almacenes</option>
+          {% for a in almacenes %}
+            <option value="{{ a.id }}" {% if almacen_id|stringformat:"s" == a.id|stringformat:"s" %}selected{% endif %}>
+              {{ a.codigo }} - {{ a.nombre }}{% if a.tipo == "VIRTUAL" %} (Virtual){% endif %}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
 
-          <button class="sg-btn-icon sg-btn-sm" type="submit" title="Aplicar">
-            <i class="bi bi-funnel"></i>
-          </button>
-
-          {% if tipo_actual or almacen_id %}
-            <a class="sg-btn-secondary sg-btn-sm" href="{% url 'salidas_list' %}" title="Limpiar filtros">
-              <i class="bi bi-x-lg"></i>
-            </a>
-          {% endif %}
-        </form>
-
-        <div class="vr mx-2 d-none d-md-block"></div>
-
-        <a href="{% url 'salidas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
-           class="sg-btn-sm {% if not tipo_actual %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
-          Todas
-        </a>
-
-        {% for value, label in TIPO_CHOICES %}
-          <a href="{% url 'salidas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
-             class="sg-btn-sm {% if tipo_actual == value %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
-            {{ label }}
+      <div class="sg-list-filter-actions">
+        <button class="sg-btn-primary sg-btn-sm" type="submit">
+          <i class="bi bi-funnel me-1"></i>
+          Filtrar
+        </button>
+        {% if tipo_actual or almacen_id %}
+          <a class="sg-btn-secondary sg-btn-sm" href="{% url 'salidas_list' %}" title="Limpiar filtros">
+            <i class="bi bi-x-lg me-1"></i>
+            Limpiar
           </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <div class="sg-list-toolbar-actions" aria-label="Tipos de salida">
+      <a href="{% url 'salidas_list' %}{% if almacen_id %}?almacen={{ almacen_id }}{% endif %}"
+         class="sg-btn-sm {% if not tipo_actual %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
+        Todas
+      </a>
+
+      {% for value, label in TIPO_CHOICES %}
+        <a href="{% url 'salidas_list' %}?tipo={{ value }}{% if almacen_id %}&almacen={{ almacen_id }}{% endif %}"
+           class="sg-btn-sm {% if tipo_actual == value %}sg-btn-primary{% else %}sg-btn-outline{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid sg-fit-table">
+          <thead class="table-light">
+            <tr>
+              <th>Folio</th>
+              <th>Fecha</th>
+              <th>Almacén / traspaso</th>
+              <th>Tipo</th>
+              <th>Cliente</th>
+              <th>Usuario</th>
+              <th class="text-end sg-nowrap">Productos</th>
+              <th class="text-end sg-nowrap">Importe total</th>
+              <th class="text-end sg-actions-col-sm">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for salida in salidas %}
+              <tr>
+                <td class="fw-semibold sg-nowrap">{{ salida.folio }}</td>
+                <td class="sg-nowrap">{{ salida.fecha|date:"Y-m-d" }}</td>
+
+                <td>
+                  {% if salida.tipo == "TRS" %}
+                    <span class="badge text-bg-danger">{{ salida.almacen_origen.codigo|default:"—" }}</span>
+                    <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                    <span class="badge text-bg-light border">{{ salida.almacen_destino.codigo|default:"—" }}</span>
+                    <div class="sg-form-help">
+                      {{ salida.almacen_origen.nombre|default:"Origen no definido" }} → {{ salida.almacen_destino.nombre|default:"Destino no definido" }}
+                    </div>
+                  {% elif salida.almacen %}
+                    <span class="badge text-bg-light border">{{ salida.almacen.codigo }}</span>
+                    <span class="sg-form-help">{{ salida.almacen.nombre }}</span>
+                  {% else %}
+                    <span class="sg-form-help">—</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if salida.tipo == "AJN" %}
+                    <span class="badge text-bg-info text-dark">
+                      <i class="bi bi-sliders me-1"></i>
+                      Ajuste (-)
+                    </span>
+                  {% elif salida.tipo == "TRS" %}
+                    <span class="badge text-bg-dark">
+                      <i class="bi bi-arrow-left-right me-1"></i>
+                      Traspaso (-)
+                    </span>
+                  {% else %}
+                    <span class="badge text-bg-danger">
+                      <i class="bi bi-box-arrow-up me-1"></i>
+                      {{ salida.get_tipo_display }}
+                    </span>
+                  {% endif %}
+                </td>
+
+                <td>{{ salida.cliente|default:salida.proveedor|default:"-" }}</td>
+
+                <td>
+                  {% if salida.registrado_por %}
+                    {{ salida.registrado_por.get_username }}
+                  {% else %}
+                    <span class="sg-form-help">—</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-end sg-nowrap">{{ salida.total_productos|default:"0" }}</td>
+
+                <td class="text-end sg-nowrap">$ {{ salida.total_importe|default:"0.00"|dinero_decimal }}</td>
+
+                <td class="text-end sg-table-actions sg-actions-cell sg-actions-cell-sm">
+                  <a href="{% url 'salida_detalle' salida.id %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="text-center py-4 sg-form-help sg-empty-state">
+                  No hay salidas registradas.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for salida in salidas %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div>
+                <span class="sg-mobile-card-label">Folio</span>
+                <strong class="sg-mobile-card-title">{{ salida.folio }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ salida.fecha|date:"Y-m-d" }}</span>
+              </div>
+              <div>
+                {% if salida.tipo == "AJN" %}
+                  <span class="badge text-bg-info text-dark">Ajuste (-)</span>
+                {% elif salida.tipo == "TRS" %}
+                  <span class="badge text-bg-dark">Traspaso (-)</span>
+                {% else %}
+                  <span class="badge text-bg-danger">{{ salida.get_tipo_display }}</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Almacén</span>
+                <span class="sg-mobile-card-value">
+                  {% if salida.tipo == "TRS" %}
+                    {{ salida.almacen_origen.codigo|default:"—" }} - {{ salida.almacen_origen.nombre|default:"Origen" }} → {{ salida.almacen_destino.codigo|default:"—" }} - {{ salida.almacen_destino.nombre|default:"Destino" }}
+                  {% elif salida.almacen %}
+                    {{ salida.almacen.codigo }} - {{ salida.almacen.nombre }}
+                  {% else %}
+                    —
+                  {% endif %}
+                </span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Cliente / Proveedor</span>
+                <span class="sg-mobile-card-value">{{ salida.cliente|default:salida.proveedor|default:"—" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Usuario</span>
+                <span class="sg-mobile-card-value">{% if salida.registrado_por %}{{ salida.registrado_por.get_username }}{% else %}—{% endif %}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Productos</span>
+                <span class="sg-mobile-card-value">{{ salida.total_productos|default:"0" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Importe total</span>
+                <span class="sg-mobile-card-value">$ {{ salida.total_importe|default:"0.00"|dinero_decimal }}</span>
+              </div>
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'salida_detalle' salida.id %}" class="sg-btn-outline sg-btn-sm">
+                <i class="bi bi-eye"></i>
+                Ver detalle
+              </a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay salidas registradas.</div>
         {% endfor %}
       </div>
     </div>
-  </div>
-
-  <div class="col-12">
-    <div class="card border-0 shadow-sm sg-form-card sg-table-card">
-      <div class="card-body">
-        <div class="table-responsive d-none d-md-block">
-          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
-            <thead class="table-light">
-              <tr>
-                <th>Folio</th>
-                <th>Fecha</th>
-                <th>Almacén / traspaso</th>
-                <th>Tipo</th>
-                <th>Cliente</th>
-                <th>Usuario</th>
-                <th class="text-end">Productos</th>
-                <th class="text-end">Importe total</th>
-                <th class="text-end">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for salida in salidas %}
-                <tr>
-                  <td class="fw-semibold">{{ salida.folio }}</td>
-                  <td>{{ salida.fecha|date:"d/m/Y" }}</td>
-
-                  <td>
-                    {% if salida.tipo == "TRS" %}
-                      <span class="badge text-bg-danger">{{ salida.almacen_origen.codigo|default:"—" }}</span>
-                      <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                      <span class="badge text-bg-light border">{{ salida.almacen_destino.codigo|default:"—" }}</span>
-                      <div class="sg-form-help">
-                        {{ salida.almacen_origen.nombre|default:"Origen no definido" }} → {{ salida.almacen_destino.nombre|default:"Destino no definido" }}
-                      </div>
-                    {% elif salida.almacen %}
-                      <span class="badge text-bg-light border">{{ salida.almacen.codigo }}</span>
-                      <span class="sg-form-help">{{ salida.almacen.nombre }}</span>
-                    {% else %}
-                      <span class="sg-form-help">—</span>
-                    {% endif %}
-                  </td>
-
-                  <td>
-                    {% if salida.tipo == "AJN" %}
-                      <span class="badge text-bg-info text-dark">
-                        <i class="bi bi-sliders me-1"></i>
-                        Ajuste (-)
-                      </span>
-                    {% elif salida.tipo == "TRS" %}
-                      <span class="badge text-bg-dark">
-                        <i class="bi bi-arrow-left-right me-1"></i>
-                        Traspaso (-)
-                      </span>
-                    {% else %}
-                      <span class="badge text-bg-danger">
-                        <i class="bi bi-box-arrow-up me-1"></i>
-                        {{ salida.get_tipo_display }}
-                      </span>
-                    {% endif %}
-                  </td>
-
-                  <td>
-                    {{ salida.cliente|default:salida.proveedor|default:"-" }}
-                  </td>
-
-                  <td>
-                    {% if salida.registrado_por %}
-                      {{ salida.registrado_por.get_username }}
-                    {% else %}
-                      <span class="sg-form-help">—</span>
-                    {% endif %}
-                  </td>
-
-                  <td class="text-end">
-                    {{ salida.total_productos|default:"0" }}
-                  </td>
-
-                  <td class="text-end">
-                    $ {{ salida.total_importe|default:"0.00"|dinero_decimal }}
-                  </td>
-
-                  <td class="text-end sg-table-actions">
-                    <a href="{% url 'salida_detalle' salida.id %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
-                      <i class="bi bi-eye"></i>
-                    </a>
-                  </td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="9" class="text-center py-4 sg-form-help sg-empty-state">
-                    No hay salidas registradas.
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="sg-mobile-list d-md-none">
-          {% for salida in salidas %}
-            <article class="sg-mobile-card">
-              <div class="sg-mobile-card-header">
-                <div>
-                  <span class="sg-mobile-card-label">Folio</span>
-                  <strong class="sg-mobile-card-title">{{ salida.folio }}</strong>
-                  <span class="sg-mobile-card-subtitle">{{ salida.fecha|date:"d/m/Y" }}</span>
-                </div>
-                <div>
-                  {% if salida.tipo == "AJN" %}
-                    <span class="badge text-bg-info text-dark">Ajuste (-)</span>
-                  {% elif salida.tipo == "TRS" %}
-                    <span class="badge text-bg-dark">Traspaso (-)</span>
-                  {% else %}
-                    <span class="badge text-bg-danger">{{ salida.get_tipo_display }}</span>
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="sg-mobile-card-grid">
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Almacén</span>
-                  <span class="sg-mobile-card-value">
-                    {% if salida.tipo == "TRS" %}
-                      {{ salida.almacen_origen.codigo|default:"—" }} - {{ salida.almacen_origen.nombre|default:"Origen" }} → {{ salida.almacen_destino.codigo|default:"—" }} - {{ salida.almacen_destino.nombre|default:"Destino" }}
-                    {% elif salida.almacen %}
-                      {{ salida.almacen.codigo }} - {{ salida.almacen.nombre }}
-                    {% else %}
-                      —
-                    {% endif %}
-                  </span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Cliente / Proveedor</span>
-                  <span class="sg-mobile-card-value">{{ salida.cliente|default:salida.proveedor|default:"—" }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Usuario</span>
-                  <span class="sg-mobile-card-value">{% if salida.registrado_por %}{{ salida.registrado_por.get_username }}{% else %}—{% endif %}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Productos</span>
-                  <span class="sg-mobile-card-value">{{ salida.total_productos|default:"0" }}</span>
-                </div>
-                <div class="sg-mobile-card-field">
-                  <span class="sg-mobile-card-label">Importe total</span>
-                  <span class="sg-mobile-card-value">$ {{ salida.total_importe|default:"0.00"|dinero_decimal }}</span>
-                </div>
-              </div>
-
-              <div class="sg-mobile-card-actions">
-                <a href="{% url 'salida_detalle' salida.id %}" class="sg-btn-outline sg-btn-sm">
-                  <i class="bi bi-eye"></i>
-                  Ver detalle
-                </a>
-              </div>
-            </article>
-          {% empty %}
-            <div class="sg-empty-state">No hay salidas registradas.</div>
-          {% endfor %}
-        </div>
-
-      </div>
-    </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

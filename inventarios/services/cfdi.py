@@ -7,7 +7,7 @@ def parse_cfdi_header(xml_text: str):
     {
       "folio": str,
       "fecha": str (ISO date: YYYY-MM-DD)          <- para hidden/BD
-      "fecha_display": str (DD/MM/YYYY HH:MM:SS)   <- para UI
+      "fecha_display": str (YYYY-MM-DD HH:MM:SS)   <- para UI
       "uuid": str,
       "proveedor_nombre": str,
       "proveedor_rfc": str,
@@ -22,7 +22,7 @@ def parse_cfdi_header(xml_text: str):
     data = {
         "folio": "",
         "fecha": "",          # ISO YYYY-MM-DD
-        "fecha_display": "",  # DD/MM/YYYY HH:MM:SS
+        "fecha_display": "",  # YYYY-MM-DD HH:MM:SS
         "uuid": "",
         "proveedor_nombre": "",
         "proveedor_rfc": "",
@@ -38,12 +38,12 @@ def parse_cfdi_header(xml_text: str):
 
         raw_fecha = comprobante.attrib.get("Fecha", "").strip()
 
-        # fecha ISO para backend (YYYY-mm-dd)
+        # fecha ISO para backend/UI (YYYY-MM-DD)
         if raw_fecha:
             try:
                 dt = datetime.strptime(raw_fecha, "%Y-%m-%dT%H:%M:%S")
                 data["fecha"] = dt.strftime("%Y-%m-%d")
-                data["fecha_display"] = dt.strftime("%d/%m/%Y %H:%M:%S")
+                data["fecha_display"] = dt.strftime("%Y-%m-%d %H:%M:%S")
                 
             except ValueError:
                 # fallback si viene con fracciones o timezone (si aparece)                

@@ -50,3 +50,15 @@ def precio_entero_input(value):
 def cantidad_decimal(value):
     """Muestra cantidades/stock con 2 decimales."""
     return intcomma(_to_decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+
+
+@register.filter
+def numero_compacto(value):
+    """Muestra números con máximo 2 decimales, ocultando .00 cuando aplica."""
+    numero = _to_decimal(value).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if numero == numero.to_integral_value():
+        return intcomma(numero.quantize(Decimal("1")))
+    texto = format(numero.normalize(), "f")
+    if "." in texto:
+        texto = texto.rstrip("0").rstrip(".")
+    return intcomma(texto)
