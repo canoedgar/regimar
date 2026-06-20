@@ -312,7 +312,8 @@
 
     lineas.forEach(function (l, idx) {
       const tr = document.createElement("tr");
-      const importe = Number(l.cantidad || 0) * Number(l.costo_unitario || 0);
+      const cantidadInventario = Number(l.cantidad_convertida || l.cantidad || 0);
+      const importe = cantidadInventario * Number(l.costo_unitario || 0);
       total += importe;
 
       tr.innerHTML = `

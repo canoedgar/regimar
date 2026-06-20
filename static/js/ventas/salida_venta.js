@@ -179,10 +179,9 @@
     productoPresentacionSelect.value = base ? String(base.id) : "";
   }
 
-  function selectPrimerAlmacenDisponible(producto){
-    if (!productoAlmacenSelect || !producto) return;
-    const almacen = (producto.almacenes || []).find(a => getAllocationDisponibleKg(producto, a.id) > 0) || (producto.almacenes || [])[0];
-    productoAlmacenSelect.value = almacen ? String(almacen.id) : "";
+  function limpiarAlmacenSeleccionado(){
+    if (!productoAlmacenSelect) return;
+    productoAlmacenSelect.value = "";
   }
 
   function esProductoPesoVariable(producto){
@@ -472,8 +471,8 @@
     renderPresentacionesProducto(producto);
     selectMetricaBaseProducto(producto);
     renderAlmacenesProducto(producto);
-    selectPrimerAlmacenDisponible(producto);
-    productoQty.disabled = false;
+    limpiarAlmacenSeleccionado();
+    productoQty.disabled = true;
     btnAddProducto.disabled = true;
     productoPresentacionText.textContent = "";
     if (productoAlmacenStockText){
@@ -624,9 +623,15 @@
     if (!selectedProducto){ alert("Selecciona un producto de la lista."); productoSearch.focus(); return; }
     const presentacion = getSelectedPresentacion();
     if (!presentacion){ alert("Selecciona la presentación que se venderá."); productoPresentacionSelect.focus(); return; }
-    if (!validarCantidadSeleccionada()){ productoQty.focus(); return; }
 
     const almacenId = productoAlmacenSelect.value;
+    if (!almacenId){
+      alert("Selecciona el almacén desde el que se descontará el inventario.");
+      productoAlmacenSelect.focus();
+      return;
+    }
+
+    if (!validarCantidadSeleccionada()){ productoQty.focus(); return; }
     const almacen = (selectedProducto.almacenes || []).find(a => String(a.id) === String(almacenId));
     const variable = esProductoPesoVariable(selectedProducto);
     const qCapturada = decimal(productoQty.value || 0);

@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import permiso_requerido
-from catalogos.models import Almacen
+from catalogos.models import Almacen, Producto, ProductoMetricaConversion
 
 from ..models import (
     EntradaInventario, EntradaInventarioDetalle,
@@ -34,13 +34,99 @@ def _decimal(value, default="0"):
         return Decimal(default)
 
 
+def _decimal_texto(value):
+    value = _decimal(value)
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
+
+def _productos_conversiones_qs():
+    return (
+        Producto.objects
+        .prefetch_related("conversiones_metricas")
+        .order_by("nombre")
+    )
+
+
+def _build_productos_conversiones_json(productos):
+    data = {}
+    for producto in productos:
+        conversiones = []
+        for conversion in producto.conversiones_metricas.all():
+            if not conversion.activo:
+                continue
+            conversiones.append({
+                "id": conversion.id,
+                "nombre": conversion.nombre,
+                "unidad_origen": conversion.unidad_origen,
+                "cantidad_origen": _decimal_texto(conversion.cantidad_origen),
+                "factor_conversion": _decimal_texto(conversion.factor_conversion),
+                "texto": conversion.equivalencia_texto,
+            })
+
+        data[str(producto.id)] = {
+            "id": producto.id,
+            "nombre": producto.nombre,
+            "metrica": producto.metrica or "kg",
+            "conversiones": conversiones,
+        }
+    return data
+
+
+def _normalizar_captura_entrada(producto, cantidad_capturada, conversion_id_raw):
+    metrica_base = getattr(producto, "metrica", None) or "kg"
+    conversion = None
+    conversion_id = None
+
+    if str(conversion_id_raw or "").isdigit():
+        conversion_id = int(conversion_id_raw)
+        try:
+            conversion = ProductoMetricaConversion.objects.get(
+                id=conversion_id,
+                producto_id=producto.pk,
+                activo=True,
+            )
+        except ProductoMetricaConversion.DoesNotExist as exc:
+            raise ValueError("La presentación seleccionada ya no es válida para ese producto.") from exc
+
+    cantidad_base = cantidad_capturada
+    presentacion_nombre = metrica_base
+    equivalencia_texto = f"Base ({metrica_base})"
+    factor_conversion = Decimal("1")
+    presentacion_conversion_id = str(conversion_id or "default")
+
+    if conversion:
+        cantidad_base = conversion.convertir_a_default(cantidad_capturada)
+        presentacion_nombre = conversion.unidad_origen or conversion.nombre
+        equivalencia_texto = conversion.equivalencia_texto
+        factor_conversion = conversion.factor_conversion
+
+    if cantidad_base <= 0:
+        raise ValueError("La cantidad convertida debe ser mayor a 0.")
+
+    return {
+        "cantidad_base": cantidad_base,
+        "cantidad_presentacion": cantidad_capturada,
+        "presentacion_nombre": presentacion_nombre,
+        "presentacion_conversion_id": presentacion_conversion_id,
+        "presentacion_factor_conversion": factor_conversion,
+        "presentacion_metrica_default": metrica_base,
+        "presentacion_equivalencia_texto": equivalencia_texto,
+    }
+
+
 def _render_ajuste(request, form, almacenes_qs, almacen, status=200):
     recientes = _ajustes_recientes(limit=10)
+    productos = _productos_conversiones_qs()
     return render(request, "inventarios/ajuste_inventario.html", {
         "form": form,
         "almacenes": almacenes_qs,
         "almacen": almacen,
         "ajustes_recientes": recientes,
+        "productos_conversiones_json": _build_productos_conversiones_json(productos),
+        "conversion_id_actual": (request.POST.get("conversion_id") or "") if request.method == "POST" else "",
     }, status=status)
 
 
@@ -158,8 +244,10 @@ def ajuste_inventario(request):
     fecha_capturada = form.cleaned_data["fecha"]
     producto = form.cleaned_data["producto"]
     cantidad = form.cleaned_data["cantidad"]
+    cantidad_capturada = cantidad
     precio_unitario = form.cleaned_data["precio_unitario"]
     tipo_ajuste = form.cleaned_data["tipo_ajuste"]
+    conversion_id_raw = (request.POST.get("conversion_id") or "").strip()
     motivo = (form.cleaned_data.get("motivo") or "").strip()
     observaciones = (form.cleaned_data.get("observaciones") or "").strip()
     obs = "\n".join([x for x in [motivo, observaciones] if x]).strip()
@@ -167,6 +255,15 @@ def ajuste_inventario(request):
     if cantidad is None or cantidad <= 0:
         messages.error(request, "La cantidad debe ser mayor a 0.")
         return _render_ajuste(request, form, almacenes_qs, almacen, status=400)
+
+    captura_entrada = None
+    if tipo_ajuste == AjusteInventarioForm.TIPO_AJUSTE_POSITIVO:
+        try:
+            captura_entrada = _normalizar_captura_entrada(producto, cantidad_capturada, conversion_id_raw)
+            cantidad = captura_entrada["cantidad_base"]
+        except ValueError as exc:
+            messages.error(request, str(exc))
+            return _render_ajuste(request, form, almacenes_qs, almacen, status=400)
 
     if EntradaInventario.objects.filter(folio=folio).exists() or SalidaInventario.objects.filter(folio=folio).exists():
         messages.error(request, f"El folio {folio} ya existe. Intenta nuevamente.")
@@ -192,8 +289,15 @@ def ajuste_inventario(request):
                     entrada=entrada,
                     producto=producto,
                     almacen=almacen,
+                    presentacion_nombre=captura_entrada["presentacion_nombre"],
+                    presentacion_conversion_id=captura_entrada["presentacion_conversion_id"],
+                    cantidad_presentacion=captura_entrada["cantidad_presentacion"],
+                    presentacion_factor_conversion=captura_entrada["presentacion_factor_conversion"],
+                    presentacion_metrica_default=captura_entrada["presentacion_metrica_default"],
+                    presentacion_equivalencia_texto=captura_entrada["presentacion_equivalencia_texto"],
                     cantidad=cantidad,
                     costo_unitario=precio_unitario,
+                    costo_total=cantidad * precio_unitario,
                 )
 
                 aplicar_entrada_con_costo(
@@ -275,10 +379,27 @@ def ajuste_stock_preview(request):
     producto_id = (request.GET.get("producto_id") or "").strip()
     almacen_id = (request.GET.get("almacen_id") or "").strip()
     tipo_ajuste = (request.GET.get("tipo_ajuste") or "").strip()
-    cantidad = _decimal(request.GET.get("cantidad"), default="0")
+    cantidad_capturada = _decimal(request.GET.get("cantidad"), default="0")
+    conversion_id_raw = (request.GET.get("conversion_id") or "").strip()
 
     if not producto_id.isdigit() or not almacen_id.isdigit():
         return JsonResponse({"ok": False, "message": "Selecciona almacén y producto."})
+
+    producto = Producto.objects.filter(pk=int(producto_id)).first()
+    if not producto:
+        return JsonResponse({"ok": False, "message": "Producto inválido."})
+
+    cantidad = cantidad_capturada
+    equivalencia_texto = ""
+    metrica_base = getattr(producto, "metrica", None) or "kg"
+    if tipo_ajuste == AjusteInventarioForm.TIPO_AJUSTE_POSITIVO:
+        try:
+            captura_entrada = _normalizar_captura_entrada(producto, cantidad_capturada, conversion_id_raw)
+            cantidad = captura_entrada["cantidad_base"]
+            equivalencia_texto = captura_entrada["presentacion_equivalencia_texto"]
+            metrica_base = captura_entrada["presentacion_metrica_default"]
+        except ValueError as exc:
+            return JsonResponse({"ok": False, "message": str(exc)})
 
     stock_actual = _stock_actual(int(producto_id), int(almacen_id))
     delta = cantidad if tipo_ajuste == AjusteInventarioForm.TIPO_AJUSTE_POSITIVO else -cantidad
@@ -295,12 +416,17 @@ def ajuste_stock_preview(request):
         message = "El ajuste dejaría inventario negativo. Reduce la cantidad o selecciona otro almacén."
     else:
         message = "El ajuste puede aplicarse sin dejar inventario negativo."
+        if tipo_ajuste == AjusteInventarioForm.TIPO_AJUSTE_POSITIVO:
+            message = f"El ajuste puede aplicarse. Se sumarán {_decimal_texto(cantidad)} {metrica_base} al inventario."
 
     return JsonResponse({
         "ok": True,
         "stock_actual": str(stock_actual),
         "stock_resultante": str(stock_resultante),
         "cantidad": str(cantidad),
+        "cantidad_capturada": str(cantidad_capturada),
+        "equivalencia_texto": equivalencia_texto,
+        "metrica_base": metrica_base,
         "costo_promedio": str(costo_promedio),
         "permite": permite,
         "message": message,
@@ -361,6 +487,12 @@ def deshacer_ajuste(request, tipo, pk):
                     salida=salida,
                     producto=detalle.producto,
                     almacen=almacen,
+                    presentacion_nombre=detalle.presentacion_nombre,
+                    presentacion_conversion_id=detalle.presentacion_conversion_id,
+                    cantidad_presentacion=detalle.cantidad_presentacion,
+                    presentacion_factor_conversion=detalle.presentacion_factor_conversion,
+                    presentacion_metrica_default=detalle.presentacion_metrica_default,
+                    presentacion_equivalencia_texto=detalle.presentacion_equivalencia_texto,
                     cantidad=cantidad,
                     precio_unitario=detalle.costo_unitario,
                     costo_unitario_aplicado=getattr(detalle.producto, "costo_promedio", 0) or 0,
@@ -401,8 +533,15 @@ def deshacer_ajuste(request, tipo, pk):
                     entrada=entrada,
                     producto=detalle.producto,
                     almacen=almacen,
+                    presentacion_nombre=detalle.presentacion_nombre,
+                    presentacion_conversion_id=detalle.presentacion_conversion_id,
+                    cantidad_presentacion=detalle.cantidad_presentacion,
+                    presentacion_factor_conversion=detalle.presentacion_factor_conversion,
+                    presentacion_metrica_default=detalle.presentacion_metrica_default,
+                    presentacion_equivalencia_texto=detalle.presentacion_equivalencia_texto,
                     cantidad=cantidad,
                     costo_unitario=costo_reversa,
+                    costo_total=cantidad * costo_reversa,
                 )
                 aplicar_entrada_con_costo(
                     producto_id=detalle.producto_id,

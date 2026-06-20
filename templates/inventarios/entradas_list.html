@@ -18,35 +18,6 @@
         </p>
       </div>
 
-      <div class="sg-page-actions">
-        <div class="btn-group">
-          <button type="button" class="sg-btn-primary sg-btn-md dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="bi bi-plus-circle me-1"></i>
-            Nueva entrada
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li>
-              <a class="dropdown-item" href="{% url 'entrada_ocf_create' %}">
-                <i class="bi bi-file-earmark-text me-2"></i>
-                Factura XML (OCF)
-              </a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="{% url 'entrada_manual_create' %}">
-                <i class="bi bi-journal-text me-2"></i>
-                Nota / remisión (Manual)
-              </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item" href="{% url 'traspaso_inventario' %}">
-                <i class="bi bi-arrow-left-right me-2"></i>
-                Traspaso entre almacenes
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
     </div>
   </section>
 

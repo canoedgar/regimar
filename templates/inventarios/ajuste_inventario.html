@@ -9,6 +9,12 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/inventarios.css' %}">
+<style>
+  /* Corrección local: evita que los campos se alineen hacia abajo por el align-items:end global de inventarios.css. */
+  .sg-ajuste-inventario-form .sg-form-grid {
+    align-items: flex-start;
+  }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -25,7 +31,7 @@
           </p>
         </div></div>
 
-        <form method="post" class="sg-inventory-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas aplicar este ajuste al inventario?" novalidate>
+        <form method="post" class="sg-inventory-form sg-ajuste-inventario-form" data-sg-prevent-enter-submit data-sg-confirm="¿Confirmas que deseas aplicar este ajuste al inventario?" novalidate>
           {% csrf_token %}
 
           {# Hidden: almacén seleccionado (sin tocar el form) #}
@@ -69,8 +75,16 @@
               {% for e in form.tipo_ajuste.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
 
+            <div class="col-md-6" id="conversionAjusteWrap">
+              <label class="sg-form-label" for="ajusteConversion">Métrica / presentación de entrada</label>
+              <select class="form-select sg-form-control" name="conversion_id" id="ajusteConversion" data-selected="{{ conversion_id_actual|default:'' }}">
+                <option value="">Base</option>
+              </select>
+              <div class="sg-form-help" id="conversionAjusteHelp">Selecciona cómo se capturará la entrada. El inventario se guardará convertido a la métrica base del producto.</div>
+            </div>
+
             <div class="col-md-6">
-              <label class="sg-form-label">Cantidad</label>
+              <label class="sg-form-label" id="cantidadAjusteLabel">Cantidad</label>
               {{ form.cantidad }}
               {% for e in form.cantidad.errors %}<div class="sg-form-error sg-validation-message">{{ e }}</div>{% endfor %}
             </div>
@@ -204,8 +218,11 @@
   </div>
 </div>
 
+{{ productos_conversiones_json|json_script:"productos-conversiones-data" }}
+
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    const productosData = JSON.parse(document.getElementById("productos-conversiones-data").textContent || "{}");
 
     // --- Sync almacén select -> hidden ---
     const almacenSelect = document.getElementById("almacenSelect");
@@ -232,6 +249,10 @@
     const fechaHelp = document.getElementById("fechaAjusteHelp");
     const productoSelect = document.getElementById("id_producto");
     const cantidadInput = document.getElementById("id_cantidad");
+    const cantidadLabel = document.getElementById("cantidadAjusteLabel");
+    const conversionWrap = document.getElementById("conversionAjusteWrap");
+    const conversionSelect = document.getElementById("ajusteConversion");
+    const conversionHelp = document.getElementById("conversionAjusteHelp");
     const btnAplicar = document.getElementById("btnAplicarAjuste");
     const precioLabel = document.getElementById("precioUnitarioLabel");
     const precioHelp = document.getElementById("precioUnitarioHelp");
@@ -240,12 +261,108 @@
     const stockActualValue = document.getElementById("stockActualValue");
     const stockResultanteValue = document.getElementById("stockResultanteValue");
 
+    function getProducto(pid) {
+      return productosData[String(pid)] || null;
+    }
+
+    function getConversion(pid, cid) {
+      const producto = getProducto(pid);
+      if (!producto || !cid) return null;
+      return (producto.conversiones || []).find(item => String(item.id) === String(cid)) || null;
+    }
+
+    function getMetricaBase(pid) {
+      const producto = getProducto(pid);
+      return producto ? (producto.metrica || "kg") : "kg";
+    }
+
+    function formatQty(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return value;
+      return n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 4 });
+    }
+
+    function calcularCantidadConvertida(pid, cantidad, conversionId) {
+      const qty = Number(cantidad || 0);
+      if (!qty) return 0;
+
+      const conversion = getConversion(pid, conversionId);
+      if (!conversion) return qty;
+
+      const cantidadOrigen = Number(conversion.cantidad_origen || 0);
+      const factor = Number(conversion.factor_conversion || 0);
+      if (!cantidadOrigen || !factor) return qty;
+
+      return (qty / cantidadOrigen) * factor;
+    }
+
+    function renderConversiones(productoId, selectedId) {
+      if (!conversionSelect) return;
+
+      const metrica = getMetricaBase(productoId);
+      const producto = getProducto(productoId);
+      conversionSelect.innerHTML = "";
+
+      const baseOption = document.createElement("option");
+      baseOption.value = "";
+      baseOption.textContent = "Base (" + metrica + ")";
+      conversionSelect.appendChild(baseOption);
+
+      if (producto) {
+        (producto.conversiones || []).forEach(c => {
+          const option = document.createElement("option");
+          option.value = c.id;
+          option.textContent = c.nombre + " (" + c.texto + ")";
+          if (selectedId && String(selectedId) === String(c.id)) option.selected = true;
+          conversionSelect.appendChild(option);
+        });
+      }
+
+      actualizarConversionPreview();
+    }
+
+    function actualizarConversionPreview() {
+      if (!conversionHelp || !productoSelect || !conversionSelect || !cantidadInput) return;
+
+      if (tipoAjuste && tipoAjuste.value !== "POS") {
+        conversionHelp.textContent = "Los ajustes negativos descuentan inventario directamente en la métrica base del producto.";
+        return;
+      }
+
+      const productoId = productoSelect.value;
+      const producto = getProducto(productoId);
+      if (!producto) {
+        conversionHelp.textContent = "Selecciona un producto para cargar sus presentaciones.";
+        return;
+      }
+
+      const metrica = producto.metrica || "kg";
+      const conversionId = conversionSelect.value;
+      const conversion = getConversion(productoId, conversionId);
+      const cantidad = cantidadInput.value;
+
+      if (!cantidad || Number(cantidad) <= 0) {
+        conversionHelp.textContent = conversion
+          ? "Se convertirá usando: " + conversion.texto
+          : "Se capturará directamente en métrica base (" + metrica + ").";
+        return;
+      }
+
+      const cantidadConvertida = calcularCantidadConvertida(productoId, cantidad, conversionId);
+      conversionHelp.textContent = conversion
+        ? formatQty(cantidad) + " " + conversion.unidad_origen + " = " + formatQty(cantidadConvertida) + " " + metrica + " al inventario."
+        : formatQty(cantidad) + " " + metrica + " se sumarán directamente al inventario.";
+    }
+
     function actualizarCamposPorTipo() {
       if (!tipoAjuste || !precioLabel || !precioHelp) return;
 
       if (tipoAjuste.value === "POS") {
         precioLabel.textContent = "Costo unitario de entrada";
         precioHelp.textContent = "Costo por unidad base que se usará para recalcular el costo promedio del inventario.";
+        if (cantidadLabel) cantidadLabel.textContent = "Cantidad capturada";
+        if (conversionWrap) conversionWrap.classList.remove("d-none");
+        if (conversionSelect) conversionSelect.removeAttribute("disabled");
         if (fechaInput) {
           fechaInput.removeAttribute("readonly");
           fechaInput.classList.remove("sg-readonly-soft");
@@ -254,6 +371,12 @@
       } else {
         precioLabel.textContent = "Precio unitario de salida";
         precioHelp.textContent = "Precio de referencia de la salida. El costo aplicado para margen se conservará desde el costo promedio actual.";
+        if (cantidadLabel) cantidadLabel.textContent = "Cantidad en métrica base";
+        if (conversionSelect) {
+          conversionSelect.value = "";
+          conversionSelect.setAttribute("disabled", "disabled");
+        }
+        if (conversionWrap) conversionWrap.classList.add("d-none");
         if (fechaInput) {
           const hoy = new Date().toISOString().slice(0, 10);
           fechaInput.value = hoy;
@@ -262,6 +385,7 @@
         }
         if (fechaHelp) fechaHelp.textContent = "Los ajustes negativos se aplican siempre con la fecha actual.";
       }
+      actualizarConversionPreview();
     }
 
     function setPreviewState(kind, message, actual = "—", resultante = "—") {
@@ -273,12 +397,6 @@
       stockResultanteValue.textContent = resultante;
     }
 
-    function formatQty(value) {
-      const n = Number(value);
-      if (!Number.isFinite(n)) return value;
-      return n.toLocaleString("es-MX", { minimumFractionDigits: 0, maximumFractionDigits: 4 });
-    }
-
     let previewTimer = null;
     function actualizarVistaStock() {
       clearTimeout(previewTimer);
@@ -287,6 +405,9 @@
         const productoId = productoSelect ? productoSelect.value : "";
         const cantidad = cantidadInput ? cantidadInput.value : "";
         const tipo = tipoAjuste ? tipoAjuste.value : "";
+        const conversionId = (tipo === "POS" && conversionSelect) ? conversionSelect.value : "";
+
+        actualizarConversionPreview();
 
         if (!almacenId || !productoId) {
           if (btnAplicar) btnAplicar.disabled = true;
@@ -306,6 +427,7 @@
           producto_id: productoId,
           cantidad: cantidad || "0",
           tipo_ajuste: tipo,
+          conversion_id: conversionId || "",
         });
 
         fetch("{% url 'ajuste_stock_preview' %}?" + params.toString(), {
@@ -336,15 +458,19 @@
       }, 250);
     }
 
-    [tipoAjuste, productoSelect, cantidadInput, almacenSelect].forEach(el => {
+    [tipoAjuste, productoSelect, cantidadInput, almacenSelect, conversionSelect].forEach(el => {
       if (!el) return;
       el.addEventListener("change", () => {
+        if (el === productoSelect) {
+          renderConversiones(productoSelect.value, null);
+        }
         actualizarCamposPorTipo();
         actualizarVistaStock();
       });
       el.addEventListener("input", actualizarVistaStock);
     });
 
+    renderConversiones(productoSelect ? productoSelect.value : "", conversionSelect ? conversionSelect.dataset.selected : "");
     actualizarCamposPorTipo();
     actualizarVistaStock();
   });
