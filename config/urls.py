@@ -35,6 +35,9 @@ urlpatterns = [
     # Notificaciones
     path("notificaciones/", include("notificaciones.urls")),
 
+    # Costos
+    path("costos/", include("costos.urls")),
+
     # Usuarios
     path("config/", include("accounts.urls")),
 

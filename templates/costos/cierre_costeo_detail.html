@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ cierre.folio }} | Cierre de costeo{% endblock %}
+{% block page_title %}Detalle de cierre de costeo{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_cierres_costeo %}active{% endblock %}
+
+{% block content %}
+<div class="sg-detail-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-list-header-card mb-3">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-clipboard-data me-2"></i>
+          {{ cierre.folio }}
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Periodo {{ cierre.periodo_inicio|date:"Y-m-d" }} a {{ cierre.periodo_fin|date:"Y-m-d" }}.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'costos:cierres_costeo_list' %}" class="sg-btn-secondary sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Volver
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Venta total</div>
+          <div class="fs-3 fw-bold">${{ cierre.total_ventas|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Costo compra</div>
+          <div class="fs-3 fw-bold">${{ cierre.total_costo_compra|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Gastos distribuidos</div>
+          <div class="fs-3 fw-bold">${{ cierre.total_gastos_distribuidos|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Utilidad real</div>
+          <div class="fs-3 fw-bold">${{ cierre.utilidad_real|floatformat:2|intcomma }}</div>
+          <div class="small text-muted">Margen real {{ cierre.margen_real_porcentaje|floatformat:2 }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <section class="card border-0 shadow-sm sg-form-card mb-3">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+            <div>
+              <h6 class="sg-form-section-title mb-1">Resumen del cierre</h6>
+              <p class="text-muted small mb-0">Fotografía congelada del periodo. No modifica inventario ni ventas.</p>
+            </div>
+            <div>
+              {% if cierre.estado == cierre.ESTADO_CANCELADO %}
+                <span class="badge text-bg-danger">Cancelado</span>
+              {% else %}
+                <span class="badge text-bg-success">Cerrado</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-md-4">
+              <div class="text-muted small">Productos</div>
+              <div class="fw-semibold">{{ cierre.total_productos }}</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="text-muted small">Movimientos de venta</div>
+              <div class="fw-semibold">{{ cierre.total_movimientos_venta }}</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="text-muted small">Costo real total</div>
+              <div class="fw-semibold">${{ cierre.total_costo_real|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="text-muted small">Utilidad bruta</div>
+              <div class="fw-semibold">${{ cierre.utilidad_bruta|floatformat:2|intcomma }}</div>
+              <div class="small text-muted">{{ cierre.margen_bruto_porcentaje|floatformat:2 }}%</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="text-muted small">Utilidad real</div>
+              <div class="fw-semibold">${{ cierre.utilidad_real|floatformat:2|intcomma }}</div>
+              <div class="small text-muted">{{ cierre.margen_real_porcentaje|floatformat:2 }}%</div>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="text-muted small">Creado por</div>
+              <div class="fw-semibold">{{ cierre.creado_por|default:"No disponible" }}</div>
+              <div class="small text-muted">{{ cierre.creado_en|date:"Y-m-d H:i" }}</div>
+            </div>
+            <div class="col-12">
+              <div class="text-muted small">Notas</div>
+              <div>{{ cierre.notas|default:"Sin notas"|linebreaksbr }}</div>
+            </div>
+            {% if cierre.es_cancelado %}
+              <div class="col-12">
+                <div class="text-muted small">Motivo de cancelación</div>
+                <div>{{ cierre.motivo_cancelacion|linebreaksbr }}</div>
+                <div class="small text-muted mt-1">Cancelado por {{ cierre.cancelado_por|default:"No disponible" }} el {{ cierre.cancelado_en|date:"Y-m-d H:i" }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      {% if puede_cancelar and cierre.puede_cancelarse %}
+        <section class="card border-0 shadow-sm sg-form-card mb-3">
+          <div class="card-body">
+            <h6 class="sg-form-section-title">Acciones</h6>
+            <form method="post" action="{% url 'costos:cierre_costeo_cancelar' cierre.pk %}">
+              {% csrf_token %}
+              <label class="sg-form-label" for="motivo_cancelacion">Motivo de cancelación</label>
+              <textarea id="motivo_cancelacion" name="motivo_cancelacion" class="form-control mb-2" rows="3" placeholder="Captura el motivo" required></textarea>
+              <button type="submit" class="sg-btn-danger sg-btn-md w-100">
+                <i class="bi bi-x-circle me-1"></i>
+                Cancelar cierre
+              </button>
+            </form>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card mt-3">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+        <div>
+          <h6 class="sg-form-section-title mb-1">
+            <i class="bi bi-box-seam me-1"></i>
+            Costeo por producto
+          </h6>
+          <p class="text-muted small mb-0">Detalle congelado con costo de compra, gasto asignado, costo real y margen real.</p>
+        </div>
+      </div>
+
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Producto</th>
+              <th class="text-end">Cantidad</th>
+              <th class="text-end">Venta</th>
+              <th class="text-end">Costo compra</th>
+              <th class="text-end">Gastos</th>
+              <th class="text-end">Costo real</th>
+              <th class="text-end">Utilidad bruta</th>
+              <th class="text-end">Utilidad real</th>
+              <th class="text-end">Margen real</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in productos %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ item.producto.nombre }}</div>
+                  <div class="small text-muted">{{ item.producto.metrica }}</div>
+                </td>
+                <td class="text-end">{{ item.cantidad_vendida|floatformat:4|intcomma }}</td>
+                <td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.costo_compra_total|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.gasto_asignado_total|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.utilidad_bruta|floatformat:2|intcomma }}</td>
+                <td class="text-end fw-semibold">${{ item.utilidad_real|floatformat:2|intcomma }}</td>
+                <td class="text-end">{{ item.margen_real_porcentaje|floatformat:2 }}%</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="text-center text-muted sg-empty-state">No hay productos en este cierre.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for item in productos %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Producto</span>
+                <strong class="sg-mobile-card-title">{{ item.producto.nombre }}</strong>
+              </div>
+              <span class="badge text-bg-secondary">{{ item.producto.metrica }}</span>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Cantidad</span><span class="sg-mobile-card-value">{{ item.cantidad_vendida|floatformat:4|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Venta</span><span class="sg-mobile-card-value">${{ item.venta_total|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Costo real</span><span class="sg-mobile-card-value">${{ item.costo_real_total|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Utilidad real</span><span class="sg-mobile-card-value">${{ item.utilidad_real|floatformat:2|intcomma }}</span></div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state text-center text-muted">No hay productos registrados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

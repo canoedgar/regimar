@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Gastos | Costos{% endblock %}
+{% block page_title %}Gastos{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_gastos %}active{% endblock %}
+
+{% block content %}
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card mb-3">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-cash-stack me-2"></i>
+          Gastos
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Captura gastos operativos, administrativos o directos de compra para alimentar el costeo real por periodo.
+        </p>
+      </div>
+
+      <div class="sg-page-actions">
+        {% if puede_agregar %}
+          <a href="{% url 'costos:gasto_create' %}" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nuevo gasto
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Gastos filtrados</div>
+          <div class="fs-3 fw-bold">{{ resumen.total|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Borradores</div>
+          <div class="fs-3 fw-bold">{{ resumen.borradores|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Aplicados</div>
+          <div class="fs-3 fw-bold">{{ resumen.aplicados|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Importe aplicado</div>
+          <div class="fs-3 fw-bold">${{ resumen.importe_aplicado|default:0|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-lg-4">
+          <label class="sg-form-label" for="q">Buscar</label>
+          <input id="q" type="search" name="q" value="{{ query }}" class="form-control" placeholder="Folio, referencia, descripción, proveedor">
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+          <label class="sg-form-label" for="categoria">Categoría</label>
+          <select id="categoria" name="categoria" class="form-select">
+            <option value="">Todas</option>
+            {% for categoria in categorias %}
+              <option value="{{ categoria.pk }}" {% if categoria_id_int == categoria.pk %}selected{% endif %}>{{ categoria.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+          <label class="sg-form-label" for="estado">Estado</label>
+          <select id="estado" name="estado" class="form-select">
+            <option value="vigentes" {% if estado == "vigentes" %}selected{% endif %}>Vigentes</option>
+            <option value="borradores" {% if estado == "borradores" %}selected{% endif %}>Borradores</option>
+            <option value="aplicados" {% if estado == "aplicados" %}selected{% endif %}>Aplicados</option>
+            <option value="cancelados" {% if estado == "cancelados" %}selected{% endif %}>Cancelados</option>
+            <option value="todos" {% if estado == "todos" %}selected{% endif %}>Todos</option>
+          </select>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="sg-form-label" for="fecha_inicio">Desde</label>
+          <input id="fecha_inicio" type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="sg-form-label" for="fecha_fin">Hasta</label>
+          <input id="fecha_fin" type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+        </div>
+        <div class="col-12 d-flex gap-2 justify-content-end">
+          <button type="submit" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-search me-1"></i>
+            Filtrar
+          </button>
+          {% if query or categoria_id or estado != "vigentes" or fecha_inicio or fecha_fin %}
+            <a href="{% url 'costos:gastos_list' %}" class="sg-btn-secondary sg-btn-md" title="Limpiar filtros">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Gasto</th>
+              <th>Fecha</th>
+              <th>Periodo</th>
+              <th>Categoría</th>
+              <th>Distribución</th>
+              <th class="text-end">Importe</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for gasto in gastos %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ gasto.folio }}</div>
+                  {% if gasto.referencia %}<div class="small text-muted">{{ gasto.referencia }}</div>{% endif %}
+                  {% if gasto.descripcion %}<div class="small text-muted">{{ gasto.descripcion|truncatechars:70 }}</div>{% endif %}
+                </td>
+                <td>{{ gasto.fecha|date:"Y-m-d" }}</td>
+                <td>{{ gasto.periodo_inicio|date:"Y-m-d" }}<br><span class="text-muted small">{{ gasto.periodo_fin|date:"Y-m-d" }}</span></td>
+                <td>
+                  <div>{{ gasto.categoria.nombre }}</div>
+                  <div class="small text-muted">{{ gasto.categoria.get_tipo_display }}</div>
+                </td>
+                <td>
+                  <div>{{ gasto.get_metodo_distribucion_display }}</div>
+                  {% if gasto.estado == gasto.ESTADO_APLICADO and gasto.requiere_distribucion %}
+                    {% if gasto.distribuciones_count %}
+                      <span class="badge text-bg-success">Distribuido</span>
+                    {% else %}
+                      <span class="badge text-bg-warning">Pendiente</span>
+                    {% endif %}
+                  {% elif gasto.metodo_distribucion == gasto.categoria.DIST_NO_DISTRIBUIR or not gasto.categoria.distribuible %}
+                    <span class="badge text-bg-secondary">No participa</span>
+                  {% elif gasto.metodo_distribucion == gasto.categoria.DIST_MANUAL %}
+                    <span class="badge text-bg-info">Manual</span>
+                  {% endif %}
+                </td>
+                <td class="text-end fw-semibold">${{ gasto.importe|floatformat:2|intcomma }}</td>
+                <td>
+                  {% if gasto.estado == gasto.ESTADO_APLICADO %}
+                    <span class="badge text-bg-success">Aplicado</span>
+                  {% elif gasto.estado == gasto.ESTADO_CANCELADO %}
+                    <span class="badge text-bg-danger">Cancelado</span>
+                  {% else %}
+                    <span class="badge text-bg-warning">Borrador</span>
+                  {% endif %}
+                </td>
+                <td class="text-end sg-table-actions">
+                  <a href="{% url 'costos:gasto_detail' gasto.pk %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  {% if puede_editar and gasto.puede_editarse %}
+                    <a href="{% url 'costos:gasto_edit' gasto.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center text-muted sg-empty-state">
+                  No hay gastos registrados con los filtros seleccionados.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none" aria-label="Gastos en vista móvil">
+        {% for gasto in gastos %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Gasto</span>
+                <strong class="sg-mobile-card-title">{{ gasto.folio }}</strong>
+              </div>
+              {% if gasto.estado == gasto.ESTADO_APLICADO %}
+                <span class="badge text-bg-success">Aplicado</span>
+              {% elif gasto.estado == gasto.ESTADO_CANCELADO %}
+                <span class="badge text-bg-danger">Cancelado</span>
+              {% else %}
+                <span class="badge text-bg-warning">Borrador</span>
+              {% endif %}
+            </div>
+
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Fecha</span>
+                <span class="sg-mobile-card-value">{{ gasto.fecha|date:"Y-m-d" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Periodo</span>
+                <span class="sg-mobile-card-value">{{ gasto.periodo_inicio|date:"Y-m-d" }} a {{ gasto.periodo_fin|date:"Y-m-d" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Categoría</span>
+                <span class="sg-mobile-card-value">{{ gasto.categoria.nombre }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Importe</span>
+                <span class="sg-mobile-card-value fw-semibold">${{ gasto.importe|floatformat:2|intcomma }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Distribución</span>
+                <span class="sg-mobile-card-value">
+                  {{ gasto.get_metodo_distribucion_display }}
+                  {% if gasto.estado == gasto.ESTADO_APLICADO and gasto.requiere_distribucion %}
+                    {% if gasto.distribuciones_count %}
+                      · Distribuido
+                    {% else %}
+                      · Pendiente
+                    {% endif %}
+                  {% endif %}
+                </span>
+              </div>
+              {% if gasto.referencia %}
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Referencia</span>
+                  <span class="sg-mobile-card-value">{{ gasto.referencia }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'costos:gasto_detail' gasto.pk %}" class="sg-btn-secondary sg-btn-sm">
+                <i class="bi bi-eye"></i> Ver
+              </a>
+              {% if puede_editar and gasto.puede_editarse %}
+                <a href="{% url 'costos:gasto_edit' gasto.pk %}" class="sg-btn-outline sg-btn-sm">
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
+              {% endif %}
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay gastos registrados con los filtros seleccionados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

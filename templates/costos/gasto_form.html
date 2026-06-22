@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %} | Costos
+{% endblock %}
+
+{% block page_title %}
+  {% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %}
+{% endblock %}
+
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_gastos %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-xl-10">
+    <div class="card shadow-sm border-0 sg-form-card">
+      <div class="card-body">
+        <div class="sg-page-header mb-4">
+          <div>
+            <h5 class="sg-page-header-title">
+              <i class="bi bi-cash-stack me-2"></i>
+              {% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %}
+            </h5>
+            <p class="sg-page-header-subtitle">
+              Registra el gasto y el periodo al que afectará. Al aplicar el gasto, el sistema generará la distribución automática cuando el método lo permita.
+            </p>
+          </div>
+        </div>
+
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+          </div>
+        {% endif %}
+
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+
+          <div class="sg-form-section">
+            <h6 class="sg-form-section-title">Datos del gasto</h6>
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <label class="sg-form-label" for="{{ form.fecha.id_for_label }}">{{ form.fecha.label }}</label>
+                {{ form.fecha }}
+                {% if form.fecha.errors %}<div class="sg-form-error">{{ form.fecha.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="sg-form-label" for="{{ form.periodo_inicio.id_for_label }}">{{ form.periodo_inicio.label }}</label>
+                {{ form.periodo_inicio }}
+                {% if form.periodo_inicio.errors %}<div class="sg-form-error">{{ form.periodo_inicio.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="sg-form-label" for="{{ form.periodo_fin.id_for_label }}">{{ form.periodo_fin.label }}</label>
+                {{ form.periodo_fin }}
+                {% if form.periodo_fin.errors %}<div class="sg-form-error">{{ form.periodo_fin.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-12 col-md-6">
+                <label class="sg-form-label" for="{{ form.categoria.id_for_label }}">{{ form.categoria.label }}</label>
+                {{ form.categoria }}
+                {% if form.categoria.errors %}<div class="sg-form-error">{{ form.categoria.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-md-6">
+                <label class="sg-form-label" for="{{ form.metodo_distribucion.id_for_label }}">{{ form.metodo_distribucion.label }}</label>
+                {{ form.metodo_distribucion }}
+                {% if form.metodo_distribucion.help_text %}<div class="sg-form-help">{{ form.metodo_distribucion.help_text }}</div>{% endif %}
+                {% if form.metodo_distribucion.errors %}<div class="sg-form-error">{{ form.metodo_distribucion.errors }}</div>{% endif %}
+              </div>
+
+              <div class="col-12 col-md-4">
+                <label class="sg-form-label" for="{{ form.importe.id_for_label }}">{{ form.importe.label }}</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  {{ form.importe }}
+                </div>
+                {% if form.importe.errors %}<div class="sg-form-error">{{ form.importe.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="sg-form-label" for="{{ form.proveedor.id_for_label }}">{{ form.proveedor.label }}</label>
+                {{ form.proveedor }}
+                {% if form.proveedor.errors %}<div class="sg-form-error">{{ form.proveedor.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="sg-form-label" for="{{ form.almacen.id_for_label }}">{{ form.almacen.label }}</label>
+                {{ form.almacen }}
+                {% if form.almacen.errors %}<div class="sg-form-error">{{ form.almacen.errors }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="sg-form-section mt-4">
+            <h6 class="sg-form-section-title">Relación y soporte</h6>
+            <div class="row g-3">
+              <div class="col-12 col-lg-6" id="entradaRelacionadaWrapper">
+                <label class="sg-form-label" for="{{ form.entrada_inventario.id_for_label }}">{{ form.entrada_inventario.label }}</label>
+                {{ form.entrada_inventario }}
+                {% if form.entrada_inventario.help_text %}<div class="sg-form-help">{{ form.entrada_inventario.help_text }}</div>{% endif %}
+                {% if form.entrada_inventario.errors %}<div class="sg-form-error">{{ form.entrada_inventario.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-lg-6">
+                <label class="sg-form-label" for="{{ form.referencia.id_for_label }}">{{ form.referencia.label }}</label>
+                {{ form.referencia }}
+                {% if form.referencia.help_text %}<div class="sg-form-help">{{ form.referencia.help_text }}</div>{% endif %}
+                {% if form.referencia.errors %}<div class="sg-form-error">{{ form.referencia.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-lg-6">
+                <label class="sg-form-label" for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}<div class="sg-form-error">{{ form.descripcion.errors }}</div>{% endif %}
+              </div>
+              <div class="col-12 col-lg-6">
+                <label class="sg-form-label" for="{{ form.observaciones.id_for_label }}">{{ form.observaciones.label }}</label>
+                {{ form.observaciones }}
+                {% if form.observaciones.errors %}<div class="sg-form-error">{{ form.observaciones.errors }}</div>{% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="alert alert-info mt-4 mb-0">
+            <div class="fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i> Nota funcional</div>
+            <div class="small">
+              En esta etapa el gasto queda registrado para control del periodo. Al aplicar el gasto, quedará listo para que el siguiente proceso lo distribuya al costeo real.
+            </div>
+          </div>
+
+          <div class="sg-form-actions sg-form-actions-between mt-4">
+            <a href="{% if modo_edicion %}{% url 'costos:gasto_detail' gasto.pk %}{% else %}{% url 'costos:gastos_list' %}{% endif %}" class="sg-btn-secondary sg-btn-form sg-btn-md">
+              <i class="bi bi-arrow-left me-1"></i>
+              Volver
+            </a>
+
+            <div class="d-flex flex-column flex-sm-row gap-2">
+              <button type="submit" name="accion" value="guardar" class="sg-btn-success sg-btn-form sg-btn-md">
+                <i class="bi bi-check2-circle me-1"></i>
+                Guardar borrador
+              </button>
+              {% if puede_aplicar %}
+                <button type="submit" name="accion" value="guardar_aplicar" class="sg-btn-primary sg-btn-form sg-btn-md">
+                  <i class="bi bi-lock-fill me-1"></i>
+                  Guardar y aplicar
+                </button>
+              {% endif %}
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ categorias_json|json_script:"categorias-gasto-data" }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const categoria = document.getElementById('{{ form.categoria.id_for_label }}');
+    const metodo = document.getElementById('{{ form.metodo_distribucion.id_for_label }}');
+    const entradaWrapper = document.getElementById('entradaRelacionadaWrapper');
+    const categoriasDataElement = document.getElementById('categorias-gasto-data');
+    const categoriasData = categoriasDataElement ? JSON.parse(categoriasDataElement.textContent) : {};
+
+    function syncCategoria() {
+      if (!categoria || !metodo) return;
+      const data = categoriasData[categoria.value];
+      if (!data) return;
+
+      if (!metodo.dataset.userTouched && data.metodo) {
+        metodo.value = data.metodo;
+      }
+
+      if (!data.distribuible) {
+        metodo.value = 'NO_DISTRIBUIR';
+        metodo.setAttribute('disabled', 'disabled');
+      } else {
+        metodo.removeAttribute('disabled');
+        if (metodo.value === 'NO_DISTRIBUIR') {
+          metodo.value = data.metodo || 'KG_VENDIDO';
+        }
+      }
+
+      syncEntradaRelacionada();
+    }
+
+    function syncEntradaRelacionada() {
+      if (!metodo || !entradaWrapper) return;
+      if (metodo.value === 'DIRECTO_ENTRADA') {
+        entradaWrapper.classList.remove('opacity-75');
+      } else {
+        entradaWrapper.classList.add('opacity-75');
+      }
+    }
+
+    if (categoria && metodo) {
+      categoria.addEventListener('change', function () {
+        metodo.dataset.userTouched = '';
+        syncCategoria();
+      });
+      metodo.addEventListener('change', function () {
+        metodo.dataset.userTouched = '1';
+        syncEntradaRelacionada();
+      });
+
+      const form = categoria.closest('form');
+      if (form) {
+        form.addEventListener('submit', function () {
+          metodo.removeAttribute('disabled');
+        });
+      }
+
+      syncCategoria();
+      syncEntradaRelacionada();
+    }
+  });
+</script>
+{% endblock %}

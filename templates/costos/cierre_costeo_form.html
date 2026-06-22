@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Nuevo cierre de costeo | Costos{% endblock %}
+{% block page_title %}Nuevo cierre de costeo{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_cierres_costeo %}active{% endblock %}
+
+{% block content %}
+<div class="sg-form-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-list-header-card mb-3">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-clipboard-check me-2"></i>
+          Nuevo cierre de costeo
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Previsualiza el costo real del periodo y genera una fotografía congelada para reportes de utilidad.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'costos:cierres_costeo_list' %}" class="sg-btn-secondary sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Volver
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-md-3">
+          <label class="sg-form-label" for="{{ form.periodo_inicio.id_for_label }}">{{ form.periodo_inicio.label }}</label>
+          {{ form.periodo_inicio }}
+          {% for error in form.periodo_inicio.errors %}<div class="sg-form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="sg-form-label" for="{{ form.periodo_fin.id_for_label }}">{{ form.periodo_fin.label }}</label>
+          {{ form.periodo_fin }}
+          {% for error in form.periodo_fin.errors %}<div class="sg-form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="sg-form-label" for="{{ form.notas.id_for_label }}">{{ form.notas.label }}</label>
+          {{ form.notas }}
+          {% for error in form.notas.errors %}<div class="sg-form-error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="col-12 col-md-2 d-flex justify-content-end">
+          <button type="submit" class="sg-btn-secondary sg-btn-md w-100">
+            <i class="bi bi-search me-1"></i>
+            Previsualizar
+          </button>
+        </div>
+        {% if form.non_field_errors %}
+          <div class="col-12">
+            {% for error in form.non_field_errors %}<div class="alert alert-warning mb-0">{{ error }}</div>{% endfor %}
+          </div>
+        {% endif %}
+      </form>
+    </div>
+  </section>
+
+  {% if resumen_costeo %}
+    {% if resumen_costeo.gastos_pendientes_distribucion %}
+      <div class="alert alert-warning shadow-sm">
+        <div class="fw-semibold mb-1">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          Existen gastos aplicados pendientes de distribución
+        </div>
+        <div class="small mb-2">Antes de cerrar el periodo se deben recalcular o corregir estos gastos.</div>
+        <ul class="mb-0 small">
+          {% for gasto in resumen_costeo.gastos_pendientes_distribucion %}
+            <li><a href="{% url 'costos:gasto_detail' gasto.pk %}">{{ gasto.folio }}</a> — {{ gasto.categoria.nombre }} — ${{ gasto.importe|floatformat:2|intcomma }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    {% if resumen_costeo.gastos_manual_sin_distribucion %}
+      <div class="alert alert-info shadow-sm">
+        <div class="fw-semibold mb-1">
+          <i class="bi bi-info-circle me-1"></i>
+          Gastos manuales no distribuidos
+        </div>
+        <div class="small mb-2">Estos gastos no se incluyen en el costo real hasta que exista captura manual de distribución.</div>
+        <ul class="mb-0 small">
+          {% for gasto in resumen_costeo.gastos_manual_sin_distribucion %}
+            <li><a href="{% url 'costos:gasto_detail' gasto.pk %}">{{ gasto.folio }}</a> — {{ gasto.categoria.nombre }} — ${{ gasto.importe|floatformat:2|intcomma }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="text-muted small">Venta total</div>
+            <div class="fs-3 fw-bold">${{ resumen_costeo.totales.total_ventas|floatformat:2|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="text-muted small">Costo compra</div>
+            <div class="fs-3 fw-bold">${{ resumen_costeo.totales.total_costo_compra|floatformat:2|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="text-muted small">Gastos distribuidos</div>
+            <div class="fs-3 fw-bold">${{ resumen_costeo.totales.total_gastos_distribuidos|floatformat:2|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-body">
+            <div class="text-muted small">Utilidad real</div>
+            <div class="fs-3 fw-bold">${{ resumen_costeo.totales.utilidad_real|floatformat:2|intcomma }}</div>
+            <div class="small text-muted">Margen real {{ resumen_costeo.totales.margen_real_porcentaje|floatformat:2 }}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="card border-0 shadow-sm sg-table-card mb-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <h6 class="sg-form-section-title mb-1">Previsualización por producto</h6>
+            <p class="text-muted small mb-0">
+              Periodo {{ resumen_costeo.periodo_inicio|date:"Y-m-d" }} a {{ resumen_costeo.periodo_fin|date:"Y-m-d" }}.
+              Gastos aplicados: {{ resumen_costeo.gastos_aplicados_count }}. Gastos con distribución: {{ resumen_costeo.gastos_distribuidos_count }}.
+            </p>
+          </div>
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <input type="hidden" name="periodo_inicio" value="{{ resumen_costeo.periodo_inicio|date:'Y-m-d' }}">
+            <input type="hidden" name="periodo_fin" value="{{ resumen_costeo.periodo_fin|date:'Y-m-d' }}">
+            <input type="hidden" name="notas" value="{{ form.notas.value|default:'' }}">
+            <button type="submit" class="sg-btn-success sg-btn-md" {% if resumen_costeo.gastos_pendientes_distribucion or not resumen_costeo.productos %}disabled{% endif %}>
+              <i class="bi bi-lock-fill me-1"></i>
+              Generar cierre
+            </button>
+          </form>
+        </div>
+
+        <div class="table-responsive d-none d-md-block">
+          <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th class="text-end">Cantidad</th>
+                <th class="text-end">Venta</th>
+                <th class="text-end">Costo compra</th>
+                <th class="text-end">Gastos</th>
+                <th class="text-end">Costo real</th>
+                <th class="text-end">Utilidad real</th>
+                <th class="text-end">Margen real</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in resumen_costeo.productos %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ item.producto.nombre }}</div>
+                    <div class="small text-muted">{{ item.producto.metrica }}</div>
+                  </td>
+                  <td class="text-end">{{ item.cantidad_vendida|floatformat:4|intcomma }}</td>
+                  <td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td>
+                  <td class="text-end">${{ item.costo_compra_total|floatformat:2|intcomma }}</td>
+                  <td class="text-end">${{ item.gasto_asignado_total|floatformat:2|intcomma }}</td>
+                  <td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td>
+                  <td class="text-end fw-semibold">${{ item.utilidad_real|floatformat:2|intcomma }}</td>
+                  <td class="text-end">{{ item.margen_real_porcentaje|floatformat:2 }}%</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="8" class="text-center text-muted sg-empty-state">No hay ventas ni gastos distribuidos para el periodo.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sg-mobile-list d-md-none">
+          {% for item in resumen_costeo.productos %}
+            <article class="sg-mobile-card">
+              <div class="sg-mobile-card-header">
+                <div class="min-w-0">
+                  <span class="sg-mobile-card-label">Producto</span>
+                  <strong class="sg-mobile-card-title">{{ item.producto.nombre }}</strong>
+                </div>
+                <span class="badge text-bg-secondary">{{ item.producto.metrica }}</span>
+              </div>
+              <div class="sg-mobile-card-grid">
+                <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Cantidad</span><span class="sg-mobile-card-value">{{ item.cantidad_vendida|floatformat:4|intcomma }}</span></div>
+                <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Venta</span><span class="sg-mobile-card-value">${{ item.venta_total|floatformat:2|intcomma }}</span></div>
+                <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Costo real</span><span class="sg-mobile-card-value">${{ item.costo_real_total|floatformat:2|intcomma }}</span></div>
+                <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Utilidad real</span><span class="sg-mobile-card-value">${{ item.utilidad_real|floatformat:2|intcomma }}</span></div>
+              </div>
+            </article>
+          {% empty %}
+            <div class="sg-empty-state text-center text-muted">No hay datos para mostrar.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

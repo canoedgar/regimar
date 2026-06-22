@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Cierres de costeo | Costos{% endblock %}
+{% block page_title %}Cierres de costeo{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_cierres_costeo %}active{% endblock %}
+
+{% block content %}
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card mb-3">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-clipboard-data me-2"></i>
+          Cierres de costeo
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Consulta los periodos cerrados con venta, costo de compra, gastos distribuidos y utilidad real.
+        </p>
+      </div>
+
+      <div class="sg-page-actions">
+        {% if puede_agregar %}
+          <a href="{% url 'costos:cierre_costeo_create' %}" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nuevo cierre
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Cierres filtrados</div>
+          <div class="fs-3 fw-bold">{{ resumen.total|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Venta total</div>
+          <div class="fs-3 fw-bold">${{ resumen.venta_total|default:0|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Costo real</div>
+          <div class="fs-3 fw-bold">${{ resumen.costo_real_total|default:0|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Utilidad real</div>
+          <div class="fs-3 fw-bold">${{ resumen.utilidad_real|default:0|floatformat:2|intcomma }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="sg-form-label" for="estado">Estado</label>
+          <select id="estado" name="estado" class="form-select">
+            <option value="vigentes" {% if estado == "vigentes" %}selected{% endif %}>Vigentes</option>
+            <option value="cancelados" {% if estado == "cancelados" %}selected{% endif %}>Cancelados</option>
+            <option value="todos" {% if estado == "todos" %}selected{% endif %}>Todos</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="sg-form-label" for="fecha_inicio">Desde</label>
+          <input id="fecha_inicio" type="date" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="sg-form-label" for="fecha_fin">Hasta</label>
+          <input id="fecha_fin" type="date" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+        </div>
+        <div class="col-12 col-md-2 d-flex gap-2 justify-content-end">
+          <button type="submit" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-search me-1"></i>
+            Filtrar
+          </button>
+          {% if estado != "vigentes" or fecha_inicio or fecha_fin %}
+            <a href="{% url 'costos:cierres_costeo_list' %}" class="sg-btn-secondary sg-btn-md" title="Limpiar filtros">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Cierre</th>
+              <th>Periodo</th>
+              <th class="text-end">Venta</th>
+              <th class="text-end">Costo compra</th>
+              <th class="text-end">Gastos</th>
+              <th class="text-end">Utilidad real</th>
+              <th class="text-end">Margen real</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cierre in cierres %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ cierre.folio }}</div>
+                  <div class="small text-muted">{{ cierre.total_productos }} producto(s)</div>
+                </td>
+                <td>{{ cierre.periodo_inicio|date:"Y-m-d" }}<br><span class="text-muted small">{{ cierre.periodo_fin|date:"Y-m-d" }}</span></td>
+                <td class="text-end">${{ cierre.total_ventas|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ cierre.total_costo_compra|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ cierre.total_gastos_distribuidos|floatformat:2|intcomma }}</td>
+                <td class="text-end fw-semibold">${{ cierre.utilidad_real|floatformat:2|intcomma }}</td>
+                <td class="text-end">{{ cierre.margen_real_porcentaje|floatformat:2 }}%</td>
+                <td>
+                  {% if cierre.estado == cierre.ESTADO_CANCELADO %}
+                    <span class="badge text-bg-danger">Cancelado</span>
+                  {% else %}
+                    <span class="badge text-bg-success">Cerrado</span>
+                  {% endif %}
+                </td>
+                <td class="text-end sg-table-actions">
+                  <a href="{% url 'costos:cierre_costeo_detail' cierre.pk %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="9" class="text-center text-muted sg-empty-state">
+                  No hay cierres de costeo registrados con los filtros seleccionados.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none" aria-label="Cierres de costeo en vista móvil">
+        {% for cierre in cierres %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Cierre</span>
+                <strong class="sg-mobile-card-title">{{ cierre.folio }}</strong>
+              </div>
+              {% if cierre.estado == cierre.ESTADO_CANCELADO %}
+                <span class="badge text-bg-danger">Cancelado</span>
+              {% else %}
+                <span class="badge text-bg-success">Cerrado</span>
+              {% endif %}
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Periodo</span>
+                <span class="sg-mobile-card-value">{{ cierre.periodo_inicio|date:"Y-m-d" }} a {{ cierre.periodo_fin|date:"Y-m-d" }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Venta</span>
+                <span class="sg-mobile-card-value">${{ cierre.total_ventas|floatformat:2|intcomma }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Costo real</span>
+                <span class="sg-mobile-card-value">${{ cierre.total_costo_real|floatformat:2|intcomma }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Utilidad real</span>
+                <span class="sg-mobile-card-value">${{ cierre.utilidad_real|floatformat:2|intcomma }}</span>
+              </div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'costos:cierre_costeo_detail' cierre.pk %}" class="sg-btn-table sg-btn-sm">
+                <i class="bi bi-eye me-1"></i> Ver detalle
+              </a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state text-center text-muted">No hay cierres registrados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

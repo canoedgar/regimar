@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Categorías de gasto | Costos{% endblock %}
+{% block page_title %}Categorías de gasto{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_categorias_gasto %}active{% endblock %}
+
+{% block content %}
+<div class="sg-list-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card mb-3">
+    <div class="card-body sg-page-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-diagram-3 me-2"></i>
+          Categorías de gasto
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Clasifica los gastos que después podrán afectar el costo real de los productos.
+        </p>
+      </div>
+
+      <div class="sg-page-actions">
+        {% if puede_agregar %}
+          <a href="{% url 'costos:categoria_gasto_create' %}" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nueva categoría
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Total categorías</div>
+          <div class="fs-3 fw-bold">{{ resumen.total|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Activas</div>
+          <div class="fs-3 fw-bold">{{ resumen.activas|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">Distribuibles</div>
+          <div class="fs-3 fw-bold">{{ resumen.distribuibles|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small">No distribuibles</div>
+          <div class="fs-3 fw-bold">{{ resumen.no_distribuibles|default:0 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-12 col-lg-5">
+          <label class="sg-form-label" for="q">Buscar</label>
+          <input id="q" type="search" name="q" value="{{ query }}" class="form-control" placeholder="Nombre o descripción">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="sg-form-label" for="tipo">Tipo</label>
+          <select id="tipo" name="tipo" class="form-select">
+            <option value="">Todos</option>
+            {% for value, label in tipos %}
+              <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+          <label class="sg-form-label" for="estado">Estado</label>
+          <select id="estado" name="estado" class="form-select">
+            <option value="activos" {% if estado == "activos" %}selected{% endif %}>Activos</option>
+            <option value="inactivos" {% if estado == "inactivos" %}selected{% endif %}>Inactivos</option>
+            <option value="todos" {% if estado == "todos" %}selected{% endif %}>Todos</option>
+          </select>
+        </div>
+        <div class="col-12 col-lg-2 d-flex gap-2">
+          <button type="submit" class="sg-btn-primary sg-btn-md w-100">
+            <i class="bi bi-search me-1"></i>
+            Filtrar
+          </button>
+          {% if query or tipo or estado != "activos" %}
+            <a href="{% url 'costos:categorias_gasto_list' %}" class="sg-btn-secondary sg-btn-md" title="Limpiar filtros">
+              <i class="bi bi-x-lg"></i>
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Categoría</th>
+              <th>Tipo</th>
+              <th>Distribución default</th>
+              <th>Costeo</th>
+              <th>Estado</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for categoria in categorias %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ categoria.nombre }}</div>
+                  {% if categoria.descripcion %}
+                    <div class="small text-muted">{{ categoria.descripcion|truncatechars:90 }}</div>
+                  {% endif %}
+                </td>
+                <td>{{ categoria.get_tipo_display }}</td>
+                <td>{{ categoria.get_metodo_default_distribucion_display }}</td>
+                <td>
+                  {% if categoria.distribuible %}
+                    <span class="badge text-bg-success">Distribuible</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">No distribuible</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if categoria.activo %}
+                    <span class="badge text-bg-success">Activa</span>
+                  {% else %}
+                    <span class="badge text-bg-secondary">Inactiva</span>
+                  {% endif %}
+                </td>
+                <td class="text-end sg-table-actions">
+                  {% if puede_editar %}
+                    <a href="{% url 'costos:categoria_gasto_edit' categoria.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  {% endif %}
+                  {% if puede_activar %}
+                    <form method="post" action="{% url 'costos:categoria_gasto_toggle_activo' categoria.pk %}" class="d-inline">
+                      {% csrf_token %}
+                      <button type="submit" class="sg-btn-table sg-btn-sm" title="{% if categoria.activo %}Desactivar{% else %}Activar{% endif %}">
+                        {% if categoria.activo %}
+                          <i class="bi bi-toggle-on"></i>
+                        {% else %}
+                          <i class="bi bi-toggle-off"></i>
+                        {% endif %}
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted sg-empty-state">
+                  No hay categorías de gasto registradas con los filtros seleccionados.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none" aria-label="Categorías de gasto en vista móvil">
+        {% for categoria in categorias %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Categoría</span>
+                <strong class="sg-mobile-card-title">{{ categoria.nombre }}</strong>
+              </div>
+              {% if categoria.activo %}
+                <span class="badge text-bg-success">Activa</span>
+              {% else %}
+                <span class="badge text-bg-secondary">Inactiva</span>
+              {% endif %}
+            </div>
+
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Tipo</span>
+                <span class="sg-mobile-card-value">{{ categoria.get_tipo_display }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Distribución</span>
+                <span class="sg-mobile-card-value">{{ categoria.get_metodo_default_distribucion_display }}</span>
+              </div>
+              <div class="sg-mobile-card-field">
+                <span class="sg-mobile-card-label">Costeo</span>
+                <span class="sg-mobile-card-value">
+                  {% if categoria.distribuible %}Distribuible{% else %}No distribuible{% endif %}
+                </span>
+              </div>
+              {% if categoria.descripcion %}
+                <div class="sg-mobile-card-field">
+                  <span class="sg-mobile-card-label">Descripción</span>
+                  <span class="sg-mobile-card-value">{{ categoria.descripcion }}</span>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="sg-mobile-card-actions">
+              {% if puede_editar %}
+                <a href="{% url 'costos:categoria_gasto_edit' categoria.pk %}" class="sg-btn-secondary sg-btn-sm">
+                  <i class="bi bi-pencil"></i> Editar
+                </a>
+              {% endif %}
+              {% if puede_activar %}
+                <form method="post" action="{% url 'costos:categoria_gasto_toggle_activo' categoria.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button type="submit" class="sg-btn-outline sg-btn-sm">
+                    {% if categoria.activo %}
+                      <i class="bi bi-toggle-on"></i> Desactivar
+                    {% else %}
+                      <i class="bi bi-toggle-off"></i> Activar
+                    {% endif %}
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay categorías de gasto registradas con los filtros seleccionados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
