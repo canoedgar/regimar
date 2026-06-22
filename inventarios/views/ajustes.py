@@ -54,9 +54,10 @@ def _parametro_decimal(clave, default="0"):
 def _conversion_ajuste_reciente(producto, cantidad):
     """
     Calcula la conversión visual para ajustes recientes.
-    Regla:
-    - Producto normal: total en métrica base / primera métrica activa registrada del producto.
-    - Producto con peso variable: total kilos / parámetro ARRACHERA_PROM_CAJA.
+
+    La cantidad del detalle ya está guardada en la métrica base del producto
+    (por ejemplo kilos), por eso este cálculo solo es informativo para mostrar
+    cuántas cajas/presentaciones representa el ajuste.
     """
     cantidad = _decimal(cantidad)
     if not producto or cantidad <= 0:
@@ -68,7 +69,7 @@ def _conversion_ajuste_reciente(producto, cantidad):
 
     metrica_base = getattr(producto, "metrica", None) or "kg"
 
-    if getattr(producto, "maneja_peso_variable", False):
+    if bool(getattr(producto, "maneja_peso_variable", False)):
         factor = _parametro_decimal("ARRACHERA_PROM_CAJA", "0")
         if factor <= 0:
             return {
@@ -76,15 +77,17 @@ def _conversion_ajuste_reciente(producto, cantidad):
                 "texto": "Sin parámetro",
                 "help": "Configura ARRACHERA_PROM_CAJA para estimar cajas en productos con peso variable.",
             }
+
         cajas = cantidad / factor
         return {
             "cantidad": cajas,
             "texto": f"{_decimal_texto(cajas)} cajas aprox.",
-            "help": f"{_decimal_texto(cantidad)} {metrica_base} / ARRACHERA_PROM_CAJA {_decimal_texto(factor)} {metrica_base} por caja.",
+            "help": f"{_decimal_texto(cantidad)} {metrica_base} / {_decimal_texto(factor)} {metrica_base} promedio por caja.",
         }
 
     conversion = (
-        producto.conversiones_metricas.filter(activo=True)
+        ProductoMetricaConversion.objects
+        .filter(producto_id=producto.pk, activo=True)
         .order_by("fecha_alta", "id")
         .first()
     )
@@ -111,6 +114,15 @@ def _conversion_ajuste_reciente(producto, cantidad):
         "cantidad": convertido,
         "texto": f"{_decimal_texto(convertido)} {unidad}",
         "help": f"{_decimal_texto(cantidad)} {metrica_base} / {_decimal_texto(factor_unitario)} {metrica_base} por {unidad}.",
+    }
+
+
+
+def _conversion_campos_ajuste_reciente(producto, cantidad):
+    conversion = _conversion_ajuste_reciente(producto, cantidad)
+    return {
+        "conversion_texto": conversion.get("texto") or "—",
+        "conversion_help": conversion.get("help") or "",
     }
 
 
@@ -250,7 +262,7 @@ def _ajustes_recientes(limit=10):
             "almacen": e.almacen,
             "producto": d.producto if d else None,
             "cantidad": d.cantidad if d else Decimal("0"),
-            "conversion": _conversion_ajuste_reciente(d.producto if d else None, d.cantidad if d else Decimal("0")),
+            **_conversion_campos_ajuste_reciente(d.producto if d else None, d.cantidad if d else Decimal("0")),
             "reversado": _ajuste_esta_reversado("entrada", e.id),
         }
         for e in EntradaInventario.objects.filter(tipo=EntradaInventario.TIPO_AJUSTE_POSITIVO)
@@ -272,7 +284,7 @@ def _ajustes_recientes(limit=10):
             "almacen": s.almacen,
             "producto": d.producto if d else None,
             "cantidad": d.cantidad if d else Decimal("0"),
-            "conversion": _conversion_ajuste_reciente(d.producto if d else None, d.cantidad if d else Decimal("0")),
+            **_conversion_campos_ajuste_reciente(d.producto if d else None, d.cantidad if d else Decimal("0")),
             "reversado": _ajuste_esta_reversado("salida", s.id),
         }
         for s in SalidaInventario.objects.filter(tipo=SalidaInventario.TIPO_AJUSTE_NEGATIVO)
