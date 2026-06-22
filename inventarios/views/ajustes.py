@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.decorators import permiso_requerido
-from catalogos.models import Almacen, Producto, ProductoMetricaConversion
+from catalogos.models import Almacen, Producto, ProductoMetricaConversion, ParametroSistema
 
 from ..models import (
     EntradaInventario, EntradaInventarioDetalle,
@@ -40,6 +40,78 @@ def _decimal_texto(value):
     if "." in text:
         text = text.rstrip("0").rstrip(".")
     return text or "0"
+
+
+
+
+def _parametro_decimal(clave, default="0"):
+    parametro = ParametroSistema.objects.filter(clave=clave, activo=True).first()
+    if not parametro:
+        return Decimal(str(default))
+    return _decimal(parametro.valor, default=default)
+
+
+def _conversion_ajuste_reciente(producto, cantidad):
+    """
+    Calcula la conversión visual para ajustes recientes.
+    Regla:
+    - Producto normal: total en métrica base / primera métrica activa registrada del producto.
+    - Producto con peso variable: total kilos / parámetro ARRACHERA_PROM_CAJA.
+    """
+    cantidad = _decimal(cantidad)
+    if not producto or cantidad <= 0:
+        return {
+            "cantidad": None,
+            "texto": "—",
+            "help": "Sin producto o cantidad para convertir.",
+        }
+
+    metrica_base = getattr(producto, "metrica", None) or "kg"
+
+    if getattr(producto, "maneja_peso_variable", False):
+        factor = _parametro_decimal("ARRACHERA_PROM_CAJA", "0")
+        if factor <= 0:
+            return {
+                "cantidad": None,
+                "texto": "Sin parámetro",
+                "help": "Configura ARRACHERA_PROM_CAJA para estimar cajas en productos con peso variable.",
+            }
+        cajas = cantidad / factor
+        return {
+            "cantidad": cajas,
+            "texto": f"{_decimal_texto(cajas)} cajas aprox.",
+            "help": f"{_decimal_texto(cantidad)} {metrica_base} / ARRACHERA_PROM_CAJA {_decimal_texto(factor)} {metrica_base} por caja.",
+        }
+
+    conversion = (
+        producto.conversiones_metricas.filter(activo=True)
+        .order_by("fecha_alta", "id")
+        .first()
+    )
+    if not conversion:
+        return {
+            "cantidad": None,
+            "texto": "Sin métrica",
+            "help": "El producto no tiene métricas activas registradas.",
+        }
+
+    cantidad_origen = _decimal(conversion.cantidad_origen, default="1")
+    factor = _decimal(conversion.factor_conversion, default="0")
+    if cantidad_origen <= 0 or factor <= 0:
+        return {
+            "cantidad": None,
+            "texto": "Métrica inválida",
+            "help": "La primera métrica activa no tiene una equivalencia válida.",
+        }
+
+    factor_unitario = factor / cantidad_origen
+    convertido = cantidad / factor_unitario
+    unidad = conversion.unidad_origen or conversion.nombre or "presentación"
+    return {
+        "cantidad": convertido,
+        "texto": f"{_decimal_texto(convertido)} {unidad}",
+        "help": f"{_decimal_texto(cantidad)} {metrica_base} / {_decimal_texto(factor_unitario)} {metrica_base} por {unidad}.",
+    }
 
 
 def _productos_conversiones_qs():
@@ -178,6 +250,7 @@ def _ajustes_recientes(limit=10):
             "almacen": e.almacen,
             "producto": d.producto if d else None,
             "cantidad": d.cantidad if d else Decimal("0"),
+            "conversion": _conversion_ajuste_reciente(d.producto if d else None, d.cantidad if d else Decimal("0")),
             "reversado": _ajuste_esta_reversado("entrada", e.id),
         }
         for e in EntradaInventario.objects.filter(tipo=EntradaInventario.TIPO_AJUSTE_POSITIVO)
@@ -199,6 +272,7 @@ def _ajustes_recientes(limit=10):
             "almacen": s.almacen,
             "producto": d.producto if d else None,
             "cantidad": d.cantidad if d else Decimal("0"),
+            "conversion": _conversion_ajuste_reciente(d.producto if d else None, d.cantidad if d else Decimal("0")),
             "reversado": _ajuste_esta_reversado("salida", s.id),
         }
         for s in SalidaInventario.objects.filter(tipo=SalidaInventario.TIPO_AJUSTE_NEGATIVO)

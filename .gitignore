@@ -3,3 +3,4 @@ db.sqlite3
 .env.sessions.examples
 venv/
 **/__pycache__/
+cpc.zip
