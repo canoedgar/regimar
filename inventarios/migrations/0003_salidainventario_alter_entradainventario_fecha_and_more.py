@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('catalogos', '0003_proveedor'),
-        ('inventarios', '0002_entradainventario_xml_contenido'),
+        ('inventarios', '0001_initial'),
     ]
 
     operations = [
@@ -40,12 +40,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='entradainventario',
             name='tipo',
-            field=models.CharField(choices=[('OCF', 'OC con factura (XML)'), ('OCS', 'OC sin factura (no deducible)'), ('MAN', 'Entrada manual (nota / remisión)'), ('AJP', 'Ajuste positivo (incrementa stock)'), ('TRE', 'Entrada por traslado')], max_length=3, verbose_name='Tipo de entrada'),
-        ),
-        migrations.AlterField(
-            model_name='entradainventario',
-            name='uuid_factura',
-            field=models.CharField(blank=True, max_length=40, null=True, unique=True, verbose_name='UUID factura'),
+            field=models.CharField(choices=[('MAN', 'Entrada manual (nota / remisión)'), ('AJP', 'Ajuste positivo (incrementa stock)'), ('TRE', 'Entrada por traslado')], max_length=3, verbose_name='Tipo de entrada'),
         ),
         migrations.CreateModel(
             name='SalidaInventarioDetalle',

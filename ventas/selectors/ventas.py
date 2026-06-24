@@ -1,25 +1,12 @@
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from catalogos.models import Almacen, Cliente, ClienteProductoPrecio, Producto
 from inventarios.models import InventarioStock
-from inventarios.utils import get_almacen_default
-
-
-def _to_decimal(value, default=None):
-    try:
-        return Decimal(str(value))
-    except (InvalidOperation, TypeError, ValueError):
-        return default
-
-
-def _decimal_text(value):
-    dec = _to_decimal(value, default=Decimal("0"))
-    txt = format(dec, "f")
-
-    if "." in txt:
-        txt = txt.rstrip("0").rstrip(".")
-
-    return txt or "0"
+from inventarios.utils import (
+    decimal_or_default as _to_decimal,
+    decimal_text as _decimal_text,
+    get_almacen_default,
+)
 
 
 def _nombre_metrica(obj):

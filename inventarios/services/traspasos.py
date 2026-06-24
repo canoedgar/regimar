@@ -1,11 +1,7 @@
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
 from django.db import IntegrityError, transaction
-from django.db.models import F
-
-from catalogos.models import Producto
-
 from ..models import (
     EntradaInventario,
     EntradaInventarioDetalle,
@@ -13,18 +9,9 @@ from ..models import (
     SalidaInventario,
     SalidaInventarioDetalle,
 )
-from .stock import aplicar_movimiento_stock, recalcular_costo_promedio_producto
-
-
-def _to_decimal(value) -> Decimal:
-    if value is None:
-        return Decimal("0")
-    if isinstance(value, Decimal):
-        return value
-    try:
-        return Decimal(str(value))
-    except (InvalidOperation, TypeError, ValueError):
-        return Decimal("0")
+from .costos import aplicar_entrada_con_costo
+from .stock import aplicar_movimiento_stock
+from ..utils import decimal_or_default as _to_decimal
 
 
 @dataclass(frozen=True)
@@ -145,13 +132,13 @@ class TraspasoInventarioService:
                 almacen_id=origen.pk,
                 delta=-cantidad,
             )
-            self._aplicar_entrada_traspaso_con_costo(
+            aplicar_entrada_con_costo(
                 producto_id=producto.pk,
                 almacen_id=destino.pk,
                 cantidad=cantidad,
                 costo_unitario=costo_origen,
+                actualizar_ultima_compra=False,
             )
-            recalcular_costo_promedio_producto(producto.pk)
 
             return TraspasoInventarioResultado(salida=salida, entrada=entrada)
 
@@ -177,31 +164,3 @@ class TraspasoInventarioService:
     def _append_pair_marker(observaciones, marker):
         observaciones = (observaciones or "").strip()
         return f"{observaciones}\n{marker}" if observaciones else marker
-
-    @staticmethod
-    def _aplicar_entrada_traspaso_con_costo(*, producto_id, almacen_id, cantidad, costo_unitario):
-        cantidad = _to_decimal(cantidad)
-        costo_unitario = _to_decimal(costo_unitario)
-        if cantidad <= 0:
-            return
-
-        stock_row, _ = InventarioStock.objects.select_for_update().get_or_create(
-            producto_id=producto_id,
-            almacen_id=almacen_id,
-            defaults={"cantidad": Decimal("0"), "costo_promedio": Decimal("0")},
-        )
-
-        cantidad_actual = _to_decimal(stock_row.cantidad)
-        costo_actual = _to_decimal(stock_row.costo_promedio)
-        nueva_cantidad = cantidad_actual + cantidad
-        valor_actual = cantidad_actual * costo_actual
-        valor_entrada = cantidad * costo_unitario
-        nuevo_costo = Decimal("0")
-        if nueva_cantidad > 0:
-            nuevo_costo = (valor_actual + valor_entrada) / nueva_cantidad
-
-        stock_row.cantidad = nueva_cantidad
-        stock_row.costo_promedio = nuevo_costo
-        stock_row.save(update_fields=["cantidad", "costo_promedio"])
-
-        Producto.objects.filter(pk=producto_id).update(stock=F("stock") + cantidad)

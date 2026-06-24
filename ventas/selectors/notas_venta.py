@@ -2,7 +2,7 @@ from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Sum
 
 from catalogos.models import Cliente, Producto
 from inventarios.models import SalidaInventario, SalidaInventarioDetalle
-from inventarios.selectors.ventas import get_contexto_salida_venta
+from ventas.selectors.ventas import get_contexto_salida_venta
 
 
 def importe_detalle_expr():

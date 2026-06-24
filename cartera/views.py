@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from catalogos.models import Cliente, ParametroSistema
-from inventarios.models import SalidaInventario
+from ventas.models import NotaVenta
 from cartera.forms import CancelarPagoForm, PagoGlobalForm, PagoNotaForm, SaldoFavorAplicacionForm, SaldoFavorDevolucionForm
 from cartera.models import ClienteSaldoFavorMovimiento, PagoAplicacionNota, PagoCliente
 from cartera.selectors.cartera import (
@@ -109,7 +109,7 @@ def _empresa_contexto():
     }
 
 
-@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
+@permiso_requerido("cartera.view_pagocliente", "ventas.view_notaventa", "inventarios.view_salidainventario")
 def cartera_dashboard(request):
     query = (request.GET.get("q") or "").strip()
     estado_query = (request.GET.get("estado_q") or "").strip()
@@ -243,10 +243,10 @@ def pago_nota_create(request, nota_id):
         return redirect("cartera:dashboard")
 
     nota = get_object_or_404(
-        SalidaInventario.objects.select_related("cliente_ref"),
+        NotaVenta.objects.select_related("cliente_ref"),
         pk=nota_id,
-        tipo=SalidaInventario.TIPO_VENTA,
-        estado=SalidaInventario.ESTADO_ACTIVA,
+        tipo=NotaVenta.TIPO_VENTA,
+        estado=NotaVenta.ESTADO_ACTIVA,
     )
     if not nota.cliente_ref_id:
         messages.error(request, "La nota no tiene cliente de catálogo asignado.")
@@ -369,7 +369,7 @@ def pago_detalle_print(request, pago_id):
     return render(request, "cartera/prints/pago_detalle_print.html", {"pago": pago, "total_aplicado": total_aplicado, "saldo_generado": saldo_generado, "saldo_reversado": saldo_reversado, "notas_pendientes": notas_pendientes, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
 
 
-@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
+@permiso_requerido("cartera.view_pagocliente", "ventas.view_notaventa", "inventarios.view_salidainventario")
 def estado_cuenta_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
     estado = get_estado_cuenta_cliente(cliente)
@@ -402,7 +402,7 @@ def estado_cuenta_cliente(request, cliente_id):
     )
 
 
-@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
+@permiso_requerido("cartera.view_pagocliente", "ventas.view_notaventa", "inventarios.view_salidainventario")
 def estado_cuenta_cliente_print(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
     estado = get_estado_cuenta_cliente(cliente)
@@ -418,7 +418,7 @@ def estado_cuenta_cliente_print(request, cliente_id):
     return render(request, "cartera/prints/estado_cuenta_cliente_print.html", {"estado": estado, "cliente": cliente, "movimientos_saldo": movimientos_saldo, "empresa": _empresa_contexto(), "emitido_en": timezone.now(), "movimientos_opcion": movimientos_opcion})
 
 
-@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
+@permiso_requerido("cartera.view_pagocliente", "ventas.view_notaventa", "inventarios.view_salidainventario")
 def reporte_cartera_general(request):
     query = (request.GET.get("q") or "").strip()
     estado_query = (request.GET.get("estado_q") or "").strip()
@@ -443,7 +443,7 @@ def reporte_cartera_general(request):
     return render(request, "cartera/reporte_cartera_general.html", {"query": query, "filas": filas, "total_general": total_general, "saldo_favor_general": saldo_favor_general})
 
 
-@permiso_requerido("cartera.view_pagocliente", "inventarios.view_salidainventario")
+@permiso_requerido("cartera.view_pagocliente", "ventas.view_notaventa", "inventarios.view_salidainventario")
 def reporte_cartera_general_print(request):
     query = (request.GET.get("q") or "").strip()
     estado_query = (request.GET.get("estado_q") or "").strip()
@@ -535,11 +535,11 @@ def aplicar_saldo_favor(request, cliente_id):
     nota_id = request.POST.get("nota_id") or request.GET.get("nota")
     if nota_id:
         nota_seleccionada = get_object_or_404(
-            SalidaInventario.objects.select_related("cliente_ref"),
+            NotaVenta.objects.select_related("cliente_ref"),
             pk=nota_id,
             cliente_ref=cliente,
-            tipo=SalidaInventario.TIPO_VENTA,
-            estado=SalidaInventario.ESTADO_ACTIVA,
+            tipo=NotaVenta.TIPO_VENTA,
+            estado=NotaVenta.ESTADO_ACTIVA,
         )
         nota_saldo_pendiente = get_saldo_pendiente_nota(nota_seleccionada)
 
@@ -547,11 +547,11 @@ def aplicar_saldo_favor(request, cliente_id):
         form = SaldoFavorAplicacionForm(request.POST)
         if form.is_valid():
             nota = get_object_or_404(
-                SalidaInventario.objects.select_related("cliente_ref"),
+                NotaVenta.objects.select_related("cliente_ref"),
                 pk=form.cleaned_data["nota_id"],
                 cliente_ref=cliente,
-                tipo=SalidaInventario.TIPO_VENTA,
-                estado=SalidaInventario.ESTADO_ACTIVA,
+                tipo=NotaVenta.TIPO_VENTA,
+                estado=NotaVenta.ESTADO_ACTIVA,
             )
             try:
                 aplicar_saldo_favor_a_nota(

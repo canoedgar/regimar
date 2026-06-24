@@ -1,28 +1,19 @@
 from decimal import Decimal
-from datetime import timedelta
 
-from catalogos.models import Producto, ClienteProductoPrecio, PrecioMenorMinimoAutorizacion
-from catalogos.services.credito_clientes import (
-    marcar_autorizacion_credito_usada,
-    total_detalles_venta,
-    validar_credito_cliente_para_venta,
-)
-from inventarios.models import EntradaInventario, EntradaInventarioDetalle, SalidaInventarioDetalleAlmacen
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
-from django.urls import reverse
-from django.utils import timezone
+from catalogos.models import Producto
 from catalogos.services.clientes_precios import registrar_ultimo_precio_cliente
+from inventarios.models import EntradaInventario, EntradaInventarioDetalle, SalidaInventarioDetalleAlmacen
+from inventarios.services.bitacora import registrar_bitacora_precio_inventario
+from inventarios.services.costos import aplicar_entrada_con_costo, costo_virtual_producto
 from inventarios.services.stock import (
-    validar_stock_suficiente,
-    errores_stock_humano,
     aplicar_movimientos_salida,
-    aplicar_entrada_con_costo,
+    errores_stock_humano,
+    validar_stock_suficiente,
 )
 from inventarios.services.folios import next_folio_movimiento
-
-
+from ventas.services.venta_credito import VentaCreditoService
+from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
+from ventas.services.venta_precio import VentaPrecioMinimoService
 
 
 def es_almacen_venta_virtual(almacen) -> bool:
@@ -39,43 +30,62 @@ def es_almacen_venta_virtual(almacen) -> bool:
     )
 
 
-def _costo_virtual_producto(producto) -> Decimal:
-    """
-    Costo histórico usado para la entrada automática virtual.
-    Se prioriza el último costo de compra; si no existe, el costo promedio.
-    """
-    if not producto:
-        return Decimal("0")
-    return (
-        getattr(producto, "ultimo_costo_compra", Decimal("0"))
-        or getattr(producto, "costo_promedio", Decimal("0"))
-        or Decimal("0")
-    )
-
 
 class VentaService:
     def __init__(
         self,
-        form,
+        *,
         detalles_validos,
         detalles_meta,
         lineas_stock,
         almacenes_permitidos,
+        data=None,
+        form=None,
         request=None,
+        request_context=None,
         venta_existente=None,
         total_venta_override=None,
-        validar_credito=True,
+        validar_credito=None,
     ):
-        self.form = form
+        # Compatibilidad temporal: si alguna vista antigua aún envía form/request,
+        # los adaptamos aquí. Los flujos nuevos deben enviar `data`.
+        if data is None:
+            if form is None:
+                raise ValueError("VentaService requiere data o form.")
+            data = VentaOperacionData.from_form(
+                form,
+                request_context=request_context or VentaRequestContext.from_request(request),
+                venta_existente=venta_existente,
+                total_venta_override=total_venta_override,
+                validar_credito=True if validar_credito is None else validar_credito,
+            )
+        else:
+            if request_context is not None:
+                data.contexto = request_context
+            if venta_existente is not None:
+                data.venta_existente = venta_existente
+            if total_venta_override is not None:
+                data.total_venta_override = total_venta_override
+            if validar_credito is not None:
+                data.validar_credito = validar_credito
+
+        self.data = data
         self.detalles_validos = detalles_validos
         self.detalles_meta = detalles_meta
         self.lineas_stock = lineas_stock
         self.almacenes_permitidos = almacenes_permitidos
-        self.request = request
-        self.venta_existente = venta_existente
-        self.total_venta_override = total_venta_override
-        self.validar_credito = validar_credito
-        self.autorizacion_credito = None
+        self.credito_service = VentaCreditoService(
+            cliente=self.data.cliente or getattr(self.data.salida, "cliente_ref", None),
+            fecha_venta=self.data.fecha or getattr(self.data.salida, "fecha", None),
+            contexto=self.data.contexto,
+            venta_existente=self.data.venta_existente,
+            total_venta_override=self.data.total_venta_override,
+            validar_credito=self.data.validar_credito,
+        )
+        self.precio_service = VentaPrecioMinimoService(
+            cliente=self.data.cliente or getattr(self.data.salida, "cliente_ref", None),
+            contexto=self.data.contexto,
+        )
 
     def validar_stock(self):
         requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
@@ -120,13 +130,13 @@ class VentaService:
     def guardar(self):
         requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
 
-        salida = self.form.save(commit=False)
+        salida = self.data.salida
         salida.almacen = self.lineas_stock[0]["almacen"]
-        salida.registrado_por = self.request.user if self.request and self.request.user.is_authenticated else None
+        salida.registrado_por = self.data.contexto.usuario
 
         self._agregar_observacion_almacenes(salida)
         salida.save()
-        marcar_autorizacion_credito_usada(self.autorizacion_credito, salida)
+        self.credito_service.marcar_usada(salida)
 
         self._registrar_entradas_virtuales(salida, requeridos_por_almacen)
 
@@ -145,7 +155,7 @@ class VentaService:
                 cliente=cliente,
                 producto=detalle.producto,
                 precio=detalle.precio_unitario,
-                usuario=self.request.user if self.request else None,
+                usuario=self.data.contexto.usuario,
                 observaciones=f"Venta {salida.folio}",
             )
 
@@ -179,7 +189,7 @@ class VentaService:
                 almacen=almacen,
                 documento_referencia=salida.folio,
                 motivo="Entrada automática por venta sin inventario",
-                registrado_por=self.request.user if self.request and self.request.user.is_authenticated else None,
+                registrado_por=self.data.contexto.usuario,
                 observaciones=(
                     f"Entrada automática generada por la nota de venta {salida.folio}.\n"
                     "Flujo: venta desde almacén virtual; se registra entrada y salida en la misma transacción."
@@ -188,7 +198,7 @@ class VentaService:
 
             for producto_id, cantidad in (agregados or {}).items():
                 producto = productos_por_id.get(producto_id)
-                costo_unitario = _costo_virtual_producto(producto)
+                costo_unitario = costo_virtual_producto(producto)
 
                 EntradaInventarioDetalle.objects.create(
                     entrada=entrada,
@@ -205,139 +215,27 @@ class VentaService:
                     presentacion_equivalencia_texto="Entrada automática por venta virtual",
                 )
 
+                usuario = self.data.contexto.usuario
                 aplicar_entrada_con_costo(
                     producto_id=producto_id,
                     almacen_id=almacen_id,
                     cantidad=cantidad,
                     costo_unitario=costo_unitario,
-                    usuario=self.request.user if self.request and self.request.user.is_authenticated else None,
-                    motivo_bitacora=f"Entrada automática por venta virtual {salida.folio}",
+                )
+                registrar_bitacora_precio_inventario(
+                    producto_id=producto_id,
+                    usuario=usuario,
+                    motivo=f"Entrada automática por venta virtual {salida.folio}",
                 )
 
     def _validar_credito_cliente(self):
-        if not self.validar_credito:
-            return []
-
-        cliente = self.form.cleaned_data.get("cliente_ref") if hasattr(self.form, "cleaned_data") else None
-        if not cliente:
-            return []
-
-        total_venta = (
-            self.total_venta_override
-            if self.total_venta_override is not None
-            else total_detalles_venta(self.detalles_validos)
-        )
-        fecha_venta = self.form.cleaned_data.get("fecha") if hasattr(self.form, "cleaned_data") else None
-
-        errores, autorizacion = validar_credito_cliente_para_venta(
-            cliente=cliente,
-            total_venta=total_venta,
-            fecha_venta=fecha_venta,
-            request=self.request,
-            venta_existente=self.venta_existente,
-        )
-        self.autorizacion_credito = autorizacion
-        return errores
+        return self.credito_service.validar(self.detalles_validos)
 
     def _validar_precios_minimos(self, productos_obj_por_id):
-        errores = []
-        cliente = self.form.cleaned_data.get("cliente_ref") if hasattr(self.form, "cleaned_data") else None
-
-        for detalle in self.detalles_validos:
-            producto = productos_obj_por_id.get(detalle.producto_id)
-            if not producto:
-                continue
-
-            precio_minimo = getattr(producto, "precio_minimo", Decimal("0")) or Decimal("0")
-            precio_unitario = detalle.precio_unitario or Decimal("0")
-
-            if precio_minimo <= 0 or precio_unitario >= precio_minimo:
-                continue
-
-            # Si un administrador ya autorizó este precio para este cliente/producto, se permite la venta.
-            precio_autorizado = None
-            if cliente:
-                precio_autorizado = ClienteProductoPrecio.objects.filter(
-                    cliente=cliente,
-                    producto=producto,
-                    ultimo_precio=precio_unitario,
-                ).first()
-
-            if precio_autorizado:
-                continue
-
-            envio_confirmado = (
-                self.request
-                and self.request.POST.get("confirmar_envio_autorizacion_precio") == "1"
-            )
-
-            token = None
-            if envio_confirmado:
-                token = self._crear_autorizacion_precio_minimo(
-                    cliente=cliente,
-                    producto=producto,
-                    precio_actual=getattr(producto, "precio", Decimal("0")) or Decimal("0"),
-                    precio_minimo=precio_minimo,
-                    precio_solicitado=precio_unitario,
-                )
-
-            extra = ""
-            if token:
-                extra = " Se envió solicitud de autorización a administradores activos."
-            elif not envio_confirmado:
-                extra = " Confirma el envío de la solicitud de autorización antes de continuar."
-
-            errores.append(
-                f"{producto.nombre}: el precio solicitado ${precio_unitario} "
-                f"es menor al mínimo autorizado ${precio_minimo}.{extra}"
-            )
-
-        return errores
-
-    def _crear_autorizacion_precio_minimo(self, *, cliente, producto, precio_actual, precio_minimo, precio_solicitado):
-        if not cliente or not self.request:
-            return None
-
-        autorizacion = PrecioMenorMinimoAutorizacion.objects.create(
-            cliente=cliente,
-            producto=producto,
-            usuario_solicita=self.request.user if self.request.user.is_authenticated else None,
-            precio_actual=precio_actual,
-            precio_minimo=precio_minimo,
-            precio_solicitado=precio_solicitado,
-            expira_en=timezone.now() + timedelta(hours=24),
+        return self.precio_service.validar_detalles(
+            detalles_validos=self.detalles_validos,
+            productos_por_id=productos_obj_por_id,
         )
-
-        User = get_user_model()
-        admins = User.objects.filter(is_active=True).filter(is_superuser=True)
-        correos = [u.email for u in admins if u.email]
-        if not correos:
-            return autorizacion
-
-        url = self.request.build_absolute_uri(
-            reverse("autorizar_precio_minimo", kwargs={"token": autorizacion.token})
-        )
-        usuario = self.request.user.get_username() if self.request.user.is_authenticated else "Sistema"
-        asunto = f"Autorización de precio menor al mínimo - {producto.nombre}"
-        cuerpo = (
-            f"Cliente: {cliente}\n"
-            f"Producto: {producto.nombre}\n"
-            f"Precio actual/sugerido: ${precio_actual}\n"
-            f"Precio mínimo: ${precio_minimo}\n"
-            f"Precio solicitado: ${precio_solicitado}\n"
-            f"Usuario: {usuario}\n"
-            f"Fecha: {timezone.localtime().strftime('%Y-%m-%d %H:%M')}\n\n"
-            f"Autorizar: {url}\n"
-            "Este enlace es de un solo uso y expira en 24 horas."
-        )
-        send_mail(
-            asunto,
-            cuerpo,
-            getattr(settings, "DEFAULT_FROM_EMAIL", None),
-            correos,
-            fail_silently=True,
-        )
-        return autorizacion
 
     def _agrupar_requeridos_por_almacen(self):
         requeridos = {}

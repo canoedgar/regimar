@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 
 from catalogos.models import Producto
-from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from ventas.models import NotaVenta, NotaVentaDetalle
 
 from costos.models import CierreCosteoPeriodo, CierreCosteoProducto, CategoriaGasto, Gasto, GastoDistribucion
 
@@ -84,10 +84,10 @@ def calcular_resumen_costeo(periodo_inicio, periodo_fin) -> ResumenCosteoPeriodo
     acumulados: dict[int, AcumuladoProducto] = {}
 
     detalles_venta = (
-        SalidaInventarioDetalle.objects.select_related("salida", "producto")
+        NotaVentaDetalle.objects.select_related("salida", "producto")
         .filter(
-            salida__tipo=SalidaInventario.TIPO_VENTA,
-            salida__estado=SalidaInventario.ESTADO_ACTIVA,
+            salida__tipo=NotaVenta.TIPO_VENTA,
+            salida__estado=NotaVenta.ESTADO_ACTIVA,
             salida__fecha__gte=periodo_inicio,
             salida__fecha__lte=periodo_fin,
             cantidad__gt=0,

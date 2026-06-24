@@ -11,5 +11,5 @@ class EntradaInventarioDetalleInline(admin.TabularInline):
 class EntradaInventarioAdmin(admin.ModelAdmin):
     list_display = ("folio", "fecha", "tipo", "proveedor", "creado_en")
     list_filter = ("tipo", "fecha")
-    search_fields = ("folio", "proveedor", "uuid_factura")
+    search_fields = ("folio", "proveedor__nombre", "proveedor__rfc")
     inlines = [EntradaInventarioDetalleInline]

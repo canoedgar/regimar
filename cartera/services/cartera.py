@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from inventarios.models import SalidaInventario
+from ventas.models import NotaVenta
 from cartera.models import ClienteSaldoFavorMovimiento, PagoAplicacionNota, PagoCliente, PagoMetodoDetalle
 from cartera.selectors.cartera import get_saldo_favor_cliente, get_saldo_pendiente_nota, get_total_nota
 
@@ -53,11 +53,11 @@ def actualizar_estado_pago_nota(nota):
     aplicado = total - saldo
 
     if saldo <= 0:
-        nuevo_estado = SalidaInventario.ESTADO_PAGO_PAGADO
+        nuevo_estado = NotaVenta.ESTADO_PAGO_PAGADO
     elif aplicado > 0:
-        nuevo_estado = getattr(SalidaInventario, "ESTADO_PAGO_PARCIAL", "PARC")
+        nuevo_estado = getattr(NotaVenta, "ESTADO_PAGO_PARCIAL", "PARC")
     else:
-        nuevo_estado = SalidaInventario.ESTADO_PAGO_PENDIENTE
+        nuevo_estado = NotaVenta.ESTADO_PAGO_PENDIENTE
 
     if nota.estado_pago != nuevo_estado:
         nota.estado_pago = nuevo_estado
@@ -67,7 +67,7 @@ def actualizar_estado_pago_nota(nota):
 
 @transaction.atomic
 def registrar_pago_automatico_nota_pagada(nota, usuario=None, metodo=PagoMetodoDetalle.METODO_EFECTIVO, fecha_pago=None):
-    if nota.tipo != SalidaInventario.TIPO_VENTA:
+    if nota.tipo != NotaVenta.TIPO_VENTA:
         raise ValidationError("Solo se pueden registrar pagos automáticos de notas de venta.")
     if not nota.cliente_ref_id:
         raise ValidationError("La nota debe tener cliente de catálogo para registrar pago automático.")
@@ -118,10 +118,10 @@ def registrar_pago_notas_especificas(cliente, monto_recibido, aplicaciones, meto
 
     total_aplicado = Decimal("0.00")
     for item in aplicaciones:
-        nota = SalidaInventario.objects.select_for_update().get(pk=item["nota_id"])
+        nota = NotaVenta.objects.select_for_update().get(pk=item["nota_id"])
         if nota.cliente_ref_id != cliente.id:
             raise ValidationError("Todas las notas deben pertenecer al cliente seleccionado.")
-        if nota.estado != SalidaInventario.ESTADO_ACTIVA:
+        if nota.estado != NotaVenta.ESTADO_ACTIVA:
             raise ValidationError(f"La nota {nota.folio} no está activa.")
 
         monto_aplicar = _money(item["monto"])
@@ -178,14 +178,14 @@ def registrar_pago_fifo(cliente, monto_recibido, metodos, usuario=None, referenc
 
     restante = monto_recibido
     notas = (
-        SalidaInventario.objects.select_for_update()
+        NotaVenta.objects.select_for_update()
         .filter(
-            tipo=SalidaInventario.TIPO_VENTA,
-            estado=SalidaInventario.ESTADO_ACTIVA,
+            tipo=NotaVenta.TIPO_VENTA,
+            estado=NotaVenta.ESTADO_ACTIVA,
             cliente_ref=cliente,
             estado_pago__in=[
-                SalidaInventario.ESTADO_PAGO_PENDIENTE,
-                getattr(SalidaInventario, "ESTADO_PAGO_PARCIAL", "PARC"),
+                NotaVenta.ESTADO_PAGO_PENDIENTE,
+                getattr(NotaVenta, "ESTADO_PAGO_PARCIAL", "PARC"),
             ],
         )
         .order_by("fecha", "folio", "id")
@@ -250,14 +250,14 @@ def aplicar_saldo_favor_a_nota(cliente, nota, monto, usuario=None, referencia=""
     monto = _money(monto)
     if monto <= 0:
         raise ValidationError("El monto a aplicar debe ser mayor a cero.")
-    if nota.tipo != SalidaInventario.TIPO_VENTA:
+    if nota.tipo != NotaVenta.TIPO_VENTA:
         raise ValidationError("Solo se puede aplicar saldo a favor a notas de venta.")
-    if nota.estado != SalidaInventario.ESTADO_ACTIVA:
+    if nota.estado != NotaVenta.ESTADO_ACTIVA:
         raise ValidationError("Solo se puede aplicar saldo a favor a notas activas.")
     if nota.cliente_ref_id != cliente.id:
         raise ValidationError("La nota no pertenece al cliente seleccionado.")
 
-    nota = SalidaInventario.objects.select_for_update().get(pk=nota.pk)
+    nota = NotaVenta.objects.select_for_update().get(pk=nota.pk)
     saldo_disponible = _money(get_saldo_favor_cliente(cliente))
     if saldo_disponible <= 0:
         raise ValidationError("El cliente no tiene saldo a favor disponible.")
@@ -322,7 +322,7 @@ def cancelar_pago_cliente(pago, usuario=None, motivo=""):
             )
 
     notas_afectadas = list(
-        SalidaInventario.objects.select_for_update()
+        NotaVenta.objects.select_for_update()
         .filter(aplicaciones_cartera__pago=pago)
         .distinct()
     )

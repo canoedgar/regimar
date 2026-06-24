@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db.models import DecimalField, ExpressionWrapper, F, OuterRef, Subquery, Sum, Value
 from django.db.models.functions import Coalesce
 
-from inventarios.models import SalidaInventario
+from ventas.models import NotaVenta
 from cartera.models import ClienteSaldoFavorMovimiento, PagoAplicacionNota, PagoCliente
 
 
@@ -14,11 +14,11 @@ def expresion_total_nota(prefix="detalles__"):
     """
     Importe de una nota de venta.
 
-    Cuando se usa desde SalidaInventario se requiere el prefijo `detalles__`
-    porque el cálculo cruza hacia SalidaInventarioDetalle.
+    Cuando se usa desde NotaVenta se requiere el prefijo `detalles__`
+    porque el cálculo cruza hacia NotaVentaDetalle.
 
     Cuando se usa directamente sobre `nota.detalles` el queryset ya está
-    posicionado en SalidaInventarioDetalle, por lo que no debe llevar prefijo.
+    posicionado en NotaVentaDetalle, por lo que no debe llevar prefijo.
     """
     return ExpressionWrapper(
         F(f"{prefix}cantidad") * F(f"{prefix}precio_unitario"),
@@ -26,7 +26,7 @@ def expresion_total_nota(prefix="detalles__"):
     )
 
 
-def get_total_nota(nota: SalidaInventario) -> Decimal:
+def get_total_nota(nota: NotaVenta) -> Decimal:
     return nota.detalles.aggregate(
         total=Coalesce(
             Sum(expresion_total_nota(prefix="")),
@@ -35,25 +35,25 @@ def get_total_nota(nota: SalidaInventario) -> Decimal:
     )["total"]
 
 
-def get_total_aplicado_pagos_nota(nota: SalidaInventario) -> Decimal:
+def get_total_aplicado_pagos_nota(nota: NotaVenta) -> Decimal:
     return PagoAplicacionNota.objects.filter(
         nota_venta=nota,
         pago__estado=PagoCliente.ESTADO_ACTIVO,
     ).aggregate(total=Coalesce(Sum("monto_aplicado"), Value(Decimal("0.00"), output_field=MONEY_FIELD)))["total"]
 
 
-def get_total_saldo_favor_aplicado_nota(nota: SalidaInventario) -> Decimal:
+def get_total_saldo_favor_aplicado_nota(nota: NotaVenta) -> Decimal:
     return ClienteSaldoFavorMovimiento.objects.filter(
         nota_aplicada=nota,
         tipo=ClienteSaldoFavorMovimiento.TIPO_APLICACION,
     ).aggregate(total=Coalesce(Sum("monto"), Value(Decimal("0.00"), output_field=MONEY_FIELD)))["total"]
 
 
-def get_total_aplicado_nota(nota: SalidaInventario) -> Decimal:
+def get_total_aplicado_nota(nota: NotaVenta) -> Decimal:
     return get_total_aplicado_pagos_nota(nota) + get_total_saldo_favor_aplicado_nota(nota)
 
 
-def get_saldo_pendiente_nota(nota: SalidaInventario) -> Decimal:
+def get_saldo_pendiente_nota(nota: NotaVenta) -> Decimal:
     saldo = get_total_nota(nota) - get_total_aplicado_nota(nota)
     return max(saldo, Decimal("0.00"))
 
@@ -76,12 +76,12 @@ def get_notas_venta_con_totales():
     )
 
     return (
-        SalidaInventario.objects.filter(
-            tipo=SalidaInventario.TIPO_VENTA,
-            estado=SalidaInventario.ESTADO_ACTIVA,
+        NotaVenta.objects.filter(
+            tipo=NotaVenta.TIPO_VENTA,
+            estado=NotaVenta.ESTADO_ACTIVA,
             estado_pago__in=[
-                SalidaInventario.ESTADO_PAGO_PENDIENTE,
-                getattr(SalidaInventario, "ESTADO_PAGO_PARCIAL", "PARC"),
+                NotaVenta.ESTADO_PAGO_PENDIENTE,
+                getattr(NotaVenta, "ESTADO_PAGO_PARCIAL", "PARC"),
             ],
         )
         .select_related("cliente_ref")

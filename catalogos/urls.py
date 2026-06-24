@@ -2,7 +2,7 @@ from django.urls import path
 
 import proyectos
 from .views import (
-    productos_list, productos_create, productos_create_from_xml, productos_edit, productos_delete,
+    productos_list, productos_create, productos_edit, productos_delete,
     precios_productos_list, producto_precio_bitacora,
     proveedores_list, proveedores_create, proveedores_edit,
     categorias_list, categorias_create, categorias_edit, 
@@ -25,7 +25,6 @@ urlpatterns = [
     path("configuracion/parametros/<int:pk>/editar/", parametros_sistema_edit, name="parametros_sistema_edit"),
     path("clientes/precios/", precios_clientes_list, name="precios_clientes_list"),
     path("clientes/precios/<int:pk>/editar/", precio_cliente_edit, name="precio_cliente_edit"),
-    path("catalogos/productos/nuevo-desde-xml/", productos_create_from_xml, name="productos_create_from_xml"),
 
     # Proveedores
     path("proveedores/", proveedores_list, name="proveedores_list"),

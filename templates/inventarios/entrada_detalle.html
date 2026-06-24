@@ -52,21 +52,21 @@
           <div class="col-md-4">
             <div class="text-muted small">Tipo</div>
             <div>
-              {% if entrada.tipo == "OCF" %}
-                <span class="badge text-bg-success">
-                  <i class="bi bi-file-earmark-text me-1"></i> OC con factura
-                </span>
-              {% elif entrada.tipo == "OCS" %}
+              {% if entrada.tipo == "MAN" %}
                 <span class="badge text-bg-warning text-dark">
-                  <i class="bi bi-file-earmark-excel me-1"></i> OC sin factura
+                  <i class="bi bi-file-earmark-text me-1"></i> Entrada manual
                 </span>
               {% elif entrada.tipo == "TRE" %}
                 <span class="badge text-bg-success">
                   <i class="bi bi-arrow-left-right me-1"></i> Traspaso (+)
                 </span>
+              {% elif entrada.tipo == "RTN" %}
+                <span class="badge text-bg-secondary">
+                  <i class="bi bi-arrow-return-left me-1"></i> Retorno
+                </span>
               {% else %}
                 <span class="badge text-bg-info text-dark">
-                  <i class="bi bi-sliders me-1"></i> Ajuste / Manual
+                  <i class="bi bi-sliders me-1"></i> Ajuste
                 </span>
               {% endif %}
             </div>
@@ -100,18 +100,6 @@
               {% else %}
                 -
               {% endif %}
-            </div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="text-muted small">UUID factura</div>
-            <div class="fw-semibold">{{ entrada.uuid_factura|default:"-" }}</div>
-          </div>
-
-          <div class="col-md-4">
-            <div class="text-muted small">Tiene XML</div>
-            <div class="fw-semibold">
-              {% if entrada.tiene_xml %}Sí{% else %}No{% endif %}
             </div>
           </div>
 

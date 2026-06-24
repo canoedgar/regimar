@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='entradainventario',
             name='tipo',
-            field=models.CharField(choices=[('OCF', 'Factura'), ('MAN', 'Entrada nota / remisión'), ('AJP', 'Ajuste (aumenta stock)'), ('TRE', 'Entrada por traspaso'), ('RTN', 'Retorno')], max_length=3, verbose_name='Tipo de entrada'),
+            field=models.CharField(choices=[('MAN', 'Entrada nota / remisión'), ('AJP', 'Ajuste (aumenta stock)'), ('TRE', 'Entrada por traspaso'), ('RTN', 'Retorno')], max_length=3, verbose_name='Tipo de entrada'),
         ),
         migrations.AlterField(
             model_name='salidainventario',

@@ -1,23 +1,20 @@
-from decimal import Decimal, InvalidOperation
-
 from catalogos.models import Producto
+from inventarios.utils import decimal_or_default as _to_decimal
 
 
-def _to_decimal(value, default=None):
-    try:
-        return Decimal(str(value))
-    except (InvalidOperation, TypeError, ValueError):
-        return default
+class VentaPostParser:
 
-
-class VentaPostParser:    
-
-    def __init__(self, request, formset, almacenes_permitidos):
-        self.request = request
+    def __init__(self, formset, almacenes_permitidos, post_data=None, request=None):
+        # `request` se conserva como compatibilidad temporal. La capa de vista
+        # debe preferir enviar `post_data` para no acoplar el parser al request.
+        self.post_data = post_data if post_data is not None else getattr(request, "POST", None)
         self.formset = formset
         self.almacenes_permitidos = almacenes_permitidos
 
     def parse(self):
+        if self.post_data is None:
+            return self._resultado(error="No fue posible interpretar la información enviada de la venta.")
+
         detalles = self.formset.save(commit=False)
         detalles_validos, error = self._get_detalles_validos(detalles)
 
@@ -79,13 +76,13 @@ class VentaPostParser:
         return detalles_validos, None
 
     def _parse_detalles_presentacion(self):
-        producto_ids = self.request.POST.getlist("detalle_producto_id")
-        presentacion_ids = self.request.POST.getlist("detalle_presentacion_id")
-        cantidades_presentacion = self.request.POST.getlist("detalle_cantidad_presentacion")
-        factores = self.request.POST.getlist("detalle_factor_conversion")
-        presentaciones = self.request.POST.getlist("detalle_presentacion_nombre")
-        metricas_default = self.request.POST.getlist("detalle_metrica_default")
-        equivalencias = self.request.POST.getlist("detalle_equivalencia_texto")
+        producto_ids = self.post_data.getlist("detalle_producto_id")
+        presentacion_ids = self.post_data.getlist("detalle_presentacion_id")
+        cantidades_presentacion = self.post_data.getlist("detalle_cantidad_presentacion")
+        factores = self.post_data.getlist("detalle_factor_conversion")
+        presentaciones = self.post_data.getlist("detalle_presentacion_nombre")
+        metricas_default = self.post_data.getlist("detalle_metrica_default")
+        equivalencias = self.post_data.getlist("detalle_equivalencia_texto")
 
         detalles_meta = []
         total = len(producto_ids)
@@ -124,10 +121,10 @@ class VentaPostParser:
         return detalles_meta
 
     def _parse_lineas_venta(self, productos_permitidos, almacenes_permitidos):
-        producto_ids = self.request.POST.getlist("linea_producto_id")
-        almacen_ids = self.request.POST.getlist("linea_almacen_id")
-        cantidades = self.request.POST.getlist("linea_cantidad")
-        item_indexes = self.request.POST.getlist("linea_item_index")
+        producto_ids = self.post_data.getlist("linea_producto_id")
+        almacen_ids = self.post_data.getlist("linea_almacen_id")
+        cantidades = self.post_data.getlist("linea_cantidad")
+        item_indexes = self.post_data.getlist("linea_item_index")
 
         if not (len(producto_ids) == len(almacen_ids) == len(cantidades)):
             return None, "No fue posible interpretar las asignaciones de almacén de la venta."

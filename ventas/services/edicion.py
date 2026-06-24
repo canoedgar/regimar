@@ -1,18 +1,19 @@
 from decimal import Decimal
 
-from catalogos.models import ClienteProductoPrecio, Producto
+from catalogos.models import Producto
 from catalogos.services.clientes_precios import registrar_ultimo_precio_cliente
-from catalogos.services.credito_clientes import (
-    marcar_autorizacion_credito_usada,
-    money,
-    total_detalles_venta,
-    validar_credito_cliente_para_venta,
-)
+from catalogos.services.credito_clientes import money, total_detalles_venta
 from cartera.selectors.cartera import get_total_nota
 from inventarios.models import SalidaInventarioDetalle, SalidaInventarioDetalleAlmacen
 from inventarios.services.stock import aplicar_movimientos_salida
-from inventarios.services.venta_parser import VentaPostParser
-from inventarios.services.ventas import VentaService
+from ventas.services.venta_parser import VentaPostParser
+from ventas.services.venta_credito import (
+    marcar_autorizacion_credito_venta_usada,
+    validar_credito_venta,
+)
+from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
+from ventas.services.venta_precio import VentaPrecioMinimoService
+from ventas.services.creacion import VentaService
 from django.utils import timezone
 
 
@@ -36,11 +37,11 @@ class EditarDatosNotaService:
         if not cliente:
             return []
 
-        errores, autorizacion = validar_credito_cliente_para_venta(
+        errores, autorizacion = validar_credito_venta(
             cliente=cliente,
             total_venta=get_total_nota(salida_actual),
             fecha_venta=fecha,
-            request=self.request,
+            contexto=VentaRequestContext.from_request(self.request),
             venta_existente=salida_actual,
         )
         self.autorizacion_credito = autorizacion
@@ -51,7 +52,7 @@ class EditarDatosNotaService:
         salida.editada_en = timezone.now()
         salida.editada_por = self.user if getattr(self.user, "is_authenticated", False) else None
         salida.save()
-        marcar_autorizacion_credito_usada(self.autorizacion_credito, salida)
+        marcar_autorizacion_credito_venta_usada(self.autorizacion_credito, salida)
         return salida
 
 
@@ -91,15 +92,8 @@ class AjustarPreciosNotaService:
             if precio_minimo <= 0 or precio >= precio_minimo:
                 continue
 
-            precio_autorizado = None
-            if cliente:
-                precio_autorizado = ClienteProductoPrecio.objects.filter(
-                    cliente=cliente,
-                    producto=producto,
-                    ultimo_precio=precio,
-                ).first()
-
-            if precio_autorizado:
+            precio_service = VentaPrecioMinimoService(cliente=cliente)
+            if precio_service.precio_ya_autorizado(producto=producto, precio=precio):
                 continue
 
             errores.append(
@@ -126,11 +120,11 @@ class AjustarPreciosNotaService:
             precio = money(form.cleaned_data.get("precio_unitario"))
             total += cantidad * precio
 
-        errores, autorizacion = validar_credito_cliente_para_venta(
+        errores, autorizacion = validar_credito_venta(
             cliente=cliente,
             total_venta=money(total),
             fecha_venta=getattr(self.salida, "fecha", None),
-            request=self.request,
+            contexto=VentaRequestContext.from_request(self.request),
             venta_existente=self.salida,
         )
         self.autorizacion_credito = autorizacion
@@ -143,7 +137,7 @@ class AjustarPreciosNotaService:
 
         detalles = self.formset.save()
         marcar_nota_editada(self.salida, self.user)
-        marcar_autorizacion_credito_usada(self.autorizacion_credito, self.salida)
+        marcar_autorizacion_credito_venta_usada(self.autorizacion_credito, self.salida)
         cliente = getattr(self.salida, "cliente_ref", None)
         for detalle in detalles:
             registrar_ultimo_precio_cliente(
@@ -157,8 +151,21 @@ class AjustarPreciosNotaService:
 
 
 class AgregarProductosNotaService:
-    def __init__(self, *, request, salida, formset, almacenes_permitidos):
+    def __init__(
+        self,
+        *,
+        salida,
+        formset,
+        almacenes_permitidos,
+        request=None,
+        post_data=None,
+        user=None,
+        request_context=None,
+    ):
         self.request = request
+        self.post_data = post_data if post_data is not None else getattr(request, "POST", None)
+        self.user = user if user is not None else getattr(request, "user", None)
+        self.request_context = request_context or VentaRequestContext.from_request(request)
         self.salida = salida
         self.formset = formset
         self.almacenes_permitidos = almacenes_permitidos
@@ -180,7 +187,7 @@ class AgregarProductosNotaService:
             return errores
 
         parser = VentaPostParser(
-            request=self.request,
+            post_data=self.post_data,
             formset=self.formset,
             almacenes_permitidos=self.almacenes_permitidos,
         )
@@ -189,17 +196,19 @@ class AgregarProductosNotaService:
         if errores:
             return errores
 
-        dummy_form = type("NotaVentaDummyForm", (), {
-            "cleaned_data": {"cliente_ref": self.salida.cliente_ref},
-        })()
+        venta_data = VentaOperacionData(
+            salida=self.salida,
+            cliente=self.salida.cliente_ref,
+            fecha=self.salida.fecha,
+            contexto=self.request_context,
+            validar_credito=False,
+        )
         venta_service = VentaService(
-            form=dummy_form,
+            data=venta_data,
             detalles_validos=self.resultado_parseo["detalles_validos"],
             detalles_meta=self.resultado_parseo["detalles_meta"],
             lineas_stock=self.resultado_parseo["lineas_stock"],
             almacenes_permitidos=self.almacenes_permitidos,
-            request=self.request,
-            validar_credito=False,
         )
         errores.extend(venta_service.validar_stock())
         if not errores:
@@ -211,11 +220,11 @@ class AgregarProductosNotaService:
         if not cliente or self.resultado_parseo is None:
             return []
         total_proyectado = money(get_total_nota(self.salida) + total_detalles_venta(self.resultado_parseo["detalles_validos"]))
-        errores, autorizacion = validar_credito_cliente_para_venta(
+        errores, autorizacion = validar_credito_venta(
             cliente=cliente,
             total_venta=total_proyectado,
             fecha_venta=getattr(self.salida, "fecha", None),
-            request=self.request,
+            contexto=self.request_context,
             venta_existente=self.salida,
         )
         self.autorizacion_credito = autorizacion
@@ -228,8 +237,8 @@ class AgregarProductosNotaService:
                 raise ValueError("; ".join(errores))
 
         detalles = self._guardar_productos()
-        marcar_nota_editada(self.salida, self.request.user)
-        marcar_autorizacion_credito_usada(self.autorizacion_credito, self.salida)
+        marcar_nota_editada(self.salida, self.user)
+        marcar_autorizacion_credito_venta_usada(self.autorizacion_credito, self.salida)
         return detalles
 
     def _productos_repetidos(self):
@@ -237,12 +246,12 @@ class AgregarProductosNotaService:
         vistos = set()
         repetidos = []
         try:
-            total = int(self.request.POST.get("nuevos-TOTAL_FORMS", "0") or 0)
+            total = int(self.post_data.get("nuevos-TOTAL_FORMS", "0") or 0)
         except (TypeError, ValueError):
             total = 0
 
         for idx in range(total):
-            raw_producto_id = (self.request.POST.get(f"nuevos-{idx}-producto") or "").strip()
+            raw_producto_id = (self.post_data.get(f"nuevos-{idx}-producto") or "").strip()
             if not raw_producto_id.isdigit():
                 continue
             producto_id = int(raw_producto_id)
@@ -314,14 +323,19 @@ class AgregarProductosNotaService:
                 cantidad=linea["cantidad"],
             )
 
+        venta_data = VentaOperacionData(
+            salida=self.salida,
+            cliente=self.salida.cliente_ref,
+            fecha=self.salida.fecha,
+            contexto=self.request_context,
+            validar_credito=False,
+        )
         venta_service = VentaService(
-            form=type("NotaVentaDummyForm", (), {"cleaned_data": {"cliente_ref": self.salida.cliente_ref}})(),
+            data=venta_data,
             detalles_validos=detalles_validos,
             detalles_meta=detalles_meta,
             lineas_stock=self.resultado_parseo["lineas_stock"],
             almacenes_permitidos=self.almacenes_permitidos,
-            request=self.request,
-            validar_credito=False,
         )
 
         requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
@@ -336,7 +350,7 @@ class AgregarProductosNotaService:
                 cliente=cliente,
                 producto=detalle.producto,
                 precio=detalle.precio_unitario,
-                usuario=self.request.user if self.request.user.is_authenticated else None,
+                usuario=self.user if getattr(self.user, "is_authenticated", False) else None,
                 observaciones=f"Producto agregado en nota {self.salida.folio}",
             )
 

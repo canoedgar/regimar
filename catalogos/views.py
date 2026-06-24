@@ -170,64 +170,6 @@ def productos_create(request):
     })
 
 
-@permiso_requerido("catalogos.add_producto")
-def productos_create_from_xml(request):
-    idx = int(request.GET.get("i"))
-    conceptos = request.session.get("ocf_xml_conceptos", [])
-
-    if idx >= len(conceptos):
-        messages.error(request, "Línea inválida.")
-        return redirect("entrada_ocf_create")
-
-    c = conceptos[idx]
-
-    initial = {
-        "nombre": c["descripcion_xml"],
-        "clave_sat": c["clave_sat_xml"],
-        "precio": c["valor_unitario_xml"],
-    }
-
-    producto = Producto()
-
-    if request.method == "POST":
-        form = ProductoForm(request.POST, request.FILES, instance=producto)
-        formset = _build_conversion_formset(request, producto)
-        if form.is_valid() and formset.is_valid():
-            producto = form.save()
-            formset.instance = producto
-            conversiones = formset.save(commit=False)
-            for conversion in conversiones:
-                conversion.producto = producto
-                conversion.save()
-            for eliminado in formset.deleted_objects:
-                if eliminado.pk:
-                    eliminado.delete()
-
-            registrar_bitacora_precio_producto(
-                producto,
-                usuario=request.user,
-                motivo="Alta de producto desde XML",
-            )
-
-            # 🔑 Guardamos el producto creado para esa línea
-            request.session["ocf_producto_creado"] = {
-                "idx": idx,
-                "producto_id": producto.id,
-            }
-
-            return redirect("entrada_ocf_create")
-
-    else:
-        form = ProductoForm(initial=initial, instance=producto)
-        formset = _build_conversion_formset(request, producto)
-
-    return render(request, "catalogos/productos_form.html", {
-        "form": form,
-        "formset_conversiones": formset,
-        "producto": producto,
-        "desde_xml": True,
-    })
-
 
 @permiso_requerido("catalogos.change_producto")
 def productos_edit(request, pk):

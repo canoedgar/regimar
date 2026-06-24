@@ -6,7 +6,6 @@ from ..models import EntradaInventario, SalidaInventario
 FOLIO_PREFIX_BY_TIPO = {
 
     # Entradas
-    getattr(EntradaInventario, "TIPO_OC_CON_FACTURA", "OCF"): "OCF",
     getattr(EntradaInventario, "TIPO_ENTRADA_MANUAL", "MAN"): "MAN",
     getattr(EntradaInventario, "TIPO_AJUSTE_POSITIVO", "AJP"): "AJP",
     getattr(EntradaInventario, "TIPO_TRASLADO", "TRE"): "TRE",
@@ -58,3 +57,28 @@ def next_folio_movimiento(*, tipo: str, width: int = 6, prefix: str | None = Non
                 max_num = n
 
     return f"{pref}-{max_num + 1:0{width}d}"
+
+def folio_reversa_unico(*, prefix: str, folio_original: str, movimiento_id: int) -> str:
+    """
+    Genera un folio único de reversa compatible con max_length=20.
+
+    Valida contra entradas y salidas porque ambos modelos comparten el
+    espacio funcional de folios de movimientos de inventario.
+    """
+    pref = (prefix or "REV").strip().upper()
+    base = f"{pref}-{folio_original}"
+    if len(base) > 20:
+        base = f"{pref}-{movimiento_id}"
+
+    folio = base[:20]
+    contador = 1
+    while (
+        EntradaInventario.objects.filter(folio=folio).exists()
+        or SalidaInventario.objects.filter(folio=folio).exists()
+    ):
+        suffix = f"-{contador}"
+        folio = f"{base[:20-len(suffix)]}{suffix}"
+        contador += 1
+
+    return folio
+

@@ -1,5 +1,3 @@
-from decimal import Decimal, InvalidOperation
-
 from django.contrib import messages
 from django.db import IntegrityError
 from django.http import JsonResponse
@@ -13,15 +11,7 @@ from ..forms import TraspasoInventarioForm
 from ..models import InventarioStock, EntradaInventario, SalidaInventario
 from ..services.folios import next_folio_movimiento
 from ..services.traspasos import TraspasoInventarioService
-
-
-def _decimal(value, default="0"):
-    try:
-        if value in (None, ""):
-            return Decimal(default)
-        return Decimal(str(value))
-    except (InvalidOperation, TypeError, ValueError):
-        return Decimal(default)
+from ..utils import decimal_or_default as _decimal
 
 
 def _initial_traspaso():

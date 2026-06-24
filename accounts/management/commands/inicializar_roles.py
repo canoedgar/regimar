@@ -15,6 +15,7 @@ ROLES_PERMISOS = {
         "catalogos.view_preciomenorminimoautorizacion", "catalogos.add_preciomenorminimoautorizacion", "catalogos.change_preciomenorminimoautorizacion", "catalogos.delete_preciomenorminimoautorizacion",
         "inventarios.view_entradainventario", "inventarios.add_entradainventario", "inventarios.change_entradainventario", "inventarios.delete_entradainventario",
         "inventarios.view_salidainventario", "inventarios.add_salidainventario", "inventarios.change_salidainventario", "inventarios.delete_salidainventario",
+        "ventas.view_notaventa", "ventas.add_notaventa", "ventas.change_notaventa", "ventas.delete_notaventa",
         "inventarios.view_inventariostock", "inventarios.add_inventariostock", "inventarios.change_inventariostock", "inventarios.delete_inventariostock",
         "cartera.view_pagocliente", "cartera.add_pagocliente", "cartera.change_pagocliente", "cartera.delete_pagocliente",
         "cartera.view_pagoaplicacionnota", "cartera.add_pagoaplicacionnota", "cartera.change_pagoaplicacionnota", "cartera.delete_pagoaplicacionnota",
@@ -38,19 +39,18 @@ ROLES_PERMISOS = {
     "Ventas": [
         "catalogos.view_cliente", "catalogos.add_cliente",
         "catalogos.view_producto", "catalogos.view_almacen", "catalogos.view_clienteproductoprecio",
-        "inventarios.view_salidainventario", "inventarios.add_salidainventario", "inventarios.change_salidainventario",
+        "ventas.view_notaventa", "ventas.add_notaventa", "ventas.change_notaventa",
         "cotizaciones.view_cotizacionprecio", "cotizaciones.add_cotizacionprecio", "cotizaciones.change_cotizacionprecio",
         "cartera.view_pagocliente", "cartera.add_pagocliente",
     ],
     "Cartera": [
         "catalogos.view_cliente",
-        "inventarios.view_salidainventario",
+        "ventas.view_notaventa",
         "cartera.view_pagocliente", "cartera.add_pagocliente", "cartera.change_pagocliente",
         "cartera.view_pagoaplicacionnota", "cartera.add_pagoaplicacionnota", "cartera.change_pagoaplicacionnota",
         "cartera.view_clientesaldofavormovimiento", "cartera.add_clientesaldofavormovimiento", "cartera.change_clientesaldofavormovimiento",
     ],
 }
-
 
 class Command(BaseCommand):
     help = "Crea/actualiza los roles base del sistema y les asigna permisos CRUD iniciales."

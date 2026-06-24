@@ -7,15 +7,13 @@ from django.core.exceptions import ValidationError
 
 
 class EntradaInventario(models.Model):
-    # Entradas existentes (se conservan)
-    TIPO_OC_CON_FACTURA = "OCF"        
+    # Tipos de entrada vigentes
     TIPO_ENTRADA_MANUAL = "MAN"  
     TIPO_AJUSTE_POSITIVO = "AJP"     
     TIPO_TRASLADO = "TRE" 
     TIPO_RETORNO = "RTN"
 
     TIPO_CHOICES = [
-        (TIPO_OC_CON_FACTURA, "Factura"),        
         (TIPO_ENTRADA_MANUAL, "Entrada nota / remisión"),        
         (TIPO_AJUSTE_POSITIVO, "Ajuste (aumenta stock)"),        
         (TIPO_TRASLADO, "Entrada por traspaso"),        
@@ -86,17 +84,6 @@ class EntradaInventario(models.Model):
         help_text="Usuario que registró el movimiento de inventario.",
     )
 
-    # Datos de factura (si aplica)
-    uuid_factura = models.CharField(
-        "UUID factura",
-        max_length=40,
-        blank=True,
-        null=True,   
-        unique=True
-    )
-
-    tiene_xml = models.BooleanField("Tiene XML", default=False)
-    xml_contenido = models.TextField("Contenido XML", blank=True)
     motivo = models.TextField("Motivo", blank=True)
     observaciones = models.TextField("Observaciones", blank=True)    
     creado_en = models.DateTimeField(auto_now_add=True)
@@ -119,8 +106,7 @@ class EntradaInventario(models.Model):
             raise ValidationError({"proyecto": "Este campo solo aplica para retorno de proyecto."})
         
         tipos_requieren_proveedor = [
-            self.TIPO_OC_CON_FACTURA,
-            self.TIPO_ENTRADA_MANUAL            
+            self.TIPO_ENTRADA_MANUAL
         ]
 
         if self.tipo in tipos_requieren_proveedor and not self.proveedor_id:

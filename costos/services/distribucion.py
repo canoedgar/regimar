@@ -6,7 +6,8 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Q
 
-from inventarios.models import EntradaInventario, EntradaInventarioDetalle, SalidaInventario, SalidaInventarioDetalle
+from inventarios.models import EntradaInventario, EntradaInventarioDetalle
+from ventas.models import NotaVenta, NotaVentaDetalle
 
 from costos.models import CategoriaGasto, Gasto, GastoDistribucion
 
@@ -85,10 +86,10 @@ def _obtener_bases_distribucion(gasto: Gasto) -> list[BaseDistribucion]:
 
 def _bases_ventas(gasto: Gasto, usar_importe: bool) -> list[BaseDistribucion]:
     detalles = (
-        SalidaInventarioDetalle.objects.select_related("salida", "producto", "almacen", "salida__almacen")
+        NotaVentaDetalle.objects.select_related("salida", "producto", "almacen", "salida__almacen")
         .filter(
-            salida__tipo=SalidaInventario.TIPO_VENTA,
-            salida__estado=SalidaInventario.ESTADO_ACTIVA,
+            salida__tipo=NotaVenta.TIPO_VENTA,
+            salida__estado=NotaVenta.ESTADO_ACTIVA,
             salida__fecha__gte=gasto.periodo_inicio,
             salida__fecha__lte=gasto.periodo_fin,
             cantidad__gt=0,

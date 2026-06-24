@@ -138,7 +138,7 @@ class PagoAplicacionNota(models.Model):
 
     pago = models.ForeignKey(PagoCliente, on_delete=models.PROTECT, related_name="aplicaciones")
     nota_venta = models.ForeignKey(
-        "inventarios.SalidaInventario",
+        "ventas.NotaVenta",
         on_delete=models.PROTECT,
         related_name="aplicaciones_cartera",
         limit_choices_to={"tipo": "VTA"},
@@ -212,7 +212,7 @@ class ClienteSaldoFavorMovimiento(models.Model):
         related_name="movimientos_saldo_favor",
     )
     nota_aplicada = models.ForeignKey(
-        "inventarios.SalidaInventario",
+        "ventas.NotaVenta",
         on_delete=models.PROTECT,
         null=True,
         blank=True,

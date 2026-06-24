@@ -9,7 +9,8 @@ from django.utils import timezone
 from catalogos.models import Cliente, ParametroSistema, Producto
 from cartera.models import ClienteSaldoFavorMovimiento, PagoCliente
 from cartera.selectors.cartera import get_notas_venta_con_totales, get_saldo_favor_cliente, get_total_adeudado_cliente
-from inventarios.models import EntradaInventario, EntradaInventarioDetalle, InventarioStock, SalidaInventario, SalidaInventarioDetalle
+from inventarios.models import EntradaInventario, EntradaInventarioDetalle, InventarioStock, SalidaInventario
+from ventas.models import NotaVenta, NotaVentaDetalle
 from notificaciones.models import NotificacionCorreo
 from notificaciones.services.correo import enviar_correo
 
@@ -75,12 +76,11 @@ def construir_reporte_general(fecha_inicio=None, fecha_fin=None):
 
     entradas = EntradaInventario.objects.filter(fecha__range=(fecha_inicio, fecha_fin))
     entradas_detalle = EntradaInventarioDetalle.objects.filter(entrada__in=entradas)
-    ventas = SalidaInventario.objects.filter(
-        tipo=SalidaInventario.TIPO_VENTA,
-        estado=SalidaInventario.ESTADO_ACTIVA,
+    ventas = NotaVenta.objects.filter(
+        estado=NotaVenta.ESTADO_ACTIVA,
         fecha__range=(fecha_inicio, fecha_fin),
     )
-    ventas_detalle = SalidaInventarioDetalle.objects.filter(salida__in=ventas)
+    ventas_detalle = NotaVentaDetalle.objects.filter(salida__in=ventas)
     pagos = PagoCliente.objects.filter(
         estado=PagoCliente.ESTADO_ACTIVO,
         fecha__gte=inicio_dt,

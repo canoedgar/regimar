@@ -649,7 +649,7 @@ class ClienteCreditoAutorizacion(models.Model):
         related_name="solicitudes_credito_extraordinario",
     )
     venta_autorizada = models.ForeignKey(
-        "inventarios.SalidaInventario",
+        "ventas.NotaVenta",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

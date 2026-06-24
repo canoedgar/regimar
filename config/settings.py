@@ -33,7 +33,7 @@ def env_list(name, default=""):
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-insegura")
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.68.118")
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1,192.168.68.113,192.168.68.114,192.168.1.19")
 
 # =========================
 # APPS INSTALADAS
@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "catalogos",
     "cotizaciones",
     "inventarios",
+    "ventas",
     "proyectos",
     "notificaciones",
     "costos",

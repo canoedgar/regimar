@@ -133,7 +133,7 @@ class GastoDistribucion(models.Model):
         verbose_name="Detalle de entrada",
     )
     salida_detalle = models.ForeignKey(
-        "inventarios.SalidaInventarioDetalle",
+        "ventas.NotaVentaDetalle",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

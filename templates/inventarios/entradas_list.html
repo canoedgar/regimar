@@ -124,12 +124,7 @@
                 </td>
 
                 <td>
-                  {% if entrada.tipo == "OCF" %}
-                    <span class="badge text-bg-success">
-                      <i class="bi bi-file-earmark-text me-1"></i>
-                      Entrada Factura
-                    </span>
-                  {% elif entrada.tipo == "MAN" %}
+                  {% if entrada.tipo == "MAN" %}
                     <span class="badge text-bg-warning text-dark">
                       <i class="bi bi-file-earmark-excel me-1"></i>
                       Entrada Manual
@@ -197,9 +192,7 @@
                 <span class="sg-mobile-card-subtitle">{{ entrada.fecha|date:"Y-m-d" }}</span>
               </div>
               <div>
-                {% if entrada.tipo == "OCF" %}
-                  <span class="badge text-bg-success">Factura</span>
-                {% elif entrada.tipo == "MAN" %}
+                {% if entrada.tipo == "MAN" %}
                   <span class="badge text-bg-warning text-dark">Manual</span>
                 {% elif entrada.tipo == "TRE" %}
                   <span class="badge text-bg-success">Traspaso (+)</span>

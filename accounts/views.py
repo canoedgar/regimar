@@ -10,7 +10,8 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from catalogos.models import Almacen, Cliente, ClienteProductoPrecio, Producto, Proveedor
-from inventarios.models import EntradaInventario, InventarioStock, SalidaInventario, SalidaInventarioDetalle
+from inventarios.models import EntradaInventario, InventarioStock
+from ventas.models import NotaVenta, NotaVentaDetalle
 
 
 ZERO = Decimal("0.00")
@@ -81,8 +82,8 @@ def home(request):
         return any(user.has_perm(permiso) for permiso in permisos)
 
     dashboard_permisos = {
-        "ventas_ver": puede("inventarios.view_salidainventario"),
-        "ventas_agregar": puede("inventarios.add_salidainventario"),
+        "ventas_ver": puede("ventas.view_notaventa"),
+        "ventas_agregar": puede("ventas.add_notaventa"),
         "entradas_ver": puede("inventarios.view_entradainventario"),
         "entradas_agregar": puede("inventarios.add_entradainventario"),
         "inventario_ver": puede("inventarios.view_inventariostock"),
@@ -166,17 +167,17 @@ def home(request):
         "ultimas_salidas": [],
     }
 
-    ventas_activas = SalidaInventario.objects.none()
-    detalles_venta = SalidaInventarioDetalle.objects.none()
+    ventas_activas = NotaVenta.objects.none()
+    detalles_venta = NotaVentaDetalle.objects.none()
 
     if dashboard_permisos["ventas_ver"]:
-        ventas_activas = SalidaInventario.objects.filter(
-            tipo=SalidaInventario.TIPO_VENTA,
-            estado=SalidaInventario.ESTADO_ACTIVA,
+        ventas_activas = NotaVenta.objects.filter(
+            tipo=NotaVenta.TIPO_VENTA,
+            estado=NotaVenta.ESTADO_ACTIVA,
             fecha__gte=fecha_inicio,
             fecha__lte=fecha_fin,
         )
-        detalles_venta = SalidaInventarioDetalle.objects.filter(salida__in=ventas_activas)
+        detalles_venta = NotaVentaDetalle.objects.filter(salida__in=ventas_activas)
 
         resumen = detalles_venta.aggregate(
             kilos=Coalesce(Sum("cantidad"), Value(ZERO), output_field=DecimalField(max_digits=16, decimal_places=2)),
@@ -257,21 +258,21 @@ def home(request):
             ejecutivo["mejores_clientes"] = mejores_clientes
 
         if dashboard_permisos["cartera_ver"]:
-            ventas_credito = ventas_activas.filter(forma_pago_venta=SalidaInventario.FORMA_PAGO_CREDITO)
+            ventas_credito = ventas_activas.filter(forma_pago_venta=NotaVenta.FORMA_PAGO_CREDITO)
             credito_ids = list(ventas_credito.values_list("id", flat=True))
-            credito_resumen = SalidaInventarioDetalle.objects.filter(salida_id__in=credito_ids).aggregate(
+            credito_resumen = NotaVentaDetalle.objects.filter(salida_id__in=credito_ids).aggregate(
                 total=Coalesce(Sum(_venta_expr()), Value(ZERO), output_field=DecimalField(max_digits=16, decimal_places=2))
             )
             ejecutivo["credito_notas"] = ventas_credito.count()
             ejecutivo["credito_total"] = _money(credito_resumen["total"])
 
-        operativo["ventas_hoy"] = SalidaInventario.objects.filter(
-            tipo=SalidaInventario.TIPO_VENTA,
-            estado=SalidaInventario.ESTADO_ACTIVA,
+        operativo["ventas_hoy"] = NotaVenta.objects.filter(
+            tipo=NotaVenta.TIPO_VENTA,
+            estado=NotaVenta.ESTADO_ACTIVA,
             fecha=hoy,
         ).count()
         operativo["ultimas_salidas"] = (
-            SalidaInventario.objects.filter(tipo=SalidaInventario.TIPO_VENTA)
+            NotaVenta.objects.filter(tipo=NotaVenta.TIPO_VENTA)
             .select_related("cliente_ref", "almacen")
             .order_by("-fecha", "-folio")[:5]
         )

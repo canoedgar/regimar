@@ -315,7 +315,6 @@
             {% endif %}
             {% if dashboard_permisos.entradas_agregar %}
             <a href="{% url 'entrada_manual_create' %}" class="sg-dashboard-action"><i class="bi bi-journal-plus"></i><span>Entrada manual</span></a>
-            <a href="{% url 'entrada_ocf_create' %}" class="sg-dashboard-action"><i class="bi bi-filetype-xml"></i><span>Entrada XML</span></a>
             {% endif %}
             {% if dashboard_permisos.inventario_ajustar %}
             <a href="{% url 'ajuste_inventario' %}" class="sg-dashboard-action"><i class="bi bi-sliders"></i><span>Ajuste inventario</span></a>
