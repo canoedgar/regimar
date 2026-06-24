@@ -367,12 +367,21 @@ class ClienteForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        self.puede_editar_parametros_cartera = kwargs.pop("puede_editar_parametros_cartera", True)
         super().__init__(*args, **kwargs)
+
+        if not self.puede_editar_parametros_cartera:
+            self.fields.pop("limite_credito", None)
+            self.fields.pop("dias_credito", None)
 
         if not self.instance.pk:
             self.fields["municipio"].initial = "MEXICALI"
             self.fields["estado"].initial = "B.C."
             self.fields["pais"].initial = "MÉXICO"
+            if "limite_credito" in self.fields:
+                self.fields["limite_credito"].initial = "3000.00"
+            if "dias_credito" in self.fields:
+                self.fields["dias_credito"].initial = 1
 
     def clean_rfc(self):
         rfc = (self.cleaned_data.get("rfc") or "").strip().upper()

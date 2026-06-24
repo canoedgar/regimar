@@ -457,13 +457,13 @@ class Cliente(models.Model):
         "Límite de crédito",
         max_digits=14,
         decimal_places=2,
-        default=Decimal("0.00"),
+        default=Decimal("3000.00"),
         validators=[MinValueValidator(Decimal("0.00"))],
         help_text="Monto máximo autorizado de cartera. 0 = sin validación por monto.",
     )
     dias_credito = models.PositiveIntegerField(
         "Días de crédito",
-        default=0,
+        default=1,
         help_text="Días máximos permitidos para notas pendientes. 0 = sin validación por días.",
     )
 

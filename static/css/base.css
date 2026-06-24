@@ -1153,6 +1153,31 @@ html[data-theme="dark"] .theme-switcher-moon {
   min-height: 2.35rem;
 }
 
+
+
+/* Evita saltos de línea en input-groups monetarios dentro de formularios Django. */
+.sg-form-grid .sg-money-input-group {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.sg-form-grid .sg-money-input-group > .input-group-text {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 2.5rem;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.sg-form-grid .sg-money-input-group > input.form-control,
+.sg-form-grid .sg-money-input-group > .form-control {
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+
 /* El acordeón debe heredar el tema global, no los blancos por default de Bootstrap */
 .sg-form-accordion,
 .sg-form-accordion .accordion-item,

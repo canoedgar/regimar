@@ -28,6 +28,7 @@
   const clienteDireccionReal = form.querySelector('textarea[name="cliente_direccion"]');
   const clienteContactoReal = form.querySelector('input[name="cliente_contacto"]');
   const clientesData = JSON.parse((document.getElementById("clientes-data") ? document.getElementById("clientes-data").textContent : "") || "[]");
+  const urlParams = new URLSearchParams(window.location.search);
 
   const productosData = JSON.parse(document.getElementById("productos-data").textContent || "[]");
   const productoSearch = document.getElementById("productoSearch");
@@ -1211,8 +1212,9 @@ Email: cpcalimentosbc@gmail.com</div>
     }
   });
 
-  if (clienteRefReal && clienteRefReal.value){
-    const clienteInicial = clientesData.find(c => String(c.id) === String(clienteRefReal.value));
+  const initialClienteId = urlParams.get("cliente_id") || (clienteRefReal ? clienteRefReal.value : "");
+  if (initialClienteId){
+    const clienteInicial = clientesData.find(c => String(c.id) === String(initialClienteId));
     if (clienteInicial){
       selectCliente(clienteInicial);
     }

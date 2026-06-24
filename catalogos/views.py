@@ -13,7 +13,7 @@ from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, 
 from .forms import ProductoForm, CategoriaForm, ProveedorForm, ProyectoForm, ClienteForm, AlmacenForm, ProductoMetricaConversionFormSet, ParametroSistemaForm, ClienteProductoPrecioForm
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
-from accounts.decorators import administrador_requerido, grupos_requeridos, permiso_requerido
+from accounts.decorators import ADMIN_GROUP_NAME, administrador_requerido, grupos_requeridos, permiso_requerido
 
 from django.db.models import Q
 from django.db import IntegrityError
@@ -496,6 +496,14 @@ def proyectos_edit(request, pk):
 
 # --- Inicio Clientes ---
 
+def _puede_editar_parametros_cartera(user):
+    return bool(
+        user
+        and user.is_authenticated
+        and (user.is_superuser or user.groups.filter(name=ADMIN_GROUP_NAME).exists())
+    )
+
+
 def _get_safe_next_url(request, default_url_name="clientes_list"):
     next_url = request.POST.get("next") or request.GET.get("next") or ""
 
@@ -545,9 +553,13 @@ def clientes_list(request):
 @permiso_requerido("catalogos.add_cliente")
 def cliente_create(request):
     next_url = _get_safe_next_url(request)
+    puede_editar_parametros_cartera = _puede_editar_parametros_cartera(request.user)
 
     if request.method == "POST":
-        form = ClienteForm(request.POST)
+        form = ClienteForm(
+            request.POST,
+            puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+        )
         if form.is_valid():
             try:
                 cliente = form.save()
@@ -556,20 +568,26 @@ def cliente_create(request):
             except IntegrityError:
                 form.add_error("rfc", "Ya existe un cliente con ese RFC.")
     else:
-        form = ClienteForm()
+        form = ClienteForm(puede_editar_parametros_cartera=puede_editar_parametros_cartera)
 
     return render(request, "catalogos/cliente_form.html", {
         "form": form,
         "modo": "crear",
         "next_url": next_url,
+        "puede_editar_parametros_cartera": puede_editar_parametros_cartera,
     })
 
 @permiso_requerido("catalogos.change_cliente")
 def cliente_edit(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
+    puede_editar_parametros_cartera = _puede_editar_parametros_cartera(request.user)
 
     if request.method == "POST":
-        form = ClienteForm(request.POST, instance=cliente)
+        form = ClienteForm(
+            request.POST,
+            instance=cliente,
+            puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+        )
         if form.is_valid():
             try:
                 form.save()
@@ -578,12 +596,16 @@ def cliente_edit(request, pk):
             except IntegrityError:
                 form.add_error("rfc", "Ya existe un cliente con ese RFC.")
     else:
-        form = ClienteForm(instance=cliente)
+        form = ClienteForm(
+            instance=cliente,
+            puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+        )
 
     return render(request, "catalogos/cliente_form.html", {
         "form": form,
         "modo": "editar",
         "cliente": cliente,
+        "puede_editar_parametros_cartera": puede_editar_parametros_cartera,
     })
 
 

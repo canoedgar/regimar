@@ -25,6 +25,22 @@
                 <div class="col-md-3"><label class="form-label fw-semibold sg-form-label">Teléfono</label>{{ form.telefono }}<div class="text-danger small sg-form-error">{{ form.telefono.errors }}</div></div>
                 <div class="col-md-3"><label class="form-label fw-semibold sg-form-label">Contacto</label>{{ form.contacto }}<div class="text-danger small sg-form-error">{{ form.contacto.errors }}</div></div>
                 <div class="col-md-3"><label class="form-label fw-semibold sg-form-label">Logo</label>{{ form.logo }}<div class="form-text">Default para notas de venta.</div><div class="text-danger small sg-form-error">{{ form.logo.errors }}</div></div>
+                {% if puede_editar_parametros_cartera %}
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold sg-form-label">Límite de crédito</label>
+                  <div class="input-group sg-money-input-group flex-nowrap">
+                    <span class="input-group-text">$</span>{{ form.limite_credito }}
+                  </div>
+                  <div class="form-text">Monto máximo permitido para cartera proyectada.</div>
+                  <div class="text-danger small sg-form-error">{{ form.limite_credito.errors }}</div>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label fw-semibold sg-form-label">Días de crédito</label>
+                  {{ form.dias_credito }}
+                  <div class="form-text">Días máximos antes de bloquear ventas vencidas.</div>
+                  <div class="text-danger small sg-form-error">{{ form.dias_credito.errors }}</div>
+                </div>
+                {% endif %}
                 <div class="col-md-6"><label class="form-label fw-semibold sg-form-label">Calle</label>{{ form.calle }}</div>
                 <div class="col-md-3"><label class="form-label fw-semibold sg-form-label">No. ext.</label>{{ form.num_ext }}</div>
                 <div class="col-md-3"><label class="form-label fw-semibold sg-form-label">No. int.</label>{{ form.num_int }}</div>
@@ -62,34 +78,6 @@
           </div>
         </div>
 
-        <div class="accordion-item mb-3 border-0 shadow-sm rounded overflow-hidden">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#parametrosCartera">
-              <i class="bi bi-shield-check me-2"></i> Parámetros de cartera
-            </button>
-          </h2>
-          <div id="parametrosCartera" class="accordion-collapse collapse" data-bs-parent="#clienteAccordion">
-            <div class="accordion-body">
-              <p class="text-muted small mb-3 sg-form-help">Configura estos campos solo cuando el cliente requiera control de crédito. En cero quedan sin validación.</p>
-              <div class="row g-3 sg-form-grid">
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold sg-form-label">Límite de crédito</label>
-                  <div class="input-group">
-                    <span class="input-group-text">$</span>{{ form.limite_credito }}
-                  </div>
-                  <div class="form-text">Monto máximo permitido para cartera proyectada.</div>
-                  <div class="text-danger small sg-form-error">{{ form.limite_credito.errors }}</div>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold sg-form-label">Días de crédito</label>
-                  {{ form.dias_credito }}
-                  <div class="form-text">Días máximos antes de bloquear nuevas ventas con saldo pendiente vencido.</div>
-                  <div class="text-danger small sg-form-error">{{ form.dias_credito.errors }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <div class="accordion-item mb-3 border-0 shadow-sm rounded overflow-hidden">
           <h2 class="accordion-header"><button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#defaultsFactura"><i class="bi bi-credit-card me-2"></i> Defaults de facturación</button></h2>
