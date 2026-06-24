@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ periodo.nombre }}{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_periodos_costeo %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="sg-page-header mb-3">
+    <div>
+      <h1 class="h3 mb-1">{{ periodo.nombre }}</h1>
+      <p class="text-muted mb-0">{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }} · Corte almacén {{ periodo.fecha_corte_almacen|date:"Y-m-d" }}</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="{% url 'costos:periodos_costeo_list' %}" class="sg-btn-secondary sg-btn-md">Regresar</a>
+      {% if puede_editar and periodo.puede_editarse %}<a href="{% url 'costos:periodo_costeo_edit' periodo.pk %}" class="sg-btn-outline sg-btn-md">Editar</a>{% endif %}
+      {% if puede_generar and periodo.puede_generarse %}
+      <form method="post" action="{% url 'costos:periodo_costeo_generar' periodo.pk %}">{% csrf_token %}<button class="sg-btn-primary sg-btn-md" type="submit">Generar costeo</button></form>
+      {% endif %}
+      {% if puede_cerrar and periodo.puede_cerrarse %}
+      <form method="post" action="{% url 'costos:periodo_costeo_cerrar' periodo.pk %}" onsubmit="return confirm('¿Cerrar periodo y aprobar costos sugeridos?');">{% csrf_token %}<button class="sg-btn-success sg-btn-md" type="submit">Cerrar y aprobar</button></form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Venta total</span><strong class="fs-5">${{ resumen.total_ventas|floatformat:2|intcomma }}</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Costo real</span><strong class="fs-5">${{ resumen.total_costo_real|floatformat:2|intcomma }}</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Utilidad real</span><strong class="fs-5">${{ resumen.utilidad_real|floatformat:2|intcomma }}</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Margen real</span><strong class="fs-5">{{ resumen.margen_real|floatformat:2 }}%</strong></div></div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="sg-table-card h-100">
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><h2 class="h5 mb-0">Gastos del periodo</h2><a href="{% url 'costos:gasto_periodo_create' %}?periodo={{ periodo.pk }}" class="sg-btn-primary sg-btn-sm">Agregar</a></div>
+        <div class="table-responsive"><table class="table sg-table mb-0"><tbody>{% for gasto in gastos %}<tr><td>{{ gasto.fecha|date:"Y-m-d" }}</td><td>{{ gasto.get_tipo_gasto_display }}</td><td class="text-end">${{ gasto.importe|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td class="text-muted text-center py-3">Sin gastos capturados.</td></tr>{% endfor %}</tbody></table></div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="sg-table-card h-100">
+        <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><h2 class="h5 mb-0">Almacenaje calculado</h2><a href="{% url 'costos:almacenaje_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-sm">Ver todo</a></div>
+        <div class="table-responsive"><table class="table sg-table mb-0"><tbody>{% for item in almacenajes %}<tr><td>{{ item.producto.nombre }}</td><td>{{ item.kg_al_corte|floatformat:2|intcomma }} kg</td><td class="text-end">${{ item.importe|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td class="text-muted text-center py-3">Aún no se ha calculado almacenaje.</td></tr>{% endfor %}</tbody></table></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-table-card mt-3">
+    <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><h2 class="h5 mb-0">Resultado por producto</h2><a href="{% url 'costos:resultados_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-sm">Ver resultado completo</a></div>
+    <div class="table-responsive">
+      <table class="table sg-table align-middle mb-0">
+        <thead><tr><th>Producto</th><th class="text-end">Venta</th><th class="text-end">Costo real</th><th class="text-end">Utilidad</th><th class="text-end">Margen</th><th class="text-end">Costo sugerido</th></tr></thead>
+        <tbody>{% for item in resultados %}<tr><td>{{ item.producto.nombre }}</td><td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.utilidad_real|floatformat:2|intcomma }}</td><td class="text-end">{{ item.margen_real|floatformat:2 }}%</td><td class="text-end">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</td></tr>{% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Genera el costeo para ver resultados.</td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if puede_cancelar and periodo.puede_cancelarse %}
+  <div class="card mt-3 p-3">
+    <h2 class="h6">Cancelar periodo</h2>
+    <form method="post" action="{% url 'costos:periodo_costeo_cancelar' periodo.pk %}" class="row g-2" onsubmit="return confirm('¿Cancelar este periodo?');">
+      {% csrf_token %}
+      <div class="col-md-10"><input name="motivo_cancelacion" class="form-control" placeholder="Motivo de cancelación" required></div>
+      <div class="col-md-2"><button class="sg-btn-danger sg-btn-md w-100" type="submit">Cancelar</button></div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

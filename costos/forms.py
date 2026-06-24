@@ -5,7 +5,7 @@ from django.utils import timezone
 from catalogos.models import Almacen, Proveedor
 from inventarios.models import EntradaInventario
 
-from .models import CategoriaGasto, CierreCosteoPeriodo, Gasto, normalizar_nombre
+from .models import CategoriaGasto, CierreCosteoPeriodo, Gasto, GastoPeriodo, PeriodoCosteo, normalizar_nombre
 
 
 class CategoriaGastoForm(forms.ModelForm):
@@ -232,3 +232,103 @@ class CierreCosteoPeriodoForm(forms.Form):
                     self.add_error(None, "Ya existe un cierre de costeo vigente para el mismo periodo.")
 
         return cleaned_data
+
+class PeriodoCosteoForm(forms.ModelForm):
+    class Meta:
+        model = PeriodoCosteo
+        fields = ["nombre", "fecha_inicio", "fecha_fin", "fecha_corte_almacen", "notas"]
+        widgets = {
+            "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej. Junio 2026"}),
+            "fecha_inicio": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha_fin": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha_corte_almacen": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "notas": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Notas internas del periodo."}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        hoy = timezone.localdate()
+        for field_name in ["fecha_inicio", "fecha_fin", "fecha_corte_almacen"]:
+            self.fields[field_name].input_formats = ["%Y-%m-%d"]
+        if not self.instance.pk and not self.is_bound:
+            self.fields["fecha_inicio"].initial = hoy.replace(day=1)
+            self.fields["fecha_fin"].initial = hoy
+            self.fields["fecha_corte_almacen"].initial = hoy
+
+    def clean(self):
+        cleaned_data = super().clean()
+        fecha_inicio = cleaned_data.get("fecha_inicio")
+        fecha_fin = cleaned_data.get("fecha_fin")
+        fecha_corte = cleaned_data.get("fecha_corte_almacen")
+
+        if fecha_inicio and fecha_fin and fecha_inicio > fecha_fin:
+            self.add_error("fecha_fin", "La fecha final no puede ser menor a la fecha inicial.")
+        if fecha_inicio and fecha_fin and fecha_corte:
+            if fecha_corte < fecha_inicio or fecha_corte > fecha_fin:
+                self.add_error("fecha_corte_almacen", "La fecha de corte debe estar dentro del periodo.")
+
+        qs = PeriodoCosteo.objects.filter(fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if fecha_inicio and fecha_fin and qs.exists():
+            self.add_error(None, "Ya existe un periodo de costeo con las mismas fechas.")
+
+        return cleaned_data
+
+
+class GastoPeriodoForm(forms.ModelForm):
+    class Meta:
+        model = GastoPeriodo
+        fields = ["periodo", "tipo_gasto", "fecha", "importe", "almacen", "proveedor", "referencia", "descripcion"]
+        widgets = {
+            "periodo": forms.Select(attrs={"class": "form-select"}),
+            "tipo_gasto": forms.Select(attrs={"class": "form-select"}),
+            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "importe": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01", "placeholder": "0.00"}),
+            "almacen": forms.Select(attrs={"class": "form-select"}),
+            "proveedor": forms.Select(attrs={"class": "form-select"}),
+            "referencia": forms.TextInput(attrs={"class": "form-control", "placeholder": "Factura, recibo, transferencia o nota"}),
+            "descripcion": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Describe el gasto capturado."}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        periodo = kwargs.pop("periodo", None)
+        super().__init__(*args, **kwargs)
+        hoy = timezone.localdate()
+        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].initial = hoy
+
+        periodos = PeriodoCosteo.objects.exclude(estado__in=[PeriodoCosteo.ESTADO_CERRADO, PeriodoCosteo.ESTADO_CANCELADO]).order_by("-fecha_inicio")
+        if self.instance.pk and self.instance.periodo_id:
+            periodos = PeriodoCosteo.objects.filter(pk=self.instance.periodo_id) | periodos
+        self.fields["periodo"].queryset = periodos.distinct()
+        self.fields["periodo"].empty_label = "Selecciona un periodo"
+
+        if periodo:
+            self.fields["periodo"].initial = periodo
+            self.fields["fecha"].initial = periodo.fecha_fin
+
+        self.fields["almacen"].queryset = Almacen.objects.filter(es_activo=True).order_by("nombre")
+        self.fields["almacen"].required = False
+        self.fields["almacen"].empty_label = "Sin almacén específico"
+
+        self.fields["proveedor"].queryset = Proveedor.objects.filter(activo=True).order_by("nombre")
+        self.fields["proveedor"].required = False
+        self.fields["proveedor"].empty_label = "Sin proveedor"
+
+    def clean_importe(self):
+        importe = self.cleaned_data.get("importe")
+        if importe is None or importe <= 0:
+            raise ValidationError("El importe debe ser mayor a 0.")
+        return importe
+
+    def clean(self):
+        cleaned_data = super().clean()
+        periodo = cleaned_data.get("periodo")
+        fecha = cleaned_data.get("fecha")
+        if self.instance.pk and not self.instance.puede_editarse:
+            raise ValidationError("Solo se pueden editar gastos activos de periodos abiertos o en revisión.")
+        if periodo and fecha and (fecha < periodo.fecha_inicio or fecha > periodo.fecha_fin):
+            self.add_error("fecha", "La fecha del gasto debe estar dentro del periodo seleccionado.")
+        return cleaned_data
+

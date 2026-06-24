@@ -81,7 +81,7 @@
       {% has_any_perm request.user "inventarios.view_entradainventario" "inventarios.add_entradainventario" "inventarios.view_salidainventario" "inventarios.add_salidainventario" "inventarios.view_inventariostock" "inventarios.change_inventariostock" as puede_menu_inventario %}
       {% has_any_perm request.user "catalogos.view_proveedor" "catalogos.view_cliente" "catalogos.view_clienteproductoprecio" "catalogos.view_categoria" "catalogos.view_producto" "catalogos.view_almacen" "catalogos.view_proyecto" "catalogos.add_producto" "catalogos.add_proveedor" "catalogos.add_cliente" as puede_menu_catalogos %}
       {% has_any_perm request.user "catalogos.view_parametrosistema" as puede_menu_parametros %}
-      {% has_any_perm request.user "costos.view_gasto" "costos.add_gasto" "costos.view_cierrecosteoperiodo" "costos.add_cierrecosteoperiodo" "costos.view_categoriagasto" "costos.add_categoriagasto" as puede_menu_costos %}
+      {% has_any_perm request.user "costos.view_gasto" "costos.add_gasto" "costos.view_cierrecosteoperiodo" "costos.add_cierrecosteoperiodo" "costos.view_categoriagasto" "costos.add_categoriagasto" "costos.view_periodocosteo" "costos.add_periodocosteo" "costos.view_gastoperiodo" "costos.add_gastoperiodo" "costos.view_resultadocostoproducto" as puede_menu_costos %}
 
       <!-- VENTAS -->
       {% if puede_menu_ventas %}
@@ -214,45 +214,53 @@
 
         <div class="collapse {% block costos_show %}{% endblock %}" id="costosSubmenu">
           <nav class="nav flex-column nav-submenu">
-            {% if perms.costos.view_gasto %}
-            <a href="{% url 'costos:gastos_list' %}" class="nav-link {% block active_gastos %}{% endblock %}">
+            {% if perms.costos.view_cierrecosteoperiodo or perms.costos.view_periodocosteo %}
+            <a href="{% url 'costos:periodos_costeo_list' %}" class="nav-link {% block active_periodos_costeo %}{% endblock %}">
+              <i class="bi bi-calendar-range me-1"></i>
+              Periodos
+            </a>
+            {% endif %}
+
+            {% if perms.costos.view_gasto or perms.costos.view_gastoperiodo %}
+            <a href="{% url 'costos:gastos_periodo_list' %}" class="nav-link {% block active_gastos_periodo %}{% endblock %}">
               <i class="bi bi-cash-stack me-1"></i>
-              Gastos
+              Gastos del periodo
             </a>
             {% endif %}
 
             {% if perms.costos.add_gasto and not perms.costos.view_gasto %}
-            <a href="{% url 'costos:gasto_create' %}" class="nav-link {% block active_gasto_create %}{% endblock %}">
+            <a href="{% url 'costos:gasto_periodo_create' %}" class="nav-link {% block active_gasto_periodo_create %}{% endblock %}">
               <i class="bi bi-plus-circle me-1"></i>
               Nuevo gasto
             </a>
             {% endif %}
 
-            {% if perms.costos.view_cierrecosteoperiodo %}
-            <a href="{% url 'costos:cierres_costeo_list' %}" class="nav-link {% block active_cierres_costeo %}{% endblock %}">
-              <i class="bi bi-clipboard-data me-1"></i>
-              Cierres de costeo
+            {% if perms.costos.view_cierrecosteoperiodo or perms.costos.view_periodocosteo %}
+            <a href="{% url 'costos:almacenaje_costeo_list' %}" class="nav-link {% block active_almacenaje_costeo %}{% endblock %}">
+              <i class="bi bi-boxes me-1"></i>
+              Almacenaje
+            </a>
+            <a href="{% url 'costos:resultados_costeo_list' %}" class="nav-link {% block active_resultados_costeo %}{% endblock %}">
+              <i class="bi bi-graph-up-arrow me-1"></i>
+              Resultado por producto
             </a>
             {% endif %}
 
-            {% if perms.costos.add_cierrecosteoperiodo and not perms.costos.view_cierrecosteoperiodo %}
-            <a href="{% url 'costos:cierre_costeo_create' %}" class="nav-link {% block active_cierres_costeo_create %}{% endblock %}">
-              <i class="bi bi-plus-circle me-1"></i>
-              Nuevo cierre
-            </a>
+            {% if perms.costos.view_categoriagasto or perms.costos.view_cierrecosteoperiodo or perms.costos.view_periodocosteo %}
+            <span class="nav-subtitle">Configuración</span>
             {% endif %}
 
             {% if perms.costos.view_categoriagasto %}
             <a href="{% url 'costos:categorias_gasto_list' %}" class="nav-link {% block active_categorias_gasto %}{% endblock %}">
               <i class="bi bi-diagram-3 me-1"></i>
-              Categorías de gasto
+              Categorías avanzadas
             </a>
             {% endif %}
 
-            {% if perms.costos.add_categoriagasto and not perms.costos.view_categoriagasto %}
-            <a href="{% url 'costos:categoria_gasto_create' %}" class="nav-link {% block active_categorias_gasto_create %}{% endblock %}">
-              <i class="bi bi-plus-circle me-1"></i>
-              Nueva categoría
+            {% if perms.costos.view_cierrecosteoperiodo %}
+            <a href="{% url 'costos:cierres_costeo_list' %}" class="nav-link {% block active_cierres_costeo %}{% endblock %}">
+              <i class="bi bi-archive me-1"></i>
+              Cierres anteriores
             </a>
             {% endif %}
           </nav>

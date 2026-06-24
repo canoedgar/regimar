@@ -1,6 +1,16 @@
 from django.contrib import admin
 
-from .models import CategoriaGasto, CierreCosteoPeriodo, CierreCosteoProducto, Gasto, GastoDistribucion
+from .models import (
+    AlmacenajeProductoPeriodo,
+    CategoriaGasto,
+    CierreCosteoPeriodo,
+    CierreCosteoProducto,
+    Gasto,
+    GastoDistribucion,
+    GastoPeriodo,
+    PeriodoCosteo,
+    ResultadoCostoProducto,
+)
 
 
 @admin.register(CategoriaGasto)
@@ -142,3 +152,72 @@ class CierreCosteoProductoAdmin(admin.ModelAdmin):
     list_filter = ("cierre__estado", "cierre__periodo_inicio")
     search_fields = ("cierre__folio", "producto__nombre")
     readonly_fields = [field.name for field in CierreCosteoProducto._meta.fields]
+
+
+class AlmacenajeProductoPeriodoInline(admin.TabularInline):
+    model = AlmacenajeProductoPeriodo
+    extra = 0
+    can_delete = False
+    readonly_fields = ("almacen", "producto", "kg_al_corte", "tarifa_kg", "importe", "observaciones", "creado_en")
+    fields = readonly_fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class ResultadoCostoProductoInline(admin.TabularInline):
+    model = ResultadoCostoProducto
+    extra = 0
+    can_delete = False
+    readonly_fields = (
+        "producto",
+        "kg_vendidos",
+        "kg_almacenados",
+        "venta_total",
+        "costo_compra_total",
+        "gastos_operativos",
+        "costo_almacenaje",
+        "costo_real_total",
+        "utilidad_real",
+        "margen_real",
+        "costo_sugerido_siguiente",
+        "aprobado",
+    )
+    fields = readonly_fields
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PeriodoCosteo)
+class PeriodoCosteoAdmin(admin.ModelAdmin):
+    inlines = [AlmacenajeProductoPeriodoInline, ResultadoCostoProductoInline]
+    list_display = ("nombre", "fecha_inicio", "fecha_fin", "fecha_corte_almacen", "estado", "creado_por", "cerrado_en")
+    list_filter = ("estado", "fecha_inicio", "fecha_fin")
+    search_fields = ("nombre", "notas")
+    readonly_fields = ("estado", "creado_por", "cerrado_por", "cancelado_por", "cerrado_en", "cancelado_en", "creado_en", "actualizado_en")
+
+
+@admin.register(GastoPeriodo)
+class GastoPeriodoAdmin(admin.ModelAdmin):
+    list_display = ("periodo", "fecha", "tipo_gasto", "importe", "almacen", "estado")
+    list_filter = ("estado", "tipo_gasto", "periodo", "fecha")
+    search_fields = ("periodo__nombre", "referencia", "descripcion", "proveedor__nombre", "almacen__nombre")
+    readonly_fields = ("creado_por", "cancelado_por", "cancelado_en", "creado_en", "actualizado_en")
+
+
+@admin.register(AlmacenajeProductoPeriodo)
+class AlmacenajeProductoPeriodoAdmin(admin.ModelAdmin):
+    list_display = ("periodo", "almacen", "producto", "kg_al_corte", "tarifa_kg", "importe")
+    list_filter = ("periodo", "almacen")
+    search_fields = ("periodo__nombre", "almacen__nombre", "producto__nombre")
+    readonly_fields = [field.name for field in AlmacenajeProductoPeriodo._meta.fields]
+
+
+@admin.register(ResultadoCostoProducto)
+class ResultadoCostoProductoAdmin(admin.ModelAdmin):
+    list_display = ("periodo", "producto", "venta_total", "costo_real_total", "utilidad_real", "margen_real", "costo_sugerido_siguiente", "aprobado")
+    list_filter = ("periodo", "aprobado")
+    search_fields = ("periodo__nombre", "producto__nombre")
+    readonly_fields = [field.name for field in ResultadoCostoProducto._meta.fields]
+

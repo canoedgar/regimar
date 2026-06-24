@@ -1,1 +1,5 @@
 Inicio del proyecto de Sistema de Gestión.
+
+
+Inicializar datos del sistema:
+python manage.py shell -c "exec(open('limpiar_inventario.py').read())"

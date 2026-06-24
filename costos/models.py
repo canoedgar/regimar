@@ -605,3 +605,307 @@ class CierreCosteoProducto(models.Model):
 
     def __str__(self):
         return f"{self.cierre.folio} | {self.producto}"
+
+class PeriodoCosteo(models.Model):
+    """
+    Contenedor operativo del nuevo flujo simple de costos.
+    Un periodo agrupa gastos, almacenaje calculado y resultados por producto.
+    """
+
+    ESTADO_ABIERTO = "ABI"
+    ESTADO_REVISION = "REV"
+    ESTADO_CERRADO = "CER"
+    ESTADO_CANCELADO = "CAN"
+    ESTADO_CHOICES = [
+        (ESTADO_ABIERTO, "Abierto"),
+        (ESTADO_REVISION, "En revisión"),
+        (ESTADO_CERRADO, "Cerrado"),
+        (ESTADO_CANCELADO, "Cancelado"),
+    ]
+
+    nombre = models.CharField("Nombre", max_length=120)
+    fecha_inicio = models.DateField("Fecha inicio", db_index=True)
+    fecha_fin = models.DateField("Fecha fin", db_index=True)
+    fecha_corte_almacen = models.DateField(
+        "Fecha corte almacén",
+        help_text="Fecha usada como referencia para calcular el costo de almacenaje.",
+    )
+    estado = models.CharField("Estado", max_length=3, choices=ESTADO_CHOICES, default=ESTADO_ABIERTO, db_index=True)
+    notas = models.TextField("Notas", blank=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="periodos_costeo_creados",
+    )
+    cerrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="periodos_costeo_cerrados",
+    )
+    cancelado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="periodos_costeo_cancelados",
+    )
+    cerrado_en = models.DateTimeField("Cerrado en", null=True, blank=True)
+    cancelado_en = models.DateTimeField("Cancelado en", null=True, blank=True)
+    motivo_cancelacion = models.TextField("Motivo de cancelación", blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Periodo de costeo"
+        verbose_name_plural = "Periodos de costeo"
+        ordering = ["-fecha_inicio", "-id"]
+        unique_together = ("fecha_inicio", "fecha_fin")
+        indexes = [
+            models.Index(fields=["fecha_inicio", "fecha_fin"]),
+            models.Index(fields=["estado"]),
+        ]
+        permissions = [
+            ("puede_generar_costeo_periodo", "Puede generar costeo del periodo"),
+            ("puede_cerrar_costeo_periodo", "Puede cerrar costeo del periodo"),
+            ("puede_cancelar_costeo_periodo", "Puede cancelar costeo del periodo"),
+        ]
+
+    def __str__(self):
+        return self.nombre
+
+    @property
+    def puede_editarse(self):
+        return self.estado in {self.ESTADO_ABIERTO, self.ESTADO_REVISION}
+
+    @property
+    def puede_generarse(self):
+        return self.estado in {self.ESTADO_ABIERTO, self.ESTADO_REVISION}
+
+    @property
+    def puede_cerrarse(self):
+        return self.estado == self.ESTADO_REVISION and self.resultados.exists()
+
+    @property
+    def puede_cancelarse(self):
+        return self.estado != self.ESTADO_CANCELADO
+
+    def clean(self):
+        super().clean()
+        if self.fecha_inicio and self.fecha_fin and self.fecha_inicio > self.fecha_fin:
+            raise ValidationError({"fecha_fin": "La fecha final no puede ser menor a la fecha inicial."})
+        if self.fecha_inicio and self.fecha_corte_almacen and self.fecha_corte_almacen < self.fecha_inicio:
+            raise ValidationError({"fecha_corte_almacen": "La fecha de corte no puede ser menor a la fecha inicial."})
+        if self.fecha_fin and self.fecha_corte_almacen and self.fecha_corte_almacen > self.fecha_fin:
+            raise ValidationError({"fecha_corte_almacen": "La fecha de corte no puede ser mayor a la fecha final."})
+        if self.estado == self.ESTADO_CANCELADO and not (self.motivo_cancelacion or "").strip():
+            raise ValidationError({"motivo_cancelacion": "Captura el motivo de cancelación."})
+
+    def cerrar(self, usuario=None):
+        if not self.puede_cerrarse:
+            raise ValidationError("Solo se puede cerrar un periodo en revisión con resultados generados.")
+        self.estado = self.ESTADO_CERRADO
+        self.cerrado_por = usuario if getattr(usuario, "is_authenticated", False) else None
+        self.cerrado_en = timezone.now()
+        self.save(update_fields=["estado", "cerrado_por", "cerrado_en", "actualizado_en"])
+
+    def cancelar(self, usuario=None, motivo=""):
+        motivo = (motivo or "").strip()
+        if not motivo:
+            raise ValidationError("Captura el motivo de cancelación.")
+        if not self.puede_cancelarse:
+            raise ValidationError("El periodo ya se encuentra cancelado.")
+        self.estado = self.ESTADO_CANCELADO
+        self.motivo_cancelacion = motivo
+        self.cancelado_por = usuario if getattr(usuario, "is_authenticated", False) else None
+        self.cancelado_en = timezone.now()
+        self.save(update_fields=["estado", "motivo_cancelacion", "cancelado_por", "cancelado_en", "actualizado_en"])
+
+
+class GastoPeriodo(models.Model):
+    """Gasto simplificado capturado por periodo. El usuario no elige prorrateos técnicos."""
+
+    TIPO_ALMACENAJE = "ALMACENAJE"
+    TIPO_LUZ = "LUZ"
+    TIPO_NOMINA = "NOMINA"
+    TIPO_GASOLINA = "GASOLINA"
+    TIPO_MANTENIMIENTO = "MANTENIMIENTO"
+    TIPO_RENTA = "RENTA"
+    TIPO_ADMINISTRATIVO = "ADMINISTRATIVO"
+    TIPO_OTRO = "OTRO"
+    TIPO_CHOICES = [
+        (TIPO_ALMACENAJE, "Almacenaje"),
+        (TIPO_LUZ, "Luz"),
+        (TIPO_NOMINA, "Nómina"),
+        (TIPO_GASOLINA, "Gasolina"),
+        (TIPO_MANTENIMIENTO, "Mantenimiento vehicular"),
+        (TIPO_RENTA, "Renta"),
+        (TIPO_ADMINISTRATIVO, "Administrativo"),
+        (TIPO_OTRO, "Otro"),
+    ]
+
+    ESTADO_ACTIVO = "ACT"
+    ESTADO_CANCELADO = "CAN"
+    ESTADO_CHOICES = [
+        (ESTADO_ACTIVO, "Activo"),
+        (ESTADO_CANCELADO, "Cancelado"),
+    ]
+
+    periodo = models.ForeignKey(PeriodoCosteo, on_delete=models.PROTECT, related_name="gastos", verbose_name="Periodo")
+    tipo_gasto = models.CharField("Tipo de gasto", max_length=20, choices=TIPO_CHOICES)
+    fecha = models.DateField("Fecha del gasto", default=timezone.now, db_index=True)
+    importe = models.DecimalField("Importe", max_digits=14, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))])
+    almacen = models.ForeignKey(
+        "catalogos.Almacen",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gastos_periodo_costeo",
+        verbose_name="Almacén",
+        help_text="Opcional. Úsalo cuando el gasto corresponde a un almacén específico.",
+    )
+    proveedor = models.ForeignKey(
+        "catalogos.Proveedor",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gastos_periodo_costeo",
+        verbose_name="Proveedor",
+    )
+    referencia = models.CharField("Referencia", max_length=120, blank=True)
+    descripcion = models.TextField("Descripción", blank=True)
+    estado = models.CharField("Estado", max_length=3, choices=ESTADO_CHOICES, default=ESTADO_ACTIVO, db_index=True)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gastos_periodo_creados",
+    )
+    cancelado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gastos_periodo_cancelados",
+    )
+    motivo_cancelacion = models.TextField("Motivo de cancelación", blank=True)
+    cancelado_en = models.DateTimeField("Cancelado en", null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Gasto del periodo"
+        verbose_name_plural = "Gastos del periodo"
+        ordering = ["-fecha", "-id"]
+        indexes = [
+            models.Index(fields=["periodo", "estado"]),
+            models.Index(fields=["tipo_gasto", "fecha"]),
+        ]
+        permissions = [
+            ("puede_cancelar_gasto_periodo", "Puede cancelar gastos del periodo"),
+        ]
+
+    def __str__(self):
+        return f"{self.periodo} | {self.get_tipo_gasto_display()} | ${self.importe}"
+
+    @property
+    def es_activo(self):
+        return self.estado == self.ESTADO_ACTIVO
+
+    @property
+    def puede_editarse(self):
+        return self.es_activo and self.periodo.puede_editarse
+
+    def clean(self):
+        super().clean()
+        if self.periodo_id and self.fecha:
+            if self.fecha < self.periodo.fecha_inicio or self.fecha > self.periodo.fecha_fin:
+                raise ValidationError({"fecha": "La fecha del gasto debe estar dentro del periodo de costeo."})
+        if self.estado == self.ESTADO_CANCELADO and not (self.motivo_cancelacion or "").strip():
+            raise ValidationError({"motivo_cancelacion": "Captura el motivo de cancelación."})
+
+    def cancelar(self, usuario=None, motivo=""):
+        motivo = (motivo or "").strip()
+        if not motivo:
+            raise ValidationError("Captura el motivo de cancelación.")
+        if self.estado == self.ESTADO_CANCELADO:
+            raise ValidationError("El gasto ya se encuentra cancelado.")
+        self.estado = self.ESTADO_CANCELADO
+        self.motivo_cancelacion = motivo
+        self.cancelado_por = usuario if getattr(usuario, "is_authenticated", False) else None
+        self.cancelado_en = timezone.now()
+        self.save(update_fields=["estado", "motivo_cancelacion", "cancelado_por", "cancelado_en", "actualizado_en"])
+
+
+class AlmacenajeProductoPeriodo(models.Model):
+    """Snapshot del costo de almacenaje por producto calculado para un periodo."""
+
+    periodo = models.ForeignKey(PeriodoCosteo, on_delete=models.CASCADE, related_name="almacenajes", verbose_name="Periodo")
+    almacen = models.ForeignKey("catalogos.Almacen", on_delete=models.PROTECT, null=True, blank=True, related_name="almacenajes_costeo", verbose_name="Almacén")
+    producto = models.ForeignKey("catalogos.Producto", on_delete=models.PROTECT, related_name="almacenajes_costeo", verbose_name="Producto")
+    kg_al_corte = models.DecimalField("Kg al corte", max_digits=18, decimal_places=4, default=0)
+    tarifa_kg = models.DecimalField("Tarifa por kg", max_digits=18, decimal_places=6, default=0)
+    importe = models.DecimalField("Importe", max_digits=14, decimal_places=2, default=0)
+    observaciones = models.TextField("Observaciones", blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Almacenaje por producto"
+        verbose_name_plural = "Almacenaje por producto"
+        ordering = ["almacen__nombre", "producto__nombre"]
+        unique_together = ("periodo", "almacen", "producto")
+        indexes = [
+            models.Index(fields=["periodo", "producto"]),
+            models.Index(fields=["almacen", "producto"]),
+        ]
+
+    def __str__(self):
+        return f"{self.periodo} | {self.almacen} | {self.producto}"
+
+
+class ResultadoCostoProducto(models.Model):
+    """Resultado final del costeo simple por producto para un periodo."""
+
+    periodo = models.ForeignKey(PeriodoCosteo, on_delete=models.CASCADE, related_name="resultados", verbose_name="Periodo")
+    producto = models.ForeignKey("catalogos.Producto", on_delete=models.PROTECT, related_name="resultados_costeo", verbose_name="Producto")
+    kg_vendidos = models.DecimalField("Kg vendidos", max_digits=18, decimal_places=4, default=0)
+    kg_almacenados = models.DecimalField("Kg almacenados", max_digits=18, decimal_places=4, default=0)
+    venta_total = models.DecimalField("Venta total", max_digits=14, decimal_places=2, default=0)
+    costo_compra_total = models.DecimalField("Costo compra", max_digits=14, decimal_places=2, default=0)
+    gastos_operativos = models.DecimalField("Gastos operativos", max_digits=14, decimal_places=2, default=0)
+    costo_almacenaje = models.DecimalField("Costo almacenaje", max_digits=14, decimal_places=2, default=0)
+    costo_real_total = models.DecimalField("Costo real total", max_digits=14, decimal_places=2, default=0)
+    costo_real_unitario = models.DecimalField("Costo real unitario", max_digits=18, decimal_places=6, default=0)
+    utilidad_real = models.DecimalField("Utilidad real", max_digits=14, decimal_places=2, default=0)
+    margen_real = models.DecimalField("Margen real %", max_digits=8, decimal_places=2, default=0)
+    costo_sugerido_siguiente = models.DecimalField("Costo sugerido siguiente periodo", max_digits=18, decimal_places=6, default=0)
+    aprobado = models.BooleanField("Aprobado", default=False)
+    aprobado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="costos_producto_aprobados",
+    )
+    aprobado_en = models.DateTimeField("Aprobado en", null=True, blank=True)
+    creado_en = models.DateTimeField(auto_now_add=True)
+    actualizado_en = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Resultado de costo por producto"
+        verbose_name_plural = "Resultados de costos por producto"
+        ordering = ["producto__nombre"]
+        unique_together = ("periodo", "producto")
+        indexes = [
+            models.Index(fields=["periodo", "producto"]),
+            models.Index(fields=["producto"]),
+            models.Index(fields=["margen_real"]),
+        ]
+
+    def __str__(self):
+        return f"{self.periodo} | {self.producto}"
+

@@ -6,10 +6,301 @@ from django.views.decorators.http import require_POST
 
 from accounts.decorators import permiso_requerido
 
-from .forms import CategoriaGastoForm, CierreCosteoPeriodoForm, GastoForm
-from .models import CategoriaGasto, CierreCosteoPeriodo, Gasto
+from .forms import CategoriaGastoForm, CierreCosteoPeriodoForm, GastoForm, GastoPeriodoForm, PeriodoCosteoForm
+from .models import CategoriaGasto, CierreCosteoPeriodo, Gasto, GastoPeriodo, PeriodoCosteo
 from .services.distribucion import distribuir_gasto
 from .services.cierres import calcular_resumen_costeo, generar_cierre_costeo
+from .services.costeo_simple import cerrar_costeo_periodo, generar_costeo_periodo, obtener_resumen_periodo
+
+
+
+
+def _periodos_costeo_queryset():
+    return (
+        PeriodoCosteo.objects.select_related("creado_por", "cerrado_por", "cancelado_por")
+        .annotate(
+            gastos_count=Count("gastos", distinct=True),
+            almacenajes_count=Count("almacenajes", distinct=True),
+            resultados_count=Count("resultados", distinct=True),
+        )
+        .order_by("-fecha_inicio", "-id")
+    )
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def costos_home(request):
+    return redirect("costos:periodos_costeo_list")
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def periodos_costeo_list(request):
+    estado = (request.GET.get("estado") or "vigentes").strip()
+    query = (request.GET.get("q") or "").strip()
+
+    periodos = _periodos_costeo_queryset()
+    if query:
+        periodos = periodos.filter(Q(nombre__icontains=query) | Q(notas__icontains=query))
+
+    if estado == "vigentes":
+        periodos = periodos.exclude(estado=PeriodoCosteo.ESTADO_CANCELADO)
+    elif estado in {PeriodoCosteo.ESTADO_ABIERTO, PeriodoCosteo.ESTADO_REVISION, PeriodoCosteo.ESTADO_CERRADO, PeriodoCosteo.ESTADO_CANCELADO}:
+        periodos = periodos.filter(estado=estado)
+    elif estado != "todos":
+        estado = "vigentes"
+        periodos = periodos.exclude(estado=PeriodoCosteo.ESTADO_CANCELADO)
+
+    resumen = periodos.aggregate(
+        total=Count("id"),
+        abiertos=Count("id", filter=Q(estado=PeriodoCosteo.ESTADO_ABIERTO)),
+        revision=Count("id", filter=Q(estado=PeriodoCosteo.ESTADO_REVISION)),
+        cerrados=Count("id", filter=Q(estado=PeriodoCosteo.ESTADO_CERRADO)),
+    )
+
+    return render(
+        request,
+        "costos/periodos_costeo_list.html",
+        {
+            "periodos": periodos,
+            "estado": estado,
+            "query": query,
+            "resumen": resumen,
+            "puede_agregar": request.user.is_superuser or request.user.has_perm("costos.add_cierrecosteoperiodo"),
+        },
+    )
+
+
+@permiso_requerido("costos.add_cierrecosteoperiodo")
+def periodo_costeo_create(request):
+    if request.method == "POST":
+        form = PeriodoCosteoForm(request.POST)
+        if form.is_valid():
+            periodo = form.save(commit=False)
+            periodo.creado_por = request.user if request.user.is_authenticated else None
+            periodo.save()
+            messages.success(request, "Periodo de costeo creado correctamente.")
+            return redirect("costos:periodo_costeo_detail", pk=periodo.pk)
+    else:
+        form = PeriodoCosteoForm()
+    return render(request, "costos/periodo_costeo_form.html", {"form": form, "modo_edicion": False})
+
+
+@permiso_requerido("costos.change_cierrecosteoperiodo")
+def periodo_costeo_edit(request, pk):
+    periodo = get_object_or_404(PeriodoCosteo, pk=pk)
+    if not periodo.puede_editarse:
+        messages.warning(request, "Solo se pueden editar periodos abiertos o en revisión.")
+        return redirect("costos:periodo_costeo_detail", pk=periodo.pk)
+
+    if request.method == "POST":
+        form = PeriodoCosteoForm(request.POST, instance=periodo)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Periodo de costeo actualizado correctamente.")
+            return redirect("costos:periodo_costeo_detail", pk=periodo.pk)
+    else:
+        form = PeriodoCosteoForm(instance=periodo)
+    return render(request, "costos/periodo_costeo_form.html", {"form": form, "periodo": periodo, "modo_edicion": True})
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def periodo_costeo_detail(request, pk):
+    periodo = get_object_or_404(_periodos_costeo_queryset(), pk=pk)
+    gastos = periodo.gastos.select_related("almacen", "proveedor").all()[:8]
+    almacenajes = periodo.almacenajes.select_related("producto", "almacen").all()[:8]
+    resultados = periodo.resultados.select_related("producto").all()[:12]
+    resumen = obtener_resumen_periodo(periodo)
+    return render(
+        request,
+        "costos/periodo_costeo_detail.html",
+        {
+            "periodo": periodo,
+            "gastos": gastos,
+            "almacenajes": almacenajes,
+            "resultados": resultados,
+            "resumen": resumen,
+            "puede_editar": request.user.is_superuser or request.user.has_perm("costos.change_cierrecosteoperiodo"),
+            "puede_generar": request.user.is_superuser or request.user.has_perm("costos.add_cierrecosteoperiodo"),
+            "puede_cerrar": request.user.is_superuser or request.user.has_perm("costos.add_cierrecosteoperiodo"),
+            "puede_cancelar": request.user.is_superuser or request.user.has_perm("costos.puede_cancelar_cierre_costeo"),
+        },
+    )
+
+
+@require_POST
+@permiso_requerido("costos.add_cierrecosteoperiodo")
+def periodo_costeo_generar(request, pk):
+    periodo = get_object_or_404(PeriodoCosteo, pk=pk)
+    try:
+        resumen = generar_costeo_periodo(periodo, usuario=request.user)
+        messages.success(
+            request,
+            f"Costeo generado: {resumen.total_productos} productos, margen real {resumen.margen_real}%.",
+        )
+        for advertencia in resumen.advertencias:
+            messages.warning(request, advertencia)
+    except ValidationError as exc:
+        messages.warning(request, exc.messages[0] if hasattr(exc, "messages") else str(exc))
+    return redirect("costos:periodo_costeo_detail", pk=periodo.pk)
+
+
+@require_POST
+@permiso_requerido("costos.add_cierrecosteoperiodo")
+def periodo_costeo_cerrar(request, pk):
+    periodo = get_object_or_404(PeriodoCosteo, pk=pk)
+    try:
+        cerrar_costeo_periodo(periodo, usuario=request.user)
+        messages.success(request, "Periodo cerrado y costos sugeridos aprobados correctamente.")
+    except ValidationError as exc:
+        messages.warning(request, exc.messages[0] if hasattr(exc, "messages") else str(exc))
+    return redirect("costos:periodo_costeo_detail", pk=periodo.pk)
+
+
+@require_POST
+@permiso_requerido("costos.puede_cancelar_cierre_costeo")
+def periodo_costeo_cancelar(request, pk):
+    periodo = get_object_or_404(PeriodoCosteo, pk=pk)
+    motivo = (request.POST.get("motivo_cancelacion") or "").strip()
+    try:
+        periodo.cancelar(request.user, motivo=motivo)
+        messages.success(request, "Periodo de costeo cancelado correctamente.")
+    except ValidationError as exc:
+        messages.warning(request, exc.messages[0] if hasattr(exc, "messages") else str(exc))
+    return redirect("costos:periodo_costeo_detail", pk=periodo.pk)
+
+
+@permiso_requerido("costos.view_gasto")
+def gastos_periodo_list(request):
+    periodo_id = (request.GET.get("periodo") or "").strip()
+    tipo = (request.GET.get("tipo") or "").strip()
+    estado = (request.GET.get("estado") or "activos").strip()
+
+    gastos = GastoPeriodo.objects.select_related("periodo", "almacen", "proveedor").all().order_by("-fecha", "-id")
+    periodo_id_int = None
+    if periodo_id.isdigit():
+        periodo_id_int = int(periodo_id)
+        gastos = gastos.filter(periodo_id=periodo_id_int)
+    else:
+        periodo_id = ""
+
+    tipos_validos = {value for value, _ in GastoPeriodo.TIPO_CHOICES}
+    if tipo in tipos_validos:
+        gastos = gastos.filter(tipo_gasto=tipo)
+    else:
+        tipo = ""
+
+    if estado == "activos":
+        gastos = gastos.filter(estado=GastoPeriodo.ESTADO_ACTIVO)
+    elif estado == "cancelados":
+        gastos = gastos.filter(estado=GastoPeriodo.ESTADO_CANCELADO)
+    elif estado != "todos":
+        estado = "activos"
+        gastos = gastos.filter(estado=GastoPeriodo.ESTADO_ACTIVO)
+
+    resumen = gastos.aggregate(total=Count("id"), importe_total=Sum("importe"))
+
+    return render(
+        request,
+        "costos/gastos_periodo_list.html",
+        {
+            "gastos": gastos,
+            "periodos": PeriodoCosteo.objects.exclude(estado=PeriodoCosteo.ESTADO_CANCELADO).order_by("-fecha_inicio"),
+            "tipos_gasto": GastoPeriodo.TIPO_CHOICES,
+            "periodo_id": periodo_id,
+            "periodo_id_int": periodo_id_int,
+            "tipo": tipo,
+            "estado": estado,
+            "resumen": resumen,
+            "puede_agregar": request.user.is_superuser or request.user.has_perm("costos.add_gasto"),
+            "puede_editar": request.user.is_superuser or request.user.has_perm("costos.change_gasto"),
+            "puede_cancelar": request.user.is_superuser or request.user.has_perm("costos.puede_cancelar_gasto"),
+        },
+    )
+
+
+@permiso_requerido("costos.add_gasto")
+def gasto_periodo_create(request):
+    periodo = None
+    periodo_id = request.GET.get("periodo") or request.POST.get("periodo")
+    if periodo_id and str(periodo_id).isdigit():
+        periodo = PeriodoCosteo.objects.filter(pk=periodo_id).first()
+
+    if request.method == "POST":
+        form = GastoPeriodoForm(request.POST, periodo=periodo)
+        if form.is_valid():
+            gasto = form.save(commit=False)
+            gasto.creado_por = request.user if request.user.is_authenticated else None
+            gasto.save()
+            messages.success(request, "Gasto del periodo guardado correctamente.")
+            return redirect("costos:gastos_periodo_list")
+    else:
+        form = GastoPeriodoForm(periodo=periodo)
+    return render(request, "costos/gasto_periodo_form.html", {"form": form, "modo_edicion": False})
+
+
+@permiso_requerido("costos.change_gasto")
+def gasto_periodo_edit(request, pk):
+    gasto = get_object_or_404(GastoPeriodo, pk=pk)
+    if not gasto.puede_editarse:
+        messages.warning(request, "Solo se pueden editar gastos activos de periodos abiertos o en revisión.")
+        return redirect("costos:gastos_periodo_list")
+    if request.method == "POST":
+        form = GastoPeriodoForm(request.POST, instance=gasto)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Gasto del periodo actualizado correctamente.")
+            return redirect("costos:gastos_periodo_list")
+    else:
+        form = GastoPeriodoForm(instance=gasto)
+    return render(request, "costos/gasto_periodo_form.html", {"form": form, "gasto": gasto, "modo_edicion": True})
+
+
+@require_POST
+@permiso_requerido("costos.puede_cancelar_gasto")
+def gasto_periodo_cancelar(request, pk):
+    gasto = get_object_or_404(GastoPeriodo, pk=pk)
+    motivo = (request.POST.get("motivo_cancelacion") or "").strip()
+    try:
+        gasto.cancelar(request.user, motivo=motivo)
+        messages.success(request, "Gasto cancelado correctamente.")
+    except ValidationError as exc:
+        messages.warning(request, exc.messages[0] if hasattr(exc, "messages") else str(exc))
+    return redirect("costos:gastos_periodo_list")
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def almacenaje_costeo_list(request):
+    periodos = _periodos_costeo_queryset()
+    return render(request, "costos/almacenaje_costeo_list.html", {"periodos": periodos})
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def almacenaje_costeo_detail(request, pk):
+    periodo = get_object_or_404(PeriodoCosteo, pk=pk)
+    almacenajes = periodo.almacenajes.select_related("almacen", "producto").all()
+    resumen = almacenajes.aggregate(total=Sum("importe"), kg_total=Sum("kg_al_corte"), productos=Count("producto", distinct=True), almacenes=Count("almacen", distinct=True))
+    return render(
+        request,
+        "costos/almacenaje_costeo_detail.html",
+        {"periodo": periodo, "almacenajes": almacenajes, "resumen": resumen},
+    )
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def resultados_costeo_list(request):
+    periodos = _periodos_costeo_queryset()
+    return render(request, "costos/resultados_costeo_list.html", {"periodos": periodos})
+
+
+@permiso_requerido("costos.view_cierrecosteoperiodo")
+def resultados_costeo_detail(request, pk):
+    periodo = get_object_or_404(PeriodoCosteo, pk=pk)
+    resultados = periodo.resultados.select_related("producto").all()
+    resumen = obtener_resumen_periodo(periodo)
+    return render(
+        request,
+        "costos/resultados_costeo_detail.html",
+        {"periodo": periodo, "resultados": resultados, "resumen": resumen},
+    )
 
 
 def _categorias_gasto_queryset():

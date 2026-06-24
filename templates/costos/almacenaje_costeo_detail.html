@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Almacenaje {{ periodo.nombre }}{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_almacenaje_costeo %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="sg-page-header mb-3"><div><h1 class="h3 mb-1">Almacenaje · {{ periodo.nombre }}</h1><p class="text-muted mb-0">Costo por kg calculado con almacenes arrendados y stock al momento de generar.</p></div><a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-md">Regresar al periodo</a></div>
+  <div class="row g-3 mb-3"><div class="col-md-3"><div class="card p-3"><span class="text-muted">Kg al corte</span><strong>{{ resumen.kg_total|default:0|floatformat:2|intcomma }}</strong></div></div><div class="col-md-3"><div class="card p-3"><span class="text-muted">Importe</span><strong>${{ resumen.total|default:0|floatformat:2|intcomma }}</strong></div></div><div class="col-md-3"><div class="card p-3"><span class="text-muted">Productos</span><strong>{{ resumen.productos|default:0 }}</strong></div></div><div class="col-md-3"><div class="card p-3"><span class="text-muted">Almacenes</span><strong>{{ resumen.almacenes|default:0 }}</strong></div></div></div>
+  <div class="sg-table-card"><div class="table-responsive"><table class="table sg-table align-middle mb-0"><thead><tr><th>Almacén</th><th>Producto</th><th class="text-end">Kg al corte</th><th class="text-end">Tarifa kg</th><th class="text-end">Importe</th><th>Observaciones</th></tr></thead><tbody>{% for item in almacenajes %}<tr><td>{{ item.almacen|default:"Manual" }}</td><td>{{ item.producto.nombre }}</td><td class="text-end">{{ item.kg_al_corte|floatformat:2|intcomma }}</td><td class="text-end">${{ item.tarifa_kg|floatformat:4|intcomma }}</td><td class="text-end">${{ item.importe|floatformat:2|intcomma }}</td><td>{{ item.observaciones|default:"—" }}</td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted py-4">Genera el costeo para calcular almacenaje.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}

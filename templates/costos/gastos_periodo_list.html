@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}Gastos del periodo{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_gastos_periodo %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="sg-page-header mb-3">
+    <div>
+      <h1 class="h3 mb-1">Gastos del periodo</h1>
+      <p class="text-muted mb-0">Captura gastos de forma simple; el sistema distribuye automáticamente al generar el costeo.</p>
+    </div>
+    {% if puede_agregar %}<a href="{% url 'costos:gasto_periodo_create' %}" class="sg-btn-primary sg-btn-md"><i class="bi bi-plus-circle me-1"></i>Nuevo gasto</a>{% endif %}
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6"><div class="card p-3"><span class="text-muted">Registros</span><strong class="fs-4">{{ resumen.total|default:0 }}</strong></div></div>
+    <div class="col-md-6"><div class="card p-3"><span class="text-muted">Importe</span><strong class="fs-4">${{ resumen.importe_total|default:0|floatformat:2|intcomma }}</strong></div></div>
+  </div>
+
+  <div class="sg-toolbar mb-3">
+    <form method="get" class="row g-2 align-items-end w-100">
+      <div class="col-md-4"><label class="form-label">Periodo</label><select name="periodo" class="form-select"><option value="">Todos</option>{% for periodo in periodos %}<option value="{{ periodo.pk }}" {% if periodo_id_int == periodo.pk %}selected{% endif %}>{{ periodo.nombre }}</option>{% endfor %}</select></div>
+      <div class="col-md-3"><label class="form-label">Tipo</label><select name="tipo" class="form-select"><option value="">Todos</option>{% for value,label in tipos_gasto %}<option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+      <div class="col-md-3"><label class="form-label">Estado</label><select name="estado" class="form-select"><option value="activos" {% if estado == 'activos' %}selected{% endif %}>Activos</option><option value="cancelados" {% if estado == 'cancelados' %}selected{% endif %}>Cancelados</option><option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option></select></div>
+      <div class="col-md-2 d-flex gap-2"><button class="sg-btn-primary sg-btn-md" type="submit">Filtrar</button><a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-md">Limpiar</a></div>
+    </form>
+  </div>
+
+  <div class="sg-table-card">
+    <div class="table-responsive">
+      <table class="table sg-table align-middle mb-0">
+        <thead><tr><th>Fecha</th><th>Periodo</th><th>Tipo</th><th>Referencia</th><th>Almacén</th><th>Estado</th><th class="text-end">Importe</th><th class="text-end">Acciones</th></tr></thead>
+        <tbody>
+          {% for gasto in gastos %}
+          <tr>
+            <td>{{ gasto.fecha|date:"Y-m-d" }}</td>
+            <td>{{ gasto.periodo.nombre }}</td>
+            <td>{{ gasto.get_tipo_gasto_display }}</td>
+            <td>{{ gasto.referencia|default:"—" }}</td>
+            <td>{{ gasto.almacen|default:"—" }}</td>
+            <td><span class="badge bg-secondary">{{ gasto.get_estado_display }}</span></td>
+            <td class="text-end">${{ gasto.importe|floatformat:2|intcomma }}</td>
+            <td class="text-end">
+              {% if puede_editar and gasto.puede_editarse %}<a href="{% url 'costos:gasto_periodo_edit' gasto.pk %}" class="sg-btn-table sg-btn-sm">Editar</a>{% endif %}
+              {% if puede_cancelar and gasto.es_activo %}
+              <form method="post" action="{% url 'costos:gasto_periodo_cancelar' gasto.pk %}" class="d-inline" onsubmit="return confirm('¿Cancelar este gasto?');">{% csrf_token %}<input type="hidden" name="motivo_cancelacion" value="Cancelado desde listado"><button class="sg-btn-table sg-btn-sm" type="submit">Cancelar</button></form>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="8" class="text-center text-muted py-4">No hay gastos del periodo.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

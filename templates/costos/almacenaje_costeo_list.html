@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Almacenaje{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_almacenaje_costeo %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="sg-page-header mb-3">
+    <div><h1 class="h3 mb-1">Almacenaje</h1><p class="text-muted mb-0">Revisa el costo de almacén calculado por periodo.</p></div>
+  </div>
+  <div class="sg-table-card"><div class="table-responsive"><table class="table sg-table align-middle mb-0"><thead><tr><th>Periodo</th><th>Rango</th><th>Estado</th><th>Registros almacenaje</th><th class="text-end">Acciones</th></tr></thead><tbody>{% for periodo in periodos %}<tr><td>{{ periodo.nombre }}</td><td>{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</td><td>{{ periodo.get_estado_display }}</td><td>{{ periodo.almacenajes_count }}</td><td class="text-end"><a href="{% url 'costos:almacenaje_costeo_detail' periodo.pk %}" class="sg-btn-table sg-btn-sm">Ver</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted py-4">No hay periodos.</td></tr>{% endfor %}</tbody></table></div></div>
+</div>
+{% endblock %}

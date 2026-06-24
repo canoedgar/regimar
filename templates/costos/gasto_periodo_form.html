@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}{% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %}{% endblock %}
+{% block active_costos %}active{% endblock %}
+{% block costos_show %}show{% endblock %}
+{% block active_gastos_periodo %}active{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="sg-page-header mb-3">
+    <div>
+      <h1 class="h3 mb-1">{% if modo_edicion %}Editar gasto del periodo{% else %}Nuevo gasto del periodo{% endif %}</h1>
+      <p class="text-muted mb-0">No es necesario elegir método de distribución; el sistema lo resolverá al generar el costeo.</p>
+    </div>
+    <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-md">Regresar</a>
+  </div>
+
+  <form method="post" class="sg-form-card">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert alert-warning">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="row g-3">
+      <div class="col-md-4">{{ form.periodo.label_tag }}{{ form.periodo }}{{ form.periodo.errors }}</div>
+      <div class="col-md-4">{{ form.tipo_gasto.label_tag }}{{ form.tipo_gasto }}{{ form.tipo_gasto.errors }}</div>
+      <div class="col-md-2">{{ form.fecha.label_tag }}{{ form.fecha }}{{ form.fecha.errors }}</div>
+      <div class="col-md-2">{{ form.importe.label_tag }}{{ form.importe }}{{ form.importe.errors }}</div>
+      <div class="col-md-4">{{ form.almacen.label_tag }}{{ form.almacen }}{{ form.almacen.errors }}</div>
+      <div class="col-md-4">{{ form.proveedor.label_tag }}{{ form.proveedor }}{{ form.proveedor.errors }}</div>
+      <div class="col-md-4">{{ form.referencia.label_tag }}{{ form.referencia }}{{ form.referencia.errors }}</div>
+      <div class="col-12">{{ form.descripcion.label_tag }}{{ form.descripcion }}{{ form.descripcion.errors }}</div>
+    </div>
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md">Cancelar</a>
+      <button type="submit" class="sg-btn-primary sg-btn-form sg-btn-md">Guardar gasto</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
