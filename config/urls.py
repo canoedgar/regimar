@@ -44,4 +44,7 @@ urlpatterns = [
     # Usuarios
     path("config/", include("accounts.urls")),
 
+    # Integraciones    
+    path("integraciones/whatsapp/", include("integraciones_whatsapp.urls")),
+
 ]
