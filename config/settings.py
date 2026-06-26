@@ -114,6 +114,12 @@ DATABASES = {
 }
 
 # =========================
+# WHATSAPP
+# =========================
+
+WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
+
+# =========================
 # PASSWORDS
 # =========================
 
