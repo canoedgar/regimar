@@ -1,11 +1,15 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
 {% block title %}{{ gasto.folio }} | Costos{% endblock %}
 {% block page_title %}Detalle de gasto{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_gastos %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="sg-list-page">

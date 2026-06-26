@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ titulo }}{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block active_integraciones_whatsapp %}active{% endblock %}
+{% block whatsapp_show %}show{% endblock %}
+{% block active_whatsapp_remitentes %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/integraciones_whatsapp.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sg-list-page whatsapp-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card whatsapp-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-person-check me-2"></i>{{ titulo }}</h5>
+        <p class="sg-page-header-subtitle">Autoriza números que podrán enviar instrucciones al ERP por WhatsApp. Los permisos no ejecutan acciones todavía; solo dejan la base preparada.</p>
+      </div>
+      <div class="sg-page-actions"><a href="{% url 'integraciones_whatsapp:remitentes_list' %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-arrow-left me-1"></i>Volver</a></div>
+    </div>
+  </section>
+
+  <form method="post" class="card border-0 shadow-sm sg-form-card">
+    {% csrf_token %}
+    <div class="card-body">
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+
+      <div class="sg-form-section mb-4">
+        <h5 class="mb-3"><i class="bi bi-person-lines-fill me-1"></i>Datos del remitente</h5>
+        <div class="row g-3">
+          <div class="col-12 col-md-4">
+            <label class="sg-form-label" for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
+            {{ form.telefono }}
+            <div class="sg-form-help">Formato recomendado: +52 seguido del número.</div>
+            {% for error in form.telefono.errors %}<div class="sg-form-error">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="sg-form-label" for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+            {{ form.nombre }}
+            {% for error in form.nombre.errors %}<div class="sg-form-error">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="sg-form-label" for="{{ form.usuario_sistema.id_for_label }}">{{ form.usuario_sistema.label }}</label>
+            {{ form.usuario_sistema }}
+            {% for error in form.usuario_sistema.errors %}<div class="sg-form-error">{{ error }}</div>{% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <div class="sg-form-section">
+        <h5 class="mb-3"><i class="bi bi-shield-check me-1"></i>Estado y permisos</h5>
+        <div class="whatsapp-permission-grid">
+          <div class="whatsapp-permission-item"><div class="form-check">{{ form.activo }} <label class="form-check-label" for="{{ form.activo.id_for_label }}">{{ form.activo.label }}</label></div></div>
+          <div class="whatsapp-permission-item"><div class="form-check">{{ form.requiere_confirmacion_siempre }} <label class="form-check-label" for="{{ form.requiere_confirmacion_siempre.id_for_label }}">{{ form.requiere_confirmacion_siempre.label }}</label></div></div>
+          <div class="whatsapp-permission-item"><div class="form-check">{{ form.puede_consultar_stock }} <label class="form-check-label" for="{{ form.puede_consultar_stock.id_for_label }}">{{ form.puede_consultar_stock.label }}</label></div></div>
+          <div class="whatsapp-permission-item"><div class="form-check">{{ form.puede_cambiar_precios }} <label class="form-check-label" for="{{ form.puede_cambiar_precios.id_for_label }}">{{ form.puede_cambiar_precios.label }}</label></div></div>
+          <div class="whatsapp-permission-item"><div class="form-check">{{ form.puede_crear_clientes }} <label class="form-check-label" for="{{ form.puede_crear_clientes.id_for_label }}">{{ form.puede_crear_clientes.label }}</label></div></div>
+          <div class="whatsapp-permission-item"><div class="form-check">{{ form.puede_registrar_inventario }} <label class="form-check-label" for="{{ form.puede_registrar_inventario.id_for_label }}">{{ form.puede_registrar_inventario.label }}</label></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-footer sg-form-actions sg-form-actions-between sg-form-actions-compact">
+      <a href="{% url 'integraciones_whatsapp:remitentes_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md"><i class="bi bi-x-lg me-1"></i>Cancelar</a>
+      <button type="submit" class="sg-btn-primary sg-btn-form sg-btn-md"><i class="bi bi-save me-1"></i>Guardar</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

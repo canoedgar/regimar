@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Detalle instrucción WhatsApp{% endblock %}
+{% block page_title %}Detalle instrucción WhatsApp{% endblock %}
+{% block active_integraciones_whatsapp %}active{% endblock %}
+{% block whatsapp_show %}show{% endblock %}
+{% block active_whatsapp_instrucciones %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/integraciones_whatsapp.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sg-list-page whatsapp-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card whatsapp-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-whatsapp me-2"></i>Detalle de instrucción</h5>
+        <p class="sg-page-header-subtitle">Revisión auditable del mensaje recibido, payload original, operaciones derivadas y bitácora.</p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'integraciones_whatsapp:instrucciones_list' %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-xl-8">
+      <section class="card border-0 shadow-sm sg-form-card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center gap-2">
+          <div>
+            <h5 class="mb-0">Mensaje original</h5>
+            <small class="text-muted">{{ instruccion.fecha_recibido|date:"Y-m-d H:i" }}</small>
+          </div>
+          <span class="badge {{ instruccion.estado_badge_class }}">{{ instruccion.get_estado_display }}</span>
+        </div>
+        <div class="card-body">
+          <div class="whatsapp-message-box fs-5 mb-3">{{ instruccion.mensaje_original|default:"Sin mensaje de texto." }}</div>
+          <div class="whatsapp-info-grid">
+            <div class="whatsapp-info-item"><span class="whatsapp-info-label">Remitente</span><span class="whatsapp-info-value">{{ instruccion.nombre_perfil|default:"—" }}</span></div>
+            <div class="whatsapp-info-item"><span class="whatsapp-info-label">Teléfono</span><span class="whatsapp-info-value">{{ instruccion.telefono_origen|default:"—" }}</span></div>
+            <div class="whatsapp-info-item"><span class="whatsapp-info-label">Tipo</span><span class="whatsapp-info-value">{{ instruccion.tipo_mensaje|default:"—" }}</span></div>
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">ID externo</span><span class="whatsapp-info-value">{{ instruccion.mensaje_id_externo|default:"—" }}</span></div>
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">Proveedor</span><span class="whatsapp-info-value">{{ instruccion.proveedor|default:"—" }}</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-12 col-xl-4">
+      <section class="card border-0 shadow-sm sg-form-card h-100">
+        <div class="card-header"><h5 class="mb-0">Interpretación</h5></div>
+        <div class="card-body">
+          <div class="whatsapp-info-grid">
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">Intención detectada</span><span class="whatsapp-info-value">{{ instruccion.intencion_detectada|default:"—" }}</span></div>
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">Confianza</span><span class="whatsapp-info-value">{{ instruccion.confianza|default:"0.00" }}%</span></div>
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">Requiere confirmación</span><span class="whatsapp-info-value">{% if instruccion.requiere_confirmacion %}Sí{% else %}No{% endif %}</span></div>
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">Fecha confirmación</span><span class="whatsapp-info-value">{{ instruccion.fecha_confirmacion|date:"Y-m-d H:i"|default:"—" }}</span></div>
+            <div class="whatsapp-info-item whatsapp-info-item-wide"><span class="whatsapp-info-label">Fecha procesado</span><span class="whatsapp-info-value">{{ instruccion.fecha_procesado|date:"Y-m-d H:i"|default:"—" }}</span></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  {% if instruccion.error or instruccion.respuesta_enviada %}
+    <div class="row g-3">
+      {% if instruccion.respuesta_enviada %}
+        <div class="col-12 col-lg-6"><div class="alert alert-info mb-0"><strong>Respuesta enviada:</strong><br>{{ instruccion.respuesta_enviada }}</div></div>
+      {% endif %}
+      {% if instruccion.error %}
+        <div class="col-12 col-lg-6"><div class="alert alert-danger mb-0"><strong>Error:</strong><br>{{ instruccion.error }}</div></div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="row g-3">
+    <div class="col-12 col-lg-6">
+      <section class="card border-0 shadow-sm sg-form-card h-100">
+        <div class="card-header"><h5 class="mb-0"><i class="bi bi-braces me-1"></i>Datos extraídos</h5></div>
+        <div class="card-body"><pre class="whatsapp-json-pre mb-0">{{ datos_extraidos_json }}</pre></div>
+      </section>
+    </div>
+    <div class="col-12 col-lg-6">
+      <section class="card border-0 shadow-sm sg-form-card h-100">
+        <div class="card-header"><h5 class="mb-0"><i class="bi bi-filetype-json me-1"></i>Payload original</h5></div>
+        <div class="card-body"><pre class="whatsapp-json-pre mb-0">{{ payload_original_json }}</pre></div>
+      </section>
+    </div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Operaciones relacionadas</h5></div>
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light"><tr><th>Tipo</th><th>Destino</th><th>Resumen</th><th>Estado</th><th>Ejecutado por</th><th>Fecha</th></tr></thead>
+          <tbody>
+            {% for operacion in operaciones %}
+              <tr>
+                <td>{{ operacion.get_tipo_operacion_display }}</td>
+                <td>{{ operacion.app_destino|default:"—" }}{% if operacion.modelo_afectado %} / {{ operacion.modelo_afectado }}{% endif %}</td>
+                <td>{{ operacion.resumen|default:"—" }}</td>
+                <td><span class="badge {{ operacion.estado_badge_class }}">{{ operacion.get_estado_display }}</span></td>
+                <td>{{ operacion.ejecutado_por|default:"—" }}</td>
+                <td>{{ operacion.fecha_ejecucion|date:"Y-m-d H:i"|default:"—" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="sg-empty-state">No hay operaciones relacionadas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="sg-mobile-list d-md-none">
+        {% for operacion in operaciones %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header"><div class="min-w-0"><span class="sg-mobile-card-label">Operación</span><strong class="sg-mobile-card-title">{{ operacion.get_tipo_operacion_display }}</strong><span class="sg-mobile-card-subtitle">{{ operacion.app_destino|default:"—" }}{% if operacion.modelo_afectado %} / {{ operacion.modelo_afectado }}{% endif %}</span></div><span class="badge {{ operacion.estado_badge_class }}">{{ operacion.get_estado_display }}</span></div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Resumen</span><span class="sg-mobile-card-value">{{ operacion.resumen|default:"—" }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Ejecutado por</span><span class="sg-mobile-card-value">{{ operacion.ejecutado_por|default:"—" }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Fecha</span><span class="sg-mobile-card-value">{{ operacion.fecha_ejecucion|date:"Y-m-d H:i"|default:"—" }}</span></div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay operaciones relacionadas.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-header"><h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Bitácora</h5></div>
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light"><tr><th>Fecha</th><th>Evento</th><th>Detalle</th></tr></thead>
+          <tbody>
+            {% for evento in bitacora %}
+              <tr><td>{{ evento.fecha|date:"Y-m-d H:i" }}</td><td>{{ evento.evento }}</td><td>{{ evento.detalle|default:"—" }}</td></tr>
+            {% empty %}
+              <tr><td colspan="3" class="sg-empty-state">No hay eventos registrados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="sg-mobile-list d-md-none">
+        {% for evento in bitacora %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">{{ evento.fecha|date:"Y-m-d H:i" }}</span><strong class="sg-mobile-card-title">{{ evento.evento }}</strong></div></div>
+            <div class="sg-mobile-card-grid"><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Detalle</span><span class="sg-mobile-card-value">{{ evento.detalle|default:"—" }}</span></div></div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay eventos registrados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

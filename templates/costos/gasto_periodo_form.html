@@ -1,37 +1,108 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %}{% endblock %}
+{% block title %}{% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %} | Costos{% endblock %}
+{% block page_title %}{% if modo_edicion %}Editar gasto{% else %}Nuevo gasto{% endif %}{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_gastos_periodo %}active{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3">
-    <div>
-      <h1 class="h3 mb-1">{% if modo_edicion %}Editar gasto del periodo{% else %}Nuevo gasto del periodo{% endif %}</h1>
-      <p class="text-muted mb-0">No es necesario elegir método de distribución; el sistema lo resolverá al generar el costeo.</p>
-    </div>
-    <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-md">Regresar</a>
-  </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
 
-  <form method="post" class="sg-form-card">
-    {% csrf_token %}
-    {% if form.non_field_errors %}<div class="alert alert-warning">{{ form.non_field_errors }}</div>{% endif %}
-    <div class="row g-3">
-      <div class="col-md-4">{{ form.periodo.label_tag }}{{ form.periodo }}{{ form.periodo.errors }}</div>
-      <div class="col-md-4">{{ form.tipo_gasto.label_tag }}{{ form.tipo_gasto }}{{ form.tipo_gasto.errors }}</div>
-      <div class="col-md-2">{{ form.fecha.label_tag }}{{ form.fecha }}{{ form.fecha.errors }}</div>
-      <div class="col-md-2">{{ form.importe.label_tag }}{{ form.importe }}{{ form.importe.errors }}</div>
-      <div class="col-md-4">{{ form.almacen.label_tag }}{{ form.almacen }}{{ form.almacen.errors }}</div>
-      <div class="col-md-4">{{ form.proveedor.label_tag }}{{ form.proveedor }}{{ form.proveedor.errors }}</div>
-      <div class="col-md-4">{{ form.referencia.label_tag }}{{ form.referencia }}{{ form.referencia.errors }}</div>
-      <div class="col-12">{{ form.descripcion.label_tag }}{{ form.descripcion }}{{ form.descripcion.errors }}</div>
+{% block content %}
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-cash-coin me-2"></i>
+          {% if modo_edicion %}Editar gasto del periodo{% else %}Nuevo gasto del periodo{% endif %}
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Captura gastos simples del periodo; el sistema resolverá su distribución al generar el costeo.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Regresar
+        </a>
+      </div>
     </div>
-    <div class="d-flex justify-content-end gap-2 mt-4">
-      <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md">Cancelar</a>
-      <button type="submit" class="sg-btn-primary sg-btn-form sg-btn-md">Guardar gasto</button>
-    </div>
-  </form>
+  </section>
+
+  <div class="costos-form-shell w-100">
+    <form method="post" class="card border-0 shadow-sm sg-form-card">
+      {% csrf_token %}
+      <div class="card-body">
+        {% if form.non_field_errors %}
+          <div class="alert alert-warning">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="sg-form-section">
+          <h6 class="sg-form-section-title mb-3">Datos del gasto</h6>
+          <div class="row g-3">
+            <div class="col-12 col-lg-4">
+              <label class="sg-form-label" for="{{ form.periodo.id_for_label }}">{{ form.periodo.label }}</label>
+              {{ form.periodo }}
+              {% if form.periodo.errors %}<div class="sg-form-error">{{ form.periodo.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="sg-form-label" for="{{ form.tipo_gasto.id_for_label }}">{{ form.tipo_gasto.label }}</label>
+              {{ form.tipo_gasto }}
+              {% if form.tipo_gasto.errors %}<div class="sg-form-error">{{ form.tipo_gasto.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-3 col-lg-2">
+              <label class="sg-form-label" for="{{ form.fecha.id_for_label }}">{{ form.fecha.label }}</label>
+              {{ form.fecha }}
+              <div class="sg-form-help">Formato YYYY-MM-DD.</div>
+              {% if form.fecha.errors %}<div class="sg-form-error">{{ form.fecha.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-3 col-lg-2">
+              <label class="sg-form-label" for="{{ form.importe.id_for_label }}">{{ form.importe.label }}</label>
+              <div class="input-group sg-money-input-group">
+                <span class="input-group-text">$</span>
+                {{ form.importe }}
+              </div>
+              {% if form.importe.errors %}<div class="sg-form-error">{{ form.importe.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="sg-form-label" for="{{ form.almacen.id_for_label }}">{{ form.almacen.label }}</label>
+              {{ form.almacen }}
+              {% if form.almacen.errors %}<div class="sg-form-error">{{ form.almacen.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-6 col-lg-4">
+              <label class="sg-form-label" for="{{ form.proveedor.id_for_label }}">{{ form.proveedor.label }}</label>
+              {{ form.proveedor }}
+              {% if form.proveedor.errors %}<div class="sg-form-error">{{ form.proveedor.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-lg-4">
+              <label class="sg-form-label" for="{{ form.referencia.id_for_label }}">{{ form.referencia.label }}</label>
+              {{ form.referencia }}
+              {% if form.referencia.errors %}<div class="sg-form-error">{{ form.referencia.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12">
+              <label class="sg-form-label" for="{{ form.descripcion.id_for_label }}">{{ form.descripcion.label }}</label>
+              {{ form.descripcion }}
+              {% if form.descripcion.errors %}<div class="sg-form-error">{{ form.descripcion.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-form-actions sg-form-actions-between">
+          <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md">
+            <i class="bi bi-x-lg me-1"></i>
+            Cancelar
+          </a>
+          <button type="submit" class="sg-btn-primary sg-btn-form sg-btn-md">
+            <i class="bi bi-check2-circle me-1"></i>
+            Guardar gasto
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

@@ -60,7 +60,7 @@ INSTALLED_APPS = [
     "proyectos",
     "notificaciones",
     "costos",
-    "integraciones_whatsapp",
+    "integraciones_whatsapp.apps.IntegracionesWhatsappConfig",
 ]
 
 # =========================
@@ -114,10 +114,23 @@ DATABASES = {
 }
 
 # =========================
-# WHATSAPP
+# WHATSAPP / META CLOUD API
 # =========================
 
-WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN")
+# Configuración aislada para la app integraciones_whatsapp.
+# Las credenciales y secretos deben vivir únicamente en .env.
+WHATSAPP_PROVIDER = os.getenv("WHATSAPP_PROVIDER", "meta")
+WHATSAPP_WEBHOOK_ENABLED = env_bool("WHATSAPP_WEBHOOK_ENABLED", True)
+
+WHATSAPP_VERIFY_TOKEN = os.getenv("WHATSAPP_VERIFY_TOKEN", "")
+WHATSAPP_ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN", "")
+WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID", "")
+WHATSAPP_BUSINESS_ACCOUNT_ID = os.getenv("WHATSAPP_BUSINESS_ACCOUNT_ID", "")
+WHATSAPP_APP_SECRET = os.getenv("WHATSAPP_APP_SECRET", "")
+
+WHATSAPP_REQUIRE_CONFIRMATION = env_bool("WHATSAPP_REQUIRE_CONFIRMATION", True)
+WHATSAPP_CONFIRMATION_EXP_MINUTES = env_int("WHATSAPP_CONFIRMATION_EXP_MINUTES", 15)
+WHATSAPP_DEFAULT_COUNTRY_CODE = os.getenv("WHATSAPP_DEFAULT_COUNTRY_CODE", "52")
 
 # =========================
 # PASSWORDS
@@ -147,6 +160,15 @@ LANGUAGE_CODE = "es-mx"
 TIME_ZONE = "America/Hermosillo"
 USE_I18N = True
 USE_TZ = True
+
+# Formato visual universal para pantallas del sistema.
+# Los formatos de impresión conservan sus filtros explícitos en cada template.
+DATE_FORMAT = "Y-m-d"
+DATETIME_FORMAT = "Y-m-d H:i"
+SHORT_DATE_FORMAT = "Y-m-d"
+SHORT_DATETIME_FORMAT = "Y-m-d H:i"
+DATE_INPUT_FORMATS = ["%Y-%m-%d"]
+DATETIME_INPUT_FORMATS = ["%Y-%m-%d %H:%M", "%Y-%m-%d %H:%M:%S"]
 
 # =========================
 # STATIC & MEDIA

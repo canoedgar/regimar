@@ -19,7 +19,6 @@ class PagoClienteAdmin(admin.ModelAdmin):
     list_display = ("id", "cliente", "fecha", "tipo_aplicacion", "monto_recibido", "estado", "creado_por")
     list_filter = ("estado", "tipo_aplicacion", "origen", "fecha")
     search_fields = ("cliente__nombre_fiscal", "cliente__nombre_comercial", "referencia")
-    date_hierarchy = "fecha"
     inlines = [PagoMetodoDetalleInline, PagoAplicacionNotaInline]
 
 
@@ -34,7 +33,6 @@ class PagoMetodoDetalleAdmin(admin.ModelAdmin):
 class PagoAplicacionNotaAdmin(admin.ModelAdmin):
     list_display = ("pago", "nota_venta", "monto_aplicado", "aplicado_en", "creado_por")
     search_fields = ("nota_venta__folio", "pago__cliente__nombre_fiscal", "pago__cliente__nombre_comercial")
-    date_hierarchy = "aplicado_en"
 
 
 @admin.register(ClienteSaldoFavorMovimiento)
@@ -42,4 +40,3 @@ class ClienteSaldoFavorMovimientoAdmin(admin.ModelAdmin):
     list_display = ("cliente", "tipo", "fecha", "monto", "pago_origen", "nota_aplicada", "autorizado_por")
     list_filter = ("tipo", "fecha")
     search_fields = ("cliente__nombre_fiscal", "cliente__nombre_comercial", "referencia", "observaciones")
-    date_hierarchy = "fecha"

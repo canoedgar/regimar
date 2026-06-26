@@ -1,89 +1,182 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
-{% block title %}Periodos de costeo{% endblock %}
+{% block title %}Periodos de costeo | Costos{% endblock %}
+{% block page_title %}Periodos de costeo{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_periodos_costeo %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3">
-    <div>
-      <h1 class="h3 mb-1">Periodos de costeo</h1>
-      <p class="text-muted mb-0">Flujo simple: periodo, gastos, almacenaje y resultado por producto.</p>
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-calendar-range me-2"></i>
+          Periodos de costeo
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Flujo simple para calcular costos reales por periodo: gastos, almacenaje y resultado por producto.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        {% if puede_agregar %}
+          <a href="{% url 'costos:periodo_costeo_create' %}" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nuevo periodo
+          </a>
+        {% endif %}
+      </div>
     </div>
-    {% if puede_agregar %}
-      <a href="{% url 'costos:periodo_costeo_create' %}" class="sg-btn-primary sg-btn-md"><i class="bi bi-plus-circle me-1"></i>Nuevo periodo</a>
-    {% endif %}
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card">
+        <div class="card-body">
+          <span class="costos-metric-label">Periodos</span>
+          <strong class="costos-metric-value">{{ resumen.total|default:0 }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card">
+        <div class="card-body">
+          <span class="costos-metric-label">Abiertos</span>
+          <strong class="costos-metric-value">{{ resumen.abiertos|default:0 }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card">
+        <div class="card-body">
+          <span class="costos-metric-label">En revisión</span>
+          <strong class="costos-metric-value">{{ resumen.revision|default:0 }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card">
+        <div class="card-body">
+          <span class="costos-metric-label">Cerrados</span>
+          <strong class="costos-metric-value">{{ resumen.cerrados|default:0 }}</strong>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Periodos</span><strong class="fs-4">{{ resumen.total|default:0 }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Abiertos</span><strong class="fs-4">{{ resumen.abiertos|default:0 }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">En revisión</span><strong class="fs-4">{{ resumen.revision|default:0 }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Cerrados</span><strong class="fs-4">{{ resumen.cerrados|default:0 }}</strong></div></div>
-  </div>
+  <section class="card border-0 shadow-sm sg-form-card costos-filter-card">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-lg-6">
+          <label class="sg-form-label" for="periodo-q">Buscar</label>
+          <input id="periodo-q" type="search" name="q" value="{{ query }}" class="form-control sg-form-control" placeholder="Nombre o notas">
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="sg-form-label" for="periodo-estado">Estado</label>
+          <select id="periodo-estado" name="estado" class="form-select sg-form-control">
+            <option value="vigentes" {% if estado == "vigentes" %}selected{% endif %}>Vigentes</option>
+            <option value="ABI" {% if estado == "ABI" %}selected{% endif %}>Abiertos</option>
+            <option value="REV" {% if estado == "REV" %}selected{% endif %}>En revisión</option>
+            <option value="CER" {% if estado == "CER" %}selected{% endif %}>Cerrados</option>
+            <option value="CAN" {% if estado == "CAN" %}selected{% endif %}>Cancelados</option>
+            <option value="todos" {% if estado == "todos" %}selected{% endif %}>Todos</option>
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3 costos-filter-actions">
+          <button class="sg-btn-primary sg-btn-md" type="submit">
+            <i class="bi bi-search me-1"></i>
+            Filtrar
+          </button>
+          {% if query or estado != "vigentes" %}
+            <a href="{% url 'costos:periodos_costeo_list' %}" class="sg-btn-secondary sg-btn-md">
+              <i class="bi bi-x-lg me-1"></i>
+              Limpiar
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
 
-  <div class="sg-toolbar mb-3">
-    <form method="get" class="row g-2 align-items-end w-100">
-      <div class="col-md-6">
-        <label class="form-label">Buscar</label>
-        <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Nombre o notas">
-      </div>
-      <div class="col-md-3">
-        <label class="form-label">Estado</label>
-        <select name="estado" class="form-select">
-          <option value="vigentes" {% if estado == 'vigentes' %}selected{% endif %}>Vigentes</option>
-          <option value="ABI" {% if estado == 'ABI' %}selected{% endif %}>Abiertos</option>
-          <option value="REV" {% if estado == 'REV' %}selected{% endif %}>En revisión</option>
-          <option value="CER" {% if estado == 'CER' %}selected{% endif %}>Cerrados</option>
-          <option value="CAN" {% if estado == 'CAN' %}selected{% endif %}>Cancelados</option>
-          <option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option>
-        </select>
-      </div>
-      <div class="col-md-3 d-flex gap-2">
-        <button class="sg-btn-primary sg-btn-md" type="submit"><i class="bi bi-search me-1"></i>Buscar</button>
-        <a href="{% url 'costos:periodos_costeo_list' %}" class="sg-btn-secondary sg-btn-md">Limpiar</a>
-      </div>
-    </form>
-  </div>
-
-  <div class="sg-table-card">
-    <div class="table-responsive">
-      <table class="table sg-table align-middle mb-0">
-        <thead>
-          <tr>
-            <th>Periodo</th>
-            <th>Rango</th>
-            <th>Corte almacén</th>
-            <th>Estado</th>
-            <th>Gastos</th>
-            <th>Almacenaje</th>
-            <th>Resultados</th>
-            <th class="text-end">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for periodo in periodos %}
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
             <tr>
-              <td><strong>{{ periodo.nombre }}</strong></td>
-              <td>{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</td>
-              <td>{{ periodo.fecha_corte_almacen|date:"Y-m-d" }}</td>
-              <td><span class="badge bg-secondary">{{ periodo.get_estado_display }}</span></td>
-              <td>{{ periodo.gastos_count }}</td>
-              <td>{{ periodo.almacenajes_count }}</td>
-              <td>{{ periodo.resultados_count }}</td>
-              <td class="text-end">
-                <a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-table sg-btn-sm">Ver</a>
-              </td>
+              <th>Periodo</th>
+              <th>Rango</th>
+              <th>Corte almacén</th>
+              <th>Estado</th>
+              <th class="text-end">Gastos</th>
+              <th class="text-end">Almacenaje</th>
+              <th class="text-end">Resultados</th>
+              <th class="text-end">Acciones</th>
             </tr>
-          {% empty %}
-            <tr><td colspan="8" class="text-center text-muted py-4">No hay periodos de costeo.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for periodo in periodos %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ periodo.nombre }}</div>
+                  {% if periodo.notas %}<div class="small text-muted">{{ periodo.notas|truncatechars:80 }}</div>{% endif %}
+                </td>
+                <td class="costos-prevent-wrap">{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</td>
+                <td class="costos-prevent-wrap">{{ periodo.fecha_corte_almacen|date:"Y-m-d" }}</td>
+                <td><span class="badge text-bg-secondary">{{ periodo.get_estado_display }}</span></td>
+                <td class="text-end">{{ periodo.gastos_count }}</td>
+                <td class="text-end">{{ periodo.almacenajes_count }}</td>
+                <td class="text-end">{{ periodo.resultados_count }}</td>
+                <td class="text-end sg-table-actions">
+                  <a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-table sg-btn-sm" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="sg-empty-state">No hay periodos de costeo con los filtros seleccionados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for periodo in periodos %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">Periodo</span>
+                <strong class="sg-mobile-card-title">{{ periodo.nombre }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</span>
+              </div>
+              <span class="badge text-bg-secondary">{{ periodo.get_estado_display }}</span>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Corte almacén</span><span class="sg-mobile-card-value">{{ periodo.fecha_corte_almacen|date:"Y-m-d" }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Gastos</span><span class="sg-mobile-card-value">{{ periodo.gastos_count }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Almacenaje</span><span class="sg-mobile-card-value">{{ periodo.almacenajes_count }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Resultados</span><span class="sg-mobile-card-value">{{ periodo.resultados_count }}</span></div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              <a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-outline sg-btn-sm">
+                <i class="bi bi-eye me-1"></i>
+                Ver detalle
+              </a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay periodos de costeo con los filtros seleccionados.</div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

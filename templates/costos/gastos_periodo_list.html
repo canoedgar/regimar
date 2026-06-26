@@ -1,62 +1,196 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
-{% block title %}Gastos del periodo{% endblock %}
+{% block title %}Gastos del periodo | Costos{% endblock %}
+{% block page_title %}Gastos del periodo{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_gastos_periodo %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3">
-    <div>
-      <h1 class="h3 mb-1">Gastos del periodo</h1>
-      <p class="text-muted mb-0">Captura gastos de forma simple; el sistema distribuye automáticamente al generar el costeo.</p>
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-cash-coin me-2"></i>
+          Gastos del periodo
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Captura gastos de forma simple; el sistema los distribuye automáticamente al generar el costeo.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        {% if puede_agregar %}
+          <a href="{% url 'costos:gasto_periodo_create' %}" class="sg-btn-primary sg-btn-md">
+            <i class="bi bi-plus-circle me-1"></i>
+            Nuevo gasto
+          </a>
+        {% endif %}
+      </div>
     </div>
-    {% if puede_agregar %}<a href="{% url 'costos:gasto_periodo_create' %}" class="sg-btn-primary sg-btn-md"><i class="bi bi-plus-circle me-1"></i>Nuevo gasto</a>{% endif %}
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="card costos-metric-card">
+        <div class="card-body">
+          <span class="costos-metric-label">Registros filtrados</span>
+          <strong class="costos-metric-value">{{ resumen.total|default:0 }}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card costos-metric-card">
+        <div class="card-body">
+          <span class="costos-metric-label">Importe filtrado</span>
+          <strong class="costos-metric-value">${{ resumen.importe_total|default:0|floatformat:2|intcomma }}</strong>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="row g-3 mb-3">
-    <div class="col-md-6"><div class="card p-3"><span class="text-muted">Registros</span><strong class="fs-4">{{ resumen.total|default:0 }}</strong></div></div>
-    <div class="col-md-6"><div class="card p-3"><span class="text-muted">Importe</span><strong class="fs-4">${{ resumen.importe_total|default:0|floatformat:2|intcomma }}</strong></div></div>
-  </div>
+  <section class="card border-0 shadow-sm sg-form-card costos-filter-card">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-lg-4">
+          <label class="sg-form-label" for="periodo">Periodo</label>
+          <select id="periodo" name="periodo" class="form-select sg-form-control">
+            <option value="">Todos</option>
+            {% for periodo in periodos %}
+              <option value="{{ periodo.pk }}" {% if periodo_id_int == periodo.pk %}selected{% endif %}>{{ periodo.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="sg-form-label" for="tipo">Tipo</label>
+          <select id="tipo" name="tipo" class="form-select sg-form-control">
+            <option value="">Todos</option>
+            {% for value, label in tipos_gasto %}
+              <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="sg-form-label" for="estado">Estado</label>
+          <select id="estado" name="estado" class="form-select sg-form-control">
+            <option value="activos" {% if estado == "activos" %}selected{% endif %}>Activos</option>
+            <option value="cancelados" {% if estado == "cancelados" %}selected{% endif %}>Cancelados</option>
+            <option value="todos" {% if estado == "todos" %}selected{% endif %}>Todos</option>
+          </select>
+        </div>
+        <div class="col-12 col-lg-2 costos-filter-actions">
+          <button class="sg-btn-primary sg-btn-md" type="submit">
+            <i class="bi bi-funnel me-1"></i>
+            Filtrar
+          </button>
+          {% if periodo_id or tipo or estado != "activos" %}
+            <a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-md">
+              <i class="bi bi-x-lg me-1"></i>
+              Limpiar
+            </a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+  </section>
 
-  <div class="sg-toolbar mb-3">
-    <form method="get" class="row g-2 align-items-end w-100">
-      <div class="col-md-4"><label class="form-label">Periodo</label><select name="periodo" class="form-select"><option value="">Todos</option>{% for periodo in periodos %}<option value="{{ periodo.pk }}" {% if periodo_id_int == periodo.pk %}selected{% endif %}>{{ periodo.nombre }}</option>{% endfor %}</select></div>
-      <div class="col-md-3"><label class="form-label">Tipo</label><select name="tipo" class="form-select"><option value="">Todos</option>{% for value,label in tipos_gasto %}<option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
-      <div class="col-md-3"><label class="form-label">Estado</label><select name="estado" class="form-select"><option value="activos" {% if estado == 'activos' %}selected{% endif %}>Activos</option><option value="cancelados" {% if estado == 'cancelados' %}selected{% endif %}>Cancelados</option><option value="todos" {% if estado == 'todos' %}selected{% endif %}>Todos</option></select></div>
-      <div class="col-md-2 d-flex gap-2"><button class="sg-btn-primary sg-btn-md" type="submit">Filtrar</button><a href="{% url 'costos:gastos_periodo_list' %}" class="sg-btn-secondary sg-btn-md">Limpiar</a></div>
-    </form>
-  </div>
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Periodo</th>
+              <th>Tipo</th>
+              <th>Referencia</th>
+              <th>Almacén</th>
+              <th>Estado</th>
+              <th class="text-end">Importe</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for gasto in gastos %}
+              <tr>
+                <td class="costos-prevent-wrap">{{ gasto.fecha|date:"Y-m-d" }}</td>
+                <td class="fw-semibold">{{ gasto.periodo.nombre }}</td>
+                <td>{{ gasto.get_tipo_gasto_display }}</td>
+                <td>{{ gasto.referencia|default:"—" }}</td>
+                <td>{{ gasto.almacen|default:"—" }}</td>
+                <td><span class="badge text-bg-secondary">{{ gasto.get_estado_display }}</span></td>
+                <td class="text-end fw-semibold">${{ gasto.importe|floatformat:2|intcomma }}</td>
+                <td class="text-end sg-table-actions">
+                  {% if puede_editar and gasto.puede_editarse %}
+                    <a href="{% url 'costos:gasto_periodo_edit' gasto.pk %}" class="sg-btn-table sg-btn-sm" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                  {% endif %}
+                  {% if puede_cancelar and gasto.es_activo %}
+                    <form method="post" action="{% url 'costos:gasto_periodo_cancelar' gasto.pk %}" class="costos-inline-form" onsubmit="return confirm('¿Cancelar este gasto?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="motivo_cancelacion" value="Cancelado desde listado">
+                      <button class="sg-btn-table sg-btn-danger sg-btn-sm" type="submit" title="Cancelar">
+                        <i class="bi bi-ban"></i>
+                      </button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="sg-empty-state">No hay gastos del periodo con los filtros seleccionados.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-  <div class="sg-table-card">
-    <div class="table-responsive">
-      <table class="table sg-table align-middle mb-0">
-        <thead><tr><th>Fecha</th><th>Periodo</th><th>Tipo</th><th>Referencia</th><th>Almacén</th><th>Estado</th><th class="text-end">Importe</th><th class="text-end">Acciones</th></tr></thead>
-        <tbody>
-          {% for gasto in gastos %}
-          <tr>
-            <td>{{ gasto.fecha|date:"Y-m-d" }}</td>
-            <td>{{ gasto.periodo.nombre }}</td>
-            <td>{{ gasto.get_tipo_gasto_display }}</td>
-            <td>{{ gasto.referencia|default:"—" }}</td>
-            <td>{{ gasto.almacen|default:"—" }}</td>
-            <td><span class="badge bg-secondary">{{ gasto.get_estado_display }}</span></td>
-            <td class="text-end">${{ gasto.importe|floatformat:2|intcomma }}</td>
-            <td class="text-end">
-              {% if puede_editar and gasto.puede_editarse %}<a href="{% url 'costos:gasto_periodo_edit' gasto.pk %}" class="sg-btn-table sg-btn-sm">Editar</a>{% endif %}
-              {% if puede_cancelar and gasto.es_activo %}
-              <form method="post" action="{% url 'costos:gasto_periodo_cancelar' gasto.pk %}" class="d-inline" onsubmit="return confirm('¿Cancelar este gasto?');">{% csrf_token %}<input type="hidden" name="motivo_cancelacion" value="Cancelado desde listado"><button class="sg-btn-table sg-btn-sm" type="submit">Cancelar</button></form>
+      <div class="sg-mobile-list d-md-none">
+        {% for gasto in gastos %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">{{ gasto.fecha|date:"Y-m-d" }}</span>
+                <strong class="sg-mobile-card-title">{{ gasto.get_tipo_gasto_display }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ gasto.periodo.nombre }}</span>
+              </div>
+              <span class="badge text-bg-secondary">{{ gasto.get_estado_display }}</span>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Importe</span><span class="sg-mobile-card-value fw-semibold">${{ gasto.importe|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Referencia</span><span class="sg-mobile-card-value">{{ gasto.referencia|default:"—" }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Almacén</span><span class="sg-mobile-card-value">{{ gasto.almacen|default:"—" }}</span></div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              {% if puede_editar and gasto.puede_editarse %}
+                <a href="{% url 'costos:gasto_periodo_edit' gasto.pk %}" class="sg-btn-outline sg-btn-sm">
+                  <i class="bi bi-pencil me-1"></i>
+                  Editar
+                </a>
               {% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="8" class="text-center text-muted py-4">No hay gastos del periodo.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+              {% if puede_cancelar and gasto.es_activo %}
+                <form method="post" action="{% url 'costos:gasto_periodo_cancelar' gasto.pk %}" onsubmit="return confirm('¿Cancelar este gasto?');">
+                  {% csrf_token %}
+                  <input type="hidden" name="motivo_cancelacion" value="Cancelado desde listado">
+                  <button class="sg-btn-danger sg-btn-sm" type="submit">
+                    <i class="bi bi-ban me-1"></i>
+                    Cancelar
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay gastos del periodo con los filtros seleccionados.</div>
+        {% endfor %}
+      </div>
     </div>
-  </div>
+  </section>
 </div>
 {% endblock %}

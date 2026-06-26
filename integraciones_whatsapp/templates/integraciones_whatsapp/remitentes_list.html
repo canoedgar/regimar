@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Remitentes WhatsApp{% endblock %}
+{% block page_title %}Remitentes WhatsApp{% endblock %}
+{% block active_integraciones_whatsapp %}active{% endblock %}
+{% block whatsapp_show %}show{% endblock %}
+{% block active_whatsapp_remitentes %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/integraciones_whatsapp.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sg-list-page whatsapp-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card whatsapp-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-person-check me-2"></i>Remitentes autorizados WhatsApp</h5>
+        <p class="sg-page-header-subtitle">Catálogo de números permitidos para enviar instrucciones al ERP por WhatsApp.</p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'integraciones_whatsapp:instrucciones_list' %}" class="sg-btn-outline sg-btn-md"><i class="bi bi-inbox me-1"></i>Instrucciones</a>
+        <a href="{% url 'integraciones_whatsapp:remitente_create' %}" class="sg-btn-primary sg-btn-md"><i class="bi bi-plus-circle me-1"></i>Nuevo remitente</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-12 col-lg-7">
+          <label class="sg-form-label small" for="{{ form.q.id_for_label }}">{{ form.q.label }}</label>
+          {{ form.q }}
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+          <label class="sg-form-label small" for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+          {{ form.estado }}
+        </div>
+        <div class="col-12 col-md-6 col-lg-2 whatsapp-filter-actions">
+          <button class="sg-btn-primary sg-btn-md" type="submit"><i class="bi bi-search me-1"></i>Filtrar</button>
+          <a href="{% url 'integraciones_whatsapp:remitentes_list' %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-x-lg me-1"></i>Limpiar</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr><th>Nombre</th><th>Teléfono</th><th>Usuario sistema</th><th>Estado</th><th>Permisos</th><th class="text-end">Acción</th></tr>
+          </thead>
+          <tbody>
+            {% for remitente in remitentes %}
+              <tr>
+                <td class="fw-semibold">{{ remitente.nombre }}</td>
+                <td>{{ remitente.telefono }}</td>
+                <td>{{ remitente.usuario_sistema|default:"—" }}</td>
+                <td>{% if remitente.activo %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}</td>
+                <td>
+                  <div class="d-flex flex-wrap gap-1">
+                    {% if remitente.puede_consultar_stock %}<span class="badge text-bg-info">Stock</span>{% endif %}
+                    {% if remitente.puede_cambiar_precios %}<span class="badge text-bg-warning">Precios</span>{% endif %}
+                    {% if remitente.puede_crear_clientes %}<span class="badge text-bg-primary">Clientes</span>{% endif %}
+                    {% if remitente.puede_registrar_inventario %}<span class="badge text-bg-success">Inventario</span>{% endif %}
+                    {% if not remitente.puede_consultar_stock and not remitente.puede_cambiar_precios and not remitente.puede_crear_clientes and not remitente.puede_registrar_inventario %}<span class="text-muted">Sin permisos operativos</span>{% endif %}
+                  </div>
+                </td>
+                <td class="text-end sg-table-actions">
+                  <a class="sg-btn-table sg-btn-sm" href="{% url 'integraciones_whatsapp:remitente_update' remitente.pk %}" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="sg-empty-state">No hay remitentes autorizados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for remitente in remitentes %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">{{ remitente.telefono }}</span>
+                <strong class="sg-mobile-card-title">{{ remitente.nombre }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ remitente.usuario_sistema|default:"Sin usuario asociado" }}</span>
+              </div>
+              {% if remitente.activo %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-secondary">Inactivo</span>{% endif %}
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Permisos</span><span class="sg-mobile-card-value">{% if remitente.puede_consultar_stock %}Stock {% endif %}{% if remitente.puede_cambiar_precios %}Precios {% endif %}{% if remitente.puede_crear_clientes %}Clientes {% endif %}{% if remitente.puede_registrar_inventario %}Inventario{% endif %}{% if not remitente.puede_consultar_stock and not remitente.puede_cambiar_precios and not remitente.puede_crear_clientes and not remitente.puede_registrar_inventario %}Sin permisos operativos{% endif %}</span></div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              <a class="sg-btn-outline sg-btn-sm" href="{% url 'integraciones_whatsapp:remitente_update' remitente.pk %}"><i class="bi bi-pencil me-1"></i>Editar</a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay remitentes autorizados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+    <nav aria-label="Paginación remitentes WhatsApp">
+      <ul class="pagination justify-content-end mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?{% if querystring_sin_pagina %}{{ querystring_sin_pagina }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?{% if querystring_sin_pagina %}{{ querystring_sin_pagina }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

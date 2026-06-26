@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from catalogos.models import Almacen, Proveedor
 from inventarios.models import EntradaInventario
+from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 
 from .models import CategoriaGasto, CierreCosteoPeriodo, Gasto, GastoPeriodo, PeriodoCosteo, normalizar_nombre
 
@@ -83,9 +84,9 @@ class GastoForm(forms.ModelForm):
             "observaciones",
         ]
         widgets = {
-            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
-            "periodo_inicio": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
-            "periodo_fin": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha": UniversalDateInput(),
+            "periodo_inicio": UniversalDateInput(),
+            "periodo_fin": UniversalDateInput(),
             "categoria": forms.Select(attrs={"class": "form-select", "data-metodo-target": "categoria"}),
             "metodo_distribucion": forms.Select(attrs={"class": "form-select"}),
             "importe": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01", "placeholder": "0.00"}),
@@ -115,9 +116,9 @@ class GastoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         hoy = timezone.localdate()
 
-        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
-        self.fields["periodo_inicio"].input_formats = ["%Y-%m-%d"]
-        self.fields["periodo_fin"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
+        self.fields["periodo_inicio"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
+        self.fields["periodo_fin"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
 
         if not self.instance.pk:
             self.fields["fecha"].initial = hoy
@@ -190,13 +191,13 @@ class GastoForm(forms.ModelForm):
 class CierreCosteoPeriodoForm(forms.Form):
     periodo_inicio = forms.DateField(
         label="Periodo inicio",
-        input_formats=["%Y-%m-%d"],
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS,
+        widget=UniversalDateInput(),
     )
     periodo_fin = forms.DateField(
         label="Periodo fin",
-        input_formats=["%Y-%m-%d"],
-        widget=forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+        input_formats=UNIVERSAL_DATE_INPUT_FORMATS,
+        widget=UniversalDateInput(),
     )
     notas = forms.CharField(
         label="Notas",
@@ -239,9 +240,9 @@ class PeriodoCosteoForm(forms.ModelForm):
         fields = ["nombre", "fecha_inicio", "fecha_fin", "fecha_corte_almacen", "notas"]
         widgets = {
             "nombre": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej. Junio 2026"}),
-            "fecha_inicio": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
-            "fecha_fin": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
-            "fecha_corte_almacen": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha_inicio": UniversalDateInput(),
+            "fecha_fin": UniversalDateInput(),
+            "fecha_corte_almacen": UniversalDateInput(),
             "notas": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Notas internas del periodo."}),
         }
 
@@ -249,7 +250,7 @@ class PeriodoCosteoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         hoy = timezone.localdate()
         for field_name in ["fecha_inicio", "fecha_fin", "fecha_corte_almacen"]:
-            self.fields[field_name].input_formats = ["%Y-%m-%d"]
+            self.fields[field_name].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
         if not self.instance.pk and not self.is_bound:
             self.fields["fecha_inicio"].initial = hoy.replace(day=1)
             self.fields["fecha_fin"].initial = hoy
@@ -283,7 +284,7 @@ class GastoPeriodoForm(forms.ModelForm):
         widgets = {
             "periodo": forms.Select(attrs={"class": "form-select"}),
             "tipo_gasto": forms.Select(attrs={"class": "form-select"}),
-            "fecha": forms.DateInput(attrs={"class": "form-control", "type": "date"}, format="%Y-%m-%d"),
+            "fecha": UniversalDateInput(),
             "importe": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0.01", "placeholder": "0.00"}),
             "almacen": forms.Select(attrs={"class": "form-select"}),
             "proveedor": forms.Select(attrs={"class": "form-select"}),
@@ -295,7 +296,7 @@ class GastoPeriodoForm(forms.ModelForm):
         periodo = kwargs.pop("periodo", None)
         super().__init__(*args, **kwargs)
         hoy = timezone.localdate()
-        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
         self.fields["fecha"].initial = hoy
 
         periodos = PeriodoCosteo.objects.exclude(estado__in=[PeriodoCosteo.ESTADO_CERRADO, PeriodoCosteo.ESTADO_CANCELADO]).order_by("-fecha_inicio")

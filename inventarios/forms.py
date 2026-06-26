@@ -35,7 +35,7 @@ class EntradaManualForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
 
         self.fields["proveedor"].queryset = Proveedor.objects.filter(activo=True).order_by("nombre")
         self.fields["proveedor"].empty_label = "-- Selecciona --"

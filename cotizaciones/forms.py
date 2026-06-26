@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django import forms
 
-from accounts.widgets import UniversalDateInput
+from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 from django.utils import timezone
 
 from catalogos.models import Cliente, ParametroSistema
@@ -26,8 +26,8 @@ class CotizacionPrecioForm(forms.ModelForm):
         self.fields["cliente"].required = True
         self.fields["fecha"].required = True
         self.fields["fecha_vigencia"].required = True
-        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
-        self.fields["fecha_vigencia"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
+        self.fields["fecha_vigencia"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
 
         if not self.instance.pk:
             hoy = timezone.localdate()

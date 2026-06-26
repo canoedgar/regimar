@@ -1,11 +1,15 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
 {% block title %}Nuevo cierre de costeo | Costos{% endblock %}
 {% block page_title %}Nuevo cierre de costeo{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_cierres_costeo %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
 
 {% block content %}
 <div class="sg-form-page">

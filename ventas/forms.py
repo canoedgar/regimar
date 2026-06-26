@@ -1,6 +1,6 @@
 from django import forms
 
-from accounts.widgets import UniversalDateInput
+from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 from catalogos.models import Cliente, Producto
 from inventarios.models import SalidaInventario, SalidaInventarioDetalle
 
@@ -54,7 +54,7 @@ class SalidaVentaForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
         self.fields["cliente_ref"].queryset = Cliente.objects.filter(activo=True).order_by("nombre_fiscal", "nombre_comercial")
         self.fields["cliente_ref"].required = True
         self.fields["cliente_ref"].empty_label = "-- Selecciona un cliente --"
@@ -131,7 +131,7 @@ class SalidaVentaEdicionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["fecha"].input_formats = ["%Y-%m-%d"]
+        self.fields["fecha"].input_formats = UNIVERSAL_DATE_INPUT_FORMATS
         self.fields["cliente_ref"].queryset = Cliente.objects.filter(activo=True).order_by("nombre_fiscal", "nombre_comercial")
         self.fields["cliente_ref"].required = True
         self.fields["cliente_ref"].empty_label = "-- Selecciona un cliente --"

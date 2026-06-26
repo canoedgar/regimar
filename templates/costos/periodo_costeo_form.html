@@ -1,34 +1,92 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}{% if modo_edicion %}Editar periodo{% else %}Nuevo periodo{% endif %}{% endblock %}
+{% block title %}{% if modo_edicion %}Editar periodo{% else %}Nuevo periodo{% endif %} | Costos{% endblock %}
+{% block page_title %}{% if modo_edicion %}Editar periodo{% else %}Nuevo periodo{% endif %}{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_periodos_costeo %}active{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3">
-    <div>
-      <h1 class="h3 mb-1">{% if modo_edicion %}Editar periodo{% else %}Nuevo periodo de costeo{% endif %}</h1>
-      <p class="text-muted mb-0">Define el rango del periodo y la fecha de corte para almacenaje.</p>
-    </div>
-    <a href="{% if modo_edicion %}{% url 'costos:periodo_costeo_detail' periodo.pk %}{% else %}{% url 'costos:periodos_costeo_list' %}{% endif %}" class="sg-btn-secondary sg-btn-md">Regresar</a>
-  </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
 
-  <form method="post" class="sg-form-card">
-    {% csrf_token %}
-    {% if form.non_field_errors %}<div class="alert alert-warning">{{ form.non_field_errors }}</div>{% endif %}
-    <div class="row g-3">
-      <div class="col-md-6">{{ form.nombre.label_tag }}{{ form.nombre }}{{ form.nombre.errors }}</div>
-      <div class="col-md-2">{{ form.fecha_inicio.label_tag }}{{ form.fecha_inicio }}{{ form.fecha_inicio.errors }}</div>
-      <div class="col-md-2">{{ form.fecha_fin.label_tag }}{{ form.fecha_fin }}{{ form.fecha_fin.errors }}</div>
-      <div class="col-md-2">{{ form.fecha_corte_almacen.label_tag }}{{ form.fecha_corte_almacen }}{{ form.fecha_corte_almacen.errors }}</div>
-      <div class="col-12">{{ form.notas.label_tag }}{{ form.notas }}{{ form.notas.errors }}</div>
+{% block content %}
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-calendar-plus me-2"></i>
+          {% if modo_edicion %}Editar periodo{% else %}Nuevo periodo de costeo{% endif %}
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Define el rango del periodo y la fecha de corte que se usará para calcular almacenaje.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% if modo_edicion %}{% url 'costos:periodo_costeo_detail' periodo.pk %}{% else %}{% url 'costos:periodos_costeo_list' %}{% endif %}" class="sg-btn-secondary sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Regresar
+        </a>
+      </div>
     </div>
-    <div class="d-flex justify-content-end gap-2 mt-4">
-      <a href="{% url 'costos:periodos_costeo_list' %}" class="sg-btn-secondary sg-btn-form sg-btn-md">Cancelar</a>
-      <button type="submit" class="sg-btn-primary sg-btn-form sg-btn-md">Guardar periodo</button>
-    </div>
-  </form>
+  </section>
+
+  <div class="costos-form-shell w-100">
+    <form method="post" class="card border-0 shadow-sm sg-form-card">
+      {% csrf_token %}
+      <div class="card-body">
+        {% if form.non_field_errors %}
+          <div class="alert alert-warning">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="sg-form-section">
+          <h6 class="sg-form-section-title mb-3">Datos del periodo</h6>
+          <div class="row g-3">
+            <div class="col-12 col-lg-6">
+              <label class="sg-form-label" for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
+              {{ form.nombre }}
+              {% if form.nombre.errors %}<div class="sg-form-error">{{ form.nombre.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-4 col-lg-2">
+              <label class="sg-form-label" for="{{ form.fecha_inicio.id_for_label }}">{{ form.fecha_inicio.label }}</label>
+              {{ form.fecha_inicio }}
+              <div class="sg-form-help">Formato YYYY-MM-DD.</div>
+              {% if form.fecha_inicio.errors %}<div class="sg-form-error">{{ form.fecha_inicio.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-4 col-lg-2">
+              <label class="sg-form-label" for="{{ form.fecha_fin.id_for_label }}">{{ form.fecha_fin.label }}</label>
+              {{ form.fecha_fin }}
+              <div class="sg-form-help">Formato YYYY-MM-DD.</div>
+              {% if form.fecha_fin.errors %}<div class="sg-form-error">{{ form.fecha_fin.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12 col-md-4 col-lg-2">
+              <label class="sg-form-label" for="{{ form.fecha_corte_almacen.id_for_label }}">{{ form.fecha_corte_almacen.label }}</label>
+              {{ form.fecha_corte_almacen }}
+              <div class="sg-form-help">Formato YYYY-MM-DD.</div>
+              {% if form.fecha_corte_almacen.errors %}<div class="sg-form-error">{{ form.fecha_corte_almacen.errors }}</div>{% endif %}
+            </div>
+            <div class="col-12">
+              <label class="sg-form-label" for="{{ form.notas.id_for_label }}">{{ form.notas.label }}</label>
+              {{ form.notas }}
+              {% if form.notas.errors %}<div class="sg-form-error">{{ form.notas.errors }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="sg-form-actions sg-form-actions-between">
+          <a href="{% if modo_edicion %}{% url 'costos:periodo_costeo_detail' periodo.pk %}{% else %}{% url 'costos:periodos_costeo_list' %}{% endif %}" class="sg-btn-secondary sg-btn-form sg-btn-md">
+            <i class="bi bi-x-lg me-1"></i>
+            Cancelar
+          </a>
+          <button type="submit" class="sg-btn-primary sg-btn-form sg-btn-md">
+            <i class="bi bi-check2-circle me-1"></i>
+            Guardar periodo
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

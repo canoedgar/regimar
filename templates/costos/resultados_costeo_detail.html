@@ -1,21 +1,75 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
-{% block title %}Resultado {{ periodo.nombre }}{% endblock %}
+{% block title %}Resultados {{ periodo.nombre }} | Costos{% endblock %}
+{% block page_title %}Resultados de costeo{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_resultados_costeo %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3"><div><h1 class="h3 mb-1">Resultado por producto · {{ periodo.nombre }}</h1><p class="text-muted mb-0">Margen real considerando compra, gastos operativos y almacenaje.</p></div><a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-md">Regresar al periodo</a></div>
-  <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Venta total</span><strong>${{ resumen.total_ventas|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Costo real</span><strong>${{ resumen.total_costo_real|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Utilidad real</span><strong>${{ resumen.utilidad_real|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Margen real</span><strong>{{ resumen.margen_real|floatformat:2 }}%</strong></div></div>
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-graph-up-arrow me-2"></i>Resultados · {{ periodo.nombre }}</h5>
+        <p class="sg-page-header-subtitle">Venta, costo real, margen y costo sugerido para el siguiente periodo.</p>
+      </div>
+      <div class="sg-page-actions"><a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-arrow-left me-1"></i>Regresar al periodo</a></div>
+    </div>
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Venta total</span><strong class="costos-metric-value">${{ resumen.total_ventas|default:0|floatformat:2|intcomma }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Costo real</span><strong class="costos-metric-value">${{ resumen.total_costo_real|default:0|floatformat:2|intcomma }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Utilidad real</span><strong class="costos-metric-value">${{ resumen.utilidad_real|default:0|floatformat:2|intcomma }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Margen real</span><strong class="costos-metric-value">{{ resumen.margen_real|default:0|floatformat:2 }}%</strong></div></div></div>
   </div>
-  <div class="sg-table-card"><div class="table-responsive"><table class="table sg-table align-middle mb-0"><thead><tr><th>Producto</th><th class="text-end">Kg vendidos</th><th class="text-end">Kg almacenados</th><th class="text-end">Venta</th><th class="text-end">Costo compra</th><th class="text-end">Gastos</th><th class="text-end">Almacenaje</th><th class="text-end">Costo real</th><th class="text-end">Utilidad</th><th class="text-end">Margen</th><th class="text-end">Costo sugerido</th></tr></thead><tbody>{% for item in resultados %}<tr><td>{{ item.producto.nombre }}</td><td class="text-end">{{ item.kg_vendidos|floatformat:2|intcomma }}</td><td class="text-end">{{ item.kg_almacenados|floatformat:2|intcomma }}</td><td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.costo_compra_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.gastos_operativos|floatformat:2|intcomma }}</td><td class="text-end">${{ item.costo_almacenaje|floatformat:2|intcomma }}</td><td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.utilidad_real|floatformat:2|intcomma }}</td><td class="text-end">{{ item.margen_real|floatformat:2 }}%</td><td class="text-end">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</td></tr>{% empty %}<tr><td colspan="11" class="text-center text-muted py-4">Genera el costeo para ver resultados.</td></tr>{% endfor %}</tbody></table></div></div>
-  <div class="alert alert-info mt-3 mb-0">El costo sugerido se guarda como referencia del periodo; no modifica automáticamente el costo promedio ni el último costo de compra del producto.</div>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light"><tr><th>Producto</th><th class="text-end">Kg vendidos</th><th class="text-end">Venta</th><th class="text-end">Costo real</th><th class="text-end">Utilidad</th><th class="text-end">Margen</th><th class="text-end">Costo sugerido</th><th class="text-end">Aprobado</th></tr></thead>
+          <tbody>
+            {% for item in resultados %}
+              <tr>
+                <td class="fw-semibold">{{ item.producto.nombre }}</td>
+                <td class="text-end">{{ item.kg_vendidos|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td>
+                <td class="text-end fw-semibold">${{ item.utilidad_real|floatformat:2|intcomma }}</td>
+                <td class="text-end">{{ item.margen_real|floatformat:2 }}%</td>
+                <td class="text-end">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</td>
+                <td class="text-end">{% if item.aprobado %}<span class="badge text-bg-success">Sí</span>{% else %}<span class="badge text-bg-secondary">No</span>{% endif %}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="8" class="sg-empty-state">Genera el costeo para ver resultados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="sg-mobile-list d-md-none">
+        {% for item in resultados %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header"><div class="min-w-0"><span class="sg-mobile-card-label">Producto</span><strong class="sg-mobile-card-title">{{ item.producto.nombre }}</strong></div><span class="badge text-bg-secondary">{{ item.margen_real|floatformat:2 }}%</span></div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Kg vendidos</span><span class="sg-mobile-card-value">{{ item.kg_vendidos|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Venta</span><span class="sg-mobile-card-value">${{ item.venta_total|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Costo real</span><span class="sg-mobile-card-value">${{ item.costo_real_total|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Utilidad</span><span class="sg-mobile-card-value">${{ item.utilidad_real|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Costo sugerido</span><span class="sg-mobile-card-value">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</span></div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">Genera el costeo para ver resultados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

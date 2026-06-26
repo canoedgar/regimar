@@ -1,71 +1,218 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
-{% block title %}{{ periodo.nombre }}{% endblock %}
+{% block title %}{{ periodo.nombre }} | Costos{% endblock %}
+{% block page_title %}Detalle de periodo{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_periodos_costeo %}active{% endblock %}
 
-{% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3">
-    <div>
-      <h1 class="h3 mb-1">{{ periodo.nombre }}</h1>
-      <p class="text-muted mb-0">{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }} · Corte almacén {{ periodo.fecha_corte_almacen|date:"Y-m-d" }}</p>
-    </div>
-    <div class="d-flex flex-wrap gap-2">
-      <a href="{% url 'costos:periodos_costeo_list' %}" class="sg-btn-secondary sg-btn-md">Regresar</a>
-      {% if puede_editar and periodo.puede_editarse %}<a href="{% url 'costos:periodo_costeo_edit' periodo.pk %}" class="sg-btn-outline sg-btn-md">Editar</a>{% endif %}
-      {% if puede_generar and periodo.puede_generarse %}
-      <form method="post" action="{% url 'costos:periodo_costeo_generar' periodo.pk %}">{% csrf_token %}<button class="sg-btn-primary sg-btn-md" type="submit">Generar costeo</button></form>
-      {% endif %}
-      {% if puede_cerrar and periodo.puede_cerrarse %}
-      <form method="post" action="{% url 'costos:periodo_costeo_cerrar' periodo.pk %}" onsubmit="return confirm('¿Cerrar periodo y aprobar costos sugeridos?');">{% csrf_token %}<button class="sg-btn-success sg-btn-md" type="submit">Cerrar y aprobar</button></form>
-      {% endif %}
-    </div>
-  </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
 
-  <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Venta total</span><strong class="fs-5">${{ resumen.total_ventas|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Costo real</span><strong class="fs-5">${{ resumen.total_costo_real|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Utilidad real</span><strong class="fs-5">${{ resumen.utilidad_real|floatformat:2|intcomma }}</strong></div></div>
-    <div class="col-md-3"><div class="card p-3"><span class="text-muted">Margen real</span><strong class="fs-5">{{ resumen.margen_real|floatformat:2 }}%</strong></div></div>
+{% block content %}
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-calendar-check me-2"></i>
+          {{ periodo.nombre }}
+        </h5>
+        <p class="sg-page-header-subtitle">
+          {{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }} · Corte almacén {{ periodo.fecha_corte_almacen|date:"Y-m-d" }}
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'costos:periodos_costeo_list' %}" class="sg-btn-secondary sg-btn-md">
+          <i class="bi bi-arrow-left me-1"></i>
+          Regresar
+        </a>
+        {% if puede_editar and periodo.puede_editarse %}
+          <a href="{% url 'costos:periodo_costeo_edit' periodo.pk %}" class="sg-btn-outline sg-btn-md">
+            <i class="bi bi-pencil me-1"></i>
+            Editar
+          </a>
+        {% endif %}
+        {% if puede_generar and periodo.puede_generarse %}
+          <form method="post" action="{% url 'costos:periodo_costeo_generar' periodo.pk %}" class="costos-inline-form">
+            {% csrf_token %}
+            <button class="sg-btn-primary sg-btn-md" type="submit">
+              <i class="bi bi-calculator me-1"></i>
+              Generar costeo
+            </button>
+          </form>
+        {% endif %}
+        {% if puede_cerrar and periodo.puede_cerrarse %}
+          <form method="post" action="{% url 'costos:periodo_costeo_cerrar' periodo.pk %}" class="costos-inline-form" onsubmit="return confirm('¿Cerrar periodo y aprobar costos sugeridos?');">
+            {% csrf_token %}
+            <button class="sg-btn-success sg-btn-md" type="submit">
+              <i class="bi bi-check2-circle me-1"></i>
+              Cerrar y aprobar
+            </button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Venta total</span><strong class="costos-metric-value">${{ resumen.total_ventas|default:0|floatformat:2|intcomma }}</strong></div></div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Costo real</span><strong class="costos-metric-value">${{ resumen.total_costo_real|default:0|floatformat:2|intcomma }}</strong></div></div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Utilidad real</span><strong class="costos-metric-value">${{ resumen.utilidad_real|default:0|floatformat:2|intcomma }}</strong></div></div>
+    </div>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Margen real</span><strong class="costos-metric-value">{{ resumen.margen_real|default:0|floatformat:2 }}%</strong></div></div>
+    </div>
   </div>
 
   <div class="row g-3">
-    <div class="col-lg-6">
-      <div class="sg-table-card h-100">
-        <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><h2 class="h5 mb-0">Gastos del periodo</h2><a href="{% url 'costos:gasto_periodo_create' %}?periodo={{ periodo.pk }}" class="sg-btn-primary sg-btn-sm">Agregar</a></div>
-        <div class="table-responsive"><table class="table sg-table mb-0"><tbody>{% for gasto in gastos %}<tr><td>{{ gasto.fecha|date:"Y-m-d" }}</td><td>{{ gasto.get_tipo_gasto_display }}</td><td class="text-end">${{ gasto.importe|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td class="text-muted text-center py-3">Sin gastos capturados.</td></tr>{% endfor %}</tbody></table></div>
-      </div>
+    <div class="col-12 col-xl-6">
+      <section class="card border-0 shadow-sm sg-table-card h-100">
+        <div class="costos-section-heading">
+          <div>
+            <h2 class="h6 mb-1"><i class="bi bi-cash-coin me-1"></i>Gastos del periodo</h2>
+            <p class="costos-card-help mb-0">Últimos gastos capturados para el periodo.</p>
+          </div>
+          <a href="{% url 'costos:gasto_periodo_create' %}?periodo={{ periodo.pk }}" class="sg-btn-primary sg-btn-sm">
+            <i class="bi bi-plus-circle me-1"></i>
+            Agregar
+          </a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle sg-table mb-0">
+            <thead class="table-light">
+              <tr><th>Fecha</th><th>Tipo</th><th class="text-end">Importe</th></tr>
+            </thead>
+            <tbody>
+              {% for gasto in gastos %}
+                <tr><td>{{ gasto.fecha|date:"Y-m-d" }}</td><td>{{ gasto.get_tipo_gasto_display }}</td><td class="text-end fw-semibold">${{ gasto.importe|floatformat:2|intcomma }}</td></tr>
+              {% empty %}
+                <tr><td colspan="3" class="sg-empty-state">Sin gastos capturados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-    <div class="col-lg-6">
-      <div class="sg-table-card h-100">
-        <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><h2 class="h5 mb-0">Almacenaje calculado</h2><a href="{% url 'costos:almacenaje_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-sm">Ver todo</a></div>
-        <div class="table-responsive"><table class="table sg-table mb-0"><tbody>{% for item in almacenajes %}<tr><td>{{ item.producto.nombre }}</td><td>{{ item.kg_al_corte|floatformat:2|intcomma }} kg</td><td class="text-end">${{ item.importe|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td class="text-muted text-center py-3">Aún no se ha calculado almacenaje.</td></tr>{% endfor %}</tbody></table></div>
-      </div>
+
+    <div class="col-12 col-xl-6">
+      <section class="card border-0 shadow-sm sg-table-card h-100">
+        <div class="costos-section-heading">
+          <div>
+            <h2 class="h6 mb-1"><i class="bi bi-boxes me-1"></i>Almacenaje calculado</h2>
+            <p class="costos-card-help mb-0">Vista previa del costo de almacén por producto.</p>
+          </div>
+          <a href="{% url 'costos:almacenaje_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-sm">
+            <i class="bi bi-eye me-1"></i>
+            Ver todo
+          </a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle sg-table mb-0">
+            <thead class="table-light">
+              <tr><th>Producto</th><th class="text-end">Kg</th><th class="text-end">Importe</th></tr>
+            </thead>
+            <tbody>
+              {% for item in almacenajes %}
+                <tr><td class="fw-semibold">{{ item.producto.nombre }}</td><td class="text-end">{{ item.kg_al_corte|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ item.importe|floatformat:2|intcomma }}</td></tr>
+              {% empty %}
+                <tr><td colspan="3" class="sg-empty-state">Aún no se ha calculado almacenaje.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </div>
 
-  <div class="sg-table-card mt-3">
-    <div class="d-flex justify-content-between align-items-center p-3 border-bottom"><h2 class="h5 mb-0">Resultado por producto</h2><a href="{% url 'costos:resultados_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-sm">Ver resultado completo</a></div>
-    <div class="table-responsive">
-      <table class="table sg-table align-middle mb-0">
-        <thead><tr><th>Producto</th><th class="text-end">Venta</th><th class="text-end">Costo real</th><th class="text-end">Utilidad</th><th class="text-end">Margen</th><th class="text-end">Costo sugerido</th></tr></thead>
-        <tbody>{% for item in resultados %}<tr><td>{{ item.producto.nombre }}</td><td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td><td class="text-end">${{ item.utilidad_real|floatformat:2|intcomma }}</td><td class="text-end">{{ item.margen_real|floatformat:2 }}%</td><td class="text-end">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</td></tr>{% empty %}<tr><td colspan="6" class="text-muted text-center py-3">Genera el costeo para ver resultados.</td></tr>{% endfor %}</tbody>
-      </table>
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="costos-section-heading">
+      <div>
+        <h2 class="h6 mb-1"><i class="bi bi-graph-up-arrow me-1"></i>Resultado por producto</h2>
+        <p class="costos-card-help mb-0">Costo real, utilidad y costo sugerido para el siguiente periodo.</p>
+      </div>
+      <a href="{% url 'costos:resultados_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-sm">
+        <i class="bi bi-eye me-1"></i>
+        Ver resultado completo
+      </a>
     </div>
-  </div>
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Producto</th>
+              <th class="text-end">Venta</th>
+              <th class="text-end">Costo real</th>
+              <th class="text-end">Utilidad</th>
+              <th class="text-end">Margen</th>
+              <th class="text-end">Costo sugerido</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in resultados %}
+              <tr>
+                <td class="fw-semibold">{{ item.producto.nombre }}</td>
+                <td class="text-end">${{ item.venta_total|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.costo_real_total|floatformat:2|intcomma }}</td>
+                <td class="text-end fw-semibold">${{ item.utilidad_real|floatformat:2|intcomma }}</td>
+                <td class="text-end">{{ item.margen_real|floatformat:2 }}%</td>
+                <td class="text-end">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="sg-empty-state">Genera el costeo para ver resultados.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for item in resultados %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0"><span class="sg-mobile-card-label">Producto</span><strong class="sg-mobile-card-title">{{ item.producto.nombre }}</strong></div>
+              <span class="badge text-bg-secondary">{{ item.margen_real|floatformat:2 }}%</span>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Venta</span><span class="sg-mobile-card-value">${{ item.venta_total|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Costo real</span><span class="sg-mobile-card-value">${{ item.costo_real_total|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Utilidad</span><span class="sg-mobile-card-value">${{ item.utilidad_real|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Costo sugerido</span><span class="sg-mobile-card-value">${{ item.costo_sugerido_siguiente|floatformat:4|intcomma }}</span></div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">Genera el costeo para ver resultados.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 
   {% if puede_cancelar and periodo.puede_cancelarse %}
-  <div class="card mt-3 p-3">
-    <h2 class="h6">Cancelar periodo</h2>
-    <form method="post" action="{% url 'costos:periodo_costeo_cancelar' periodo.pk %}" class="row g-2" onsubmit="return confirm('¿Cancelar este periodo?');">
-      {% csrf_token %}
-      <div class="col-md-10"><input name="motivo_cancelacion" class="form-control" placeholder="Motivo de cancelación" required></div>
-      <div class="col-md-2"><button class="sg-btn-danger sg-btn-md w-100" type="submit">Cancelar</button></div>
-    </form>
-  </div>
+    <section class="card border-0 shadow-sm sg-form-card costos-cancel-card">
+      <div class="card-body">
+        <h6 class="sg-form-section-title mb-3"><i class="bi bi-exclamation-triangle me-1"></i>Cancelar periodo</h6>
+        <form method="post" action="{% url 'costos:periodo_costeo_cancelar' periodo.pk %}" class="row g-3 align-items-end" onsubmit="return confirm('¿Cancelar este periodo?');">
+          {% csrf_token %}
+          <div class="col-12 col-lg-10">
+            <label class="sg-form-label" for="motivo_cancelacion">Motivo de cancelación</label>
+            <input id="motivo_cancelacion" name="motivo_cancelacion" class="form-control sg-form-control" placeholder="Motivo de cancelación" required>
+          </div>
+          <div class="col-12 col-lg-2">
+            <button class="sg-btn-danger sg-btn-md w-100" type="submit">
+              <i class="bi bi-ban me-1"></i>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
   {% endif %}
 </div>
 {% endblock %}

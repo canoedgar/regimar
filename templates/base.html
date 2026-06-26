@@ -82,6 +82,7 @@
       {% has_any_perm request.user "catalogos.view_proveedor" "catalogos.view_cliente" "catalogos.view_clienteproductoprecio" "catalogos.view_categoria" "catalogos.view_producto" "catalogos.view_almacen" "catalogos.view_proyecto" "catalogos.add_producto" "catalogos.add_proveedor" "catalogos.add_cliente" as puede_menu_catalogos %}
       {% has_any_perm request.user "catalogos.view_parametrosistema" as puede_menu_parametros %}
       {% has_any_perm request.user "costos.view_gasto" "costos.add_gasto" "costos.view_cierrecosteoperiodo" "costos.add_cierrecosteoperiodo" "costos.view_categoriagasto" "costos.add_categoriagasto" "costos.view_periodocosteo" "costos.add_periodocosteo" "costos.view_gastoperiodo" "costos.add_gastoperiodo" "costos.view_resultadocostoproducto" as puede_menu_costos %}
+      {% in_any_group request.user "Administrador" as es_grupo_administrador %}
 
       <!-- VENTAS -->
       {% if puede_menu_ventas %}
@@ -263,6 +264,33 @@
               Cierres anteriores
             </a>
             {% endif %}
+          </nav>
+        </div>
+      {% endif %}
+
+      <!-- INTEGRACIONES -->
+      {% if request.user.is_superuser or es_grupo_administrador %}
+        <a class="nav-link d-flex justify-content-between align-items-center {% block active_integraciones_whatsapp %}{% endblock %}"
+          data-bs-toggle="collapse"
+          href="#whatsappSubmenu">
+          <span>
+            <i class="bi bi-whatsapp"></i>
+            <span class="ms-2">Integraciones</span>
+          </span>
+          <i class="bi bi-chevron-down small"></i>
+        </a>
+
+        <div class="collapse {% block whatsapp_show %}{% endblock %}" id="whatsappSubmenu">
+          <nav class="nav flex-column nav-submenu">
+            <span class="nav-subtitle">WhatsApp</span>
+            <a href="{% url 'integraciones_whatsapp:instrucciones_list' %}" class="nav-link {% block active_whatsapp_instrucciones %}{% endblock %}">
+              <i class="bi bi-inbox me-1"></i>
+              Instrucciones
+            </a>
+            <a href="{% url 'integraciones_whatsapp:remitentes_list' %}" class="nav-link {% block active_whatsapp_remitentes %}{% endblock %}">
+              <i class="bi bi-person-check me-1"></i>
+              Remitentes autorizados
+            </a>
           </nav>
         </div>
       {% endif %}

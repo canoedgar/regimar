@@ -1,15 +1,59 @@
 {% extends "base.html" %}
+{% load static %}
 
-{% block title %}Resultados de costeo{% endblock %}
+{% block title %}Resultados de costeo | Costos{% endblock %}
+{% block page_title %}Resultados de costeo{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_resultados_costeo %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3">
-    <div><h1 class="h3 mb-1">Resultado por producto</h1><p class="text-muted mb-0">Consulta margen real y costo sugerido por periodo.</p></div>
-  </div>
-  <div class="sg-table-card"><div class="table-responsive"><table class="table sg-table align-middle mb-0"><thead><tr><th>Periodo</th><th>Rango</th><th>Estado</th><th>Resultados</th><th class="text-end">Acciones</th></tr></thead><tbody>{% for periodo in periodos %}<tr><td>{{ periodo.nombre }}</td><td>{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</td><td>{{ periodo.get_estado_display }}</td><td>{{ periodo.resultados_count }}</td><td class="text-end"><a href="{% url 'costos:resultados_costeo_detail' periodo.pk %}" class="sg-btn-table sg-btn-sm">Ver</a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-muted py-4">No hay periodos.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-graph-up-arrow me-2"></i>Resultados de costeo</h5>
+        <p class="sg-page-header-subtitle">Consulta el resultado final por producto calculado para cada periodo.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light"><tr><th>Periodo</th><th>Rango</th><th>Estado</th><th class="text-end">Resultados</th><th class="text-end">Acciones</th></tr></thead>
+          <tbody>
+            {% for periodo in periodos %}
+              <tr>
+                <td class="fw-semibold">{{ periodo.nombre }}</td>
+                <td>{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</td>
+                <td><span class="badge text-bg-secondary">{{ periodo.get_estado_display }}</span></td>
+                <td class="text-end">{{ periodo.resultados_count }}</td>
+                <td class="text-end sg-table-actions"><a href="{% url 'costos:resultados_costeo_detail' periodo.pk %}" class="sg-btn-table sg-btn-sm" title="Ver resultados"><i class="bi bi-eye"></i></a></td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="sg-empty-state">No hay periodos de costeo.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="sg-mobile-list d-md-none">
+        {% for periodo in periodos %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header"><div class="min-w-0"><span class="sg-mobile-card-label">Periodo</span><strong class="sg-mobile-card-title">{{ periodo.nombre }}</strong><span class="sg-mobile-card-subtitle">{{ periodo.fecha_inicio|date:"Y-m-d" }} a {{ periodo.fecha_fin|date:"Y-m-d" }}</span></div><span class="badge text-bg-secondary">{{ periodo.get_estado_display }}</span></div>
+            <div class="sg-mobile-card-grid"><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Resultados</span><span class="sg-mobile-card-value">{{ periodo.resultados_count }}</span></div></div>
+            <div class="sg-mobile-card-actions"><a href="{% url 'costos:resultados_costeo_detail' periodo.pk %}" class="sg-btn-outline sg-btn-sm"><i class="bi bi-eye me-1"></i>Ver detalle</a></div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay periodos de costeo.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

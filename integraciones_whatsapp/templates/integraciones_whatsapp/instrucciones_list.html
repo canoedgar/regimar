@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Instrucciones WhatsApp{% endblock %}
+{% block page_title %}Instrucciones WhatsApp{% endblock %}
+{% block active_integraciones_whatsapp %}active{% endblock %}
+{% block whatsapp_show %}show{% endblock %}
+{% block active_whatsapp_instrucciones %}active{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/integraciones_whatsapp.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="sg-list-page whatsapp-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card whatsapp-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-whatsapp me-2"></i>
+          Bandeja de instrucciones WhatsApp
+        </h5>
+        <p class="sg-page-header-subtitle">
+          Mensajes recibidos desde Meta WhatsApp Cloud API para revisión interna antes de cualquier procesamiento operativo.
+        </p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'integraciones_whatsapp:remitentes_list' %}" class="sg-btn-outline sg-btn-md">
+          <i class="bi bi-person-check me-1"></i>
+          Remitentes
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card whatsapp-metric-card"><div class="card-body"><span class="whatsapp-metric-label">Total filtrado</span><strong class="whatsapp-metric-value">{{ resumen.total|default:0 }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card whatsapp-metric-card"><div class="card-body"><span class="whatsapp-metric-label">Recibidas</span><strong class="whatsapp-metric-value">{{ resumen.recibidas|default:0 }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card whatsapp-metric-card"><div class="card-body"><span class="whatsapp-metric-label">No autorizadas</span><strong class="whatsapp-metric-value">{{ resumen.no_autorizadas|default:0 }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card whatsapp-metric-card"><div class="card-body"><span class="whatsapp-metric-label">Errores</span><strong class="whatsapp-metric-value">{{ resumen.errores|default:0 }}</strong></div></div></div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-form-card">
+    <div class="card-body">
+      <form method="get" class="whatsapp-filter-grid">
+        <div>
+          <label class="sg-form-label small" for="{{ form.q.id_for_label }}">{{ form.q.label }}</label>
+          {{ form.q }}
+        </div>
+        <div>
+          <label class="sg-form-label small" for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+          {{ form.estado }}
+        </div>
+        <div>
+          <label class="sg-form-label small" for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
+          {{ form.telefono }}
+        </div>
+        <div>
+          <label class="sg-form-label small" for="{{ form.tipo_mensaje.id_for_label }}">{{ form.tipo_mensaje.label }}</label>
+          {{ form.tipo_mensaje }}
+        </div>
+        <div>
+          <label class="sg-form-label small" for="{{ form.fecha_desde.id_for_label }}">{{ form.fecha_desde.label }}</label>
+          {{ form.fecha_desde }}
+        </div>
+        <div>
+          <label class="sg-form-label small" for="{{ form.fecha_hasta.id_for_label }}">{{ form.fecha_hasta.label }}</label>
+          {{ form.fecha_hasta }}
+        </div>
+        <div class="whatsapp-filter-actions">
+          <div class="form-check mb-0">
+            {{ form.con_error }}
+            <label class="form-check-label small" for="{{ form.con_error.id_for_label }}">Errores</label>
+          </div>
+          <button class="sg-btn-primary sg-btn-md" type="submit">
+            <i class="bi bi-search me-1"></i>
+            Filtrar
+          </button>
+          <a href="{% url 'integraciones_whatsapp:instrucciones_list' %}" class="sg-btn-secondary sg-btn-md">
+            <i class="bi bi-x-lg me-1"></i>
+            Limpiar
+          </a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-header d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center">
+      <div>
+        <h5 class="mb-0"><i class="bi bi-inbox me-2"></i>Mensajes recibidos</h5>
+        <small class="text-muted">Se muestran 20 registros por página.</small>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle mb-0 sg-table sg-no-mobile-grid">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha</th>
+              <th>Remitente</th>
+              <th>Teléfono</th>
+              <th>Mensaje</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Intención</th>
+              <th class="text-end">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for instruccion in instrucciones %}
+              <tr>
+                <td class="text-nowrap">{{ instruccion.fecha_recibido|date:"Y-m-d H:i" }}</td>
+                <td>{{ instruccion.nombre_perfil|default:"—" }}</td>
+                <td>{{ instruccion.telefono_origen|default:"—" }}</td>
+                <td><div class="whatsapp-message-preview">{{ instruccion.mensaje_original|default:"—" }}</div></td>
+                <td>{{ instruccion.tipo_mensaje|default:"—" }}</td>
+                <td><span class="badge {{ instruccion.estado_badge_class }}">{{ instruccion.get_estado_display }}</span></td>
+                <td>{{ instruccion.intencion_detectada|default:"—" }}</td>
+                <td class="text-end sg-table-actions">
+                  <a class="sg-btn-table sg-btn-sm" href="{% url 'integraciones_whatsapp:instruccion_detail' instruccion.pk %}" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="8" class="sg-empty-state">No hay instrucciones para mostrar.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for instruccion in instrucciones %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header">
+              <div class="min-w-0">
+                <span class="sg-mobile-card-label">{{ instruccion.fecha_recibido|date:"Y-m-d H:i" }}</span>
+                <strong class="sg-mobile-card-title">{{ instruccion.nombre_perfil|default:instruccion.telefono_origen|default:"Sin remitente" }}</strong>
+                <span class="sg-mobile-card-subtitle">{{ instruccion.mensaje_original|default:"Sin mensaje" }}</span>
+              </div>
+              <span class="badge {{ instruccion.estado_badge_class }}">{{ instruccion.get_estado_display }}</span>
+            </div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Teléfono</span><span class="sg-mobile-card-value">{{ instruccion.telefono_origen|default:"—" }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Tipo</span><span class="sg-mobile-card-value">{{ instruccion.tipo_mensaje|default:"—" }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Intención</span><span class="sg-mobile-card-value">{{ instruccion.intencion_detectada|default:"—" }}</span></div>
+            </div>
+            <div class="sg-mobile-card-actions">
+              <a class="sg-btn-outline sg-btn-sm" href="{% url 'integraciones_whatsapp:instruccion_detail' instruccion.pk %}">
+                <i class="bi bi-eye me-1"></i>
+                Ver detalle
+              </a>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">No hay instrucciones para mostrar.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+    <nav aria-label="Paginación instrucciones WhatsApp">
+      <ul class="pagination justify-content-end mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?{% if querystring_sin_pagina %}{{ querystring_sin_pagina }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?{% if querystring_sin_pagina %}{{ querystring_sin_pagina }}&{% endif %}page={{ page_obj.next_page_number }}">Siguiente</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

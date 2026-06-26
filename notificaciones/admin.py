@@ -9,7 +9,6 @@ class NotificacionCorreoAdmin(admin.ModelAdmin):
     list_filter = ("tipo", "estado", "creado_en", "enviado_en")
     search_fields = ("asunto", "destinatarios", "mensaje_error")
     readonly_fields = ("creado_en", "enviado_en", "mensaje_error")
-    date_hierarchy = "creado_en"
 
 
 @admin.register(ReporteProgramado)

@@ -1,15 +1,74 @@
 {% extends "base.html" %}
-{% load humanize %}
+{% load static humanize %}
 
-{% block title %}Almacenaje {{ periodo.nombre }}{% endblock %}
+{% block title %}Almacenaje {{ periodo.nombre }} | Costos{% endblock %}
+{% block page_title %}Almacenaje{% endblock %}
 {% block active_costos %}active{% endblock %}
 {% block costos_show %}show{% endblock %}
 {% block active_almacenaje_costeo %}active{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/costos.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="container-fluid py-3">
-  <div class="sg-page-header mb-3"><div><h1 class="h3 mb-1">Almacenaje · {{ periodo.nombre }}</h1><p class="text-muted mb-0">Costo por kg calculado con almacenes arrendados y stock al momento de generar.</p></div><a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-md">Regresar al periodo</a></div>
-  <div class="row g-3 mb-3"><div class="col-md-3"><div class="card p-3"><span class="text-muted">Kg al corte</span><strong>{{ resumen.kg_total|default:0|floatformat:2|intcomma }}</strong></div></div><div class="col-md-3"><div class="card p-3"><span class="text-muted">Importe</span><strong>${{ resumen.total|default:0|floatformat:2|intcomma }}</strong></div></div><div class="col-md-3"><div class="card p-3"><span class="text-muted">Productos</span><strong>{{ resumen.productos|default:0 }}</strong></div></div><div class="col-md-3"><div class="card p-3"><span class="text-muted">Almacenes</span><strong>{{ resumen.almacenes|default:0 }}</strong></div></div></div>
-  <div class="sg-table-card"><div class="table-responsive"><table class="table sg-table align-middle mb-0"><thead><tr><th>Almacén</th><th>Producto</th><th class="text-end">Kg al corte</th><th class="text-end">Tarifa kg</th><th class="text-end">Importe</th><th>Observaciones</th></tr></thead><tbody>{% for item in almacenajes %}<tr><td>{{ item.almacen|default:"Manual" }}</td><td>{{ item.producto.nombre }}</td><td class="text-end">{{ item.kg_al_corte|floatformat:2|intcomma }}</td><td class="text-end">${{ item.tarifa_kg|floatformat:4|intcomma }}</td><td class="text-end">${{ item.importe|floatformat:2|intcomma }}</td><td>{{ item.observaciones|default:"—" }}</td></tr>{% empty %}<tr><td colspan="6" class="text-center text-muted py-4">Genera el costeo para calcular almacenaje.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="sg-list-page costos-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card sg-list-header-card costos-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-boxes me-2"></i>Almacenaje · {{ periodo.nombre }}</h5>
+        <p class="sg-page-header-subtitle">Costo por kg calculado con almacenes arrendados y stock al momento de generar.</p>
+      </div>
+      <div class="sg-page-actions">
+        <a href="{% url 'costos:periodo_costeo_detail' periodo.pk %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-arrow-left me-1"></i>Regresar al periodo</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="row g-3">
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Kg al corte</span><strong class="costos-metric-value">{{ resumen.kg_total|default:0|floatformat:2|intcomma }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Importe</span><strong class="costos-metric-value">${{ resumen.total|default:0|floatformat:2|intcomma }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Productos</span><strong class="costos-metric-value">{{ resumen.productos|default:0 }}</strong></div></div></div>
+    <div class="col-12 col-sm-6 col-xl-3"><div class="card costos-metric-card"><div class="card-body"><span class="costos-metric-label">Almacenes</span><strong class="costos-metric-value">{{ resumen.almacenes|default:0 }}</strong></div></div></div>
+  </div>
+
+  <section class="card border-0 shadow-sm sg-table-card">
+    <div class="card-body">
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover align-middle sg-table sg-no-mobile-grid">
+          <thead class="table-light"><tr><th>Almacén</th><th>Producto</th><th class="text-end">Kg al corte</th><th class="text-end">Tarifa kg</th><th class="text-end">Importe</th><th>Observaciones</th></tr></thead>
+          <tbody>
+            {% for item in almacenajes %}
+              <tr>
+                <td>{{ item.almacen|default:"Manual" }}</td>
+                <td class="fw-semibold">{{ item.producto.nombre }}</td>
+                <td class="text-end">{{ item.kg_al_corte|floatformat:2|intcomma }}</td>
+                <td class="text-end">${{ item.tarifa_kg|floatformat:4|intcomma }}</td>
+                <td class="text-end fw-semibold">${{ item.importe|floatformat:2|intcomma }}</td>
+                <td>{{ item.observaciones|default:"—" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6" class="sg-empty-state">Genera el costeo para calcular almacenaje.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="sg-mobile-list d-md-none">
+        {% for item in almacenajes %}
+          <article class="sg-mobile-card">
+            <div class="sg-mobile-card-header"><div class="min-w-0"><span class="sg-mobile-card-label">Producto</span><strong class="sg-mobile-card-title">{{ item.producto.nombre }}</strong><span class="sg-mobile-card-subtitle">{{ item.almacen|default:"Manual" }}</span></div><span class="badge text-bg-secondary">${{ item.importe|floatformat:2|intcomma }}</span></div>
+            <div class="sg-mobile-card-grid">
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Kg al corte</span><span class="sg-mobile-card-value">{{ item.kg_al_corte|floatformat:2|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Tarifa kg</span><span class="sg-mobile-card-value">${{ item.tarifa_kg|floatformat:4|intcomma }}</span></div>
+              <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Observaciones</span><span class="sg-mobile-card-value">{{ item.observaciones|default:"—" }}</span></div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="sg-empty-state">Genera el costeo para calcular almacenaje.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}
