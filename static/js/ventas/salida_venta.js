@@ -69,6 +69,11 @@
   const cartEmpty = document.getElementById("cartEmpty");
   const cartCount = document.getElementById("cartCount");
   const cartTotal = document.getElementById("cartTotal");
+  const cartSubtotal = document.getElementById("cartSubtotal");
+  const cartCommissionRow = document.getElementById("cartCommissionRow");
+  const cartCommissionPercent = document.getElementById("cartCommissionPercent");
+  const cartCommissionAmount = document.getElementById("cartCommissionAmount");
+  const cartGrandTotal = document.getElementById("cartGrandTotal");
   const allocationsPayload = document.getElementById("allocationsPayload");
 
   const totalForms = form.querySelector('input[name$="-TOTAL_FORMS"]');
@@ -288,10 +293,40 @@
     });
   }
 
-  function getTotal(){
+  function getSubtotal(){
     let t = 0;
     cart.forEach(i => { t += decimal(i.qty_kg) * decimal(i.precio); });
     return t;
+  }
+
+  function getComisionTerminalPorcentaje(){
+    return decimal(String(form.dataset.comisionTerminalPorcentaje || "0").replace(",", "."));
+  }
+
+  function isTerminalPayment(){
+    return !!(formaPagoReal && String(formaPagoReal.value || "").toUpperCase() === "TERMINAL");
+  }
+
+  function getCommissionAmount(){
+    const subtotal = getSubtotal();
+    const pct = getComisionTerminalPorcentaje();
+    if (!isTerminalPayment() || subtotal <= 0 || pct <= 0) return 0;
+    return Math.round((subtotal * pct / 100) * 100) / 100;
+  }
+
+  function getTotal(){
+    return getSubtotal() + getCommissionAmount();
+  }
+
+  function syncTerminalPagoState(){
+    if (!formaPagoReal || !estadoPagoReal) return;
+    if (isTerminalPayment()){
+      estadoPagoReal.value = "PAG";
+      estadoPagoReal.classList.add("bg-body-secondary");
+    } else {
+      estadoPagoReal.classList.remove("bg-body-secondary");
+    }
+    refreshCartSummary();
   }
 
   function getItemAllocationsQtyKg(item){
@@ -708,11 +743,19 @@
 
   function refreshCartSummary(){
     const items = cartToArray();
+    const subtotal = getSubtotal();
+    const commission = getCommissionAmount();
+    const total = getTotal();
     cartCount.textContent = String(items.length);
-    cartTotal.textContent = moneyAmount(getTotal());
+    cartTotal.textContent = moneyAmount(total);
+    if (cartSubtotal){ cartSubtotal.textContent = moneyAmount(subtotal); }
+    if (cartCommissionAmount){ cartCommissionAmount.textContent = moneyAmount(commission); }
+    if (cartCommissionPercent){ cartCommissionPercent.textContent = `(${getComisionTerminalPorcentaje().toLocaleString("es-MX", { maximumFractionDigits: 4 })}%)`; }
+    if (cartGrandTotal){ cartGrandTotal.textContent = moneyAmount(total); }
+    if (cartCommissionRow){ cartCommissionRow.classList.toggle("d-none", !(isTerminalPayment() && commission > 0)); }
     const summaryTotal = document.getElementById("summaryTotal");
     const summaryCount = document.getElementById("summaryCount");
-    if (summaryTotal){ summaryTotal.textContent = moneyAmount(getTotal()); }
+    if (summaryTotal){ summaryTotal.textContent = moneyAmount(total); }
     if (summaryCount){ summaryCount.textContent = String(items.length); }
   }
 
@@ -851,6 +894,9 @@
     const cliente = getClienteNombre((clienteInputReal ? clienteInputReal.value : "") || "");
     const items = cartToArray();
     const observaciones = (form.querySelector('textarea[name="observaciones"]') ? form.querySelector('textarea[name="observaciones"]').value : "") || "";
+    const subtotal = getSubtotal();
+    const commission = getCommissionAmount();
+    const total = getTotal();
 
     const rows = items.length
       ? items.map(it => {
@@ -934,15 +980,14 @@ Email: cpcalimentosbc@gmail.com</div>
           </thead>
           <tbody>
             ${rows}
-            <tr class="sale-note-total-row">
-              <td></td>
-              <td></td>
-              <td class="text-end">TOTAL</td>
-              <td></td>
-              <td class="amount">${moneyAmount(getTotal())}</td>
-            </tr>
           </tbody>
         </table>
+
+        <div class="sale-note-totals">
+          <div class="sale-note-totals-row"><span>Subtotal</span><strong>${moneyAmount(subtotal)}</strong></div>
+          ${commission > 0 ? `<div class="sale-note-totals-row sale-note-commission-row"><span></span><strong>${moneyAmount(commission)}</strong></div>` : ``}
+          <div class="sale-note-totals-row sale-note-grand-total"><span>Total</span><strong>${moneyAmount(total)}</strong></div>
+        </div>
 
         <div class="mt-4">
           <h6 class="fw-bold text-center mb-2">PAGARÉ</h6>
@@ -979,6 +1024,7 @@ Email: cpcalimentosbc@gmail.com</div>
 
   function validateStep(current){
     if (current === 1){
+      syncTerminalPagoState();
       const fecha = form.querySelector('input[name="fecha"]');
       if (fecha && !fecha.value){ alert("Captura la fecha."); fecha.focus(); return false; }
       if (formaPagoReal && !formaPagoReal.value){ alert("Selecciona la forma de pago."); formaPagoReal.focus(); return false; }
@@ -1183,6 +1229,13 @@ Email: cpcalimentosbc@gmail.com</div>
     });
   }
 
+  if (formaPagoReal){
+    formaPagoReal.addEventListener("change", () => {
+      syncTerminalPagoState();
+      if (step === 3){ renderPreview(); }
+    });
+  }
+
   cartList.addEventListener("click", (e) => {
     const wrap = e.target.closest(".cart-item");
     if (!wrap) return;
@@ -1220,6 +1273,7 @@ Email: cpcalimentosbc@gmail.com</div>
     }
   }
 
+  syncTerminalPagoState();
   renderProductos();
   updateCartUI();
   showStep(initialStep);

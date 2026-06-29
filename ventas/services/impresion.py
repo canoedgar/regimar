@@ -1,9 +1,13 @@
 """Servicios y expresiones para impresión/listados comerciales de notas de venta."""
 
-from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Sum
+from decimal import Decimal
+
+from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Sum, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from ventas.services.comisiones import MONEY_FIELD, total_importe_con_comision_expr
 
 
 def importe_linea_expr(prefix=""):
@@ -45,8 +49,9 @@ def get_nota_guardada_para_impresion(pk):
         .select_related("almacen", "cliente_ref", "almacen_origen", "almacen_destino", "registrado_por")
         .annotate(
             total_cantidad=Sum("detalles__cantidad"),
-            total_importe=Sum(importe_detalles_expr()),
+            subtotal_importe=Coalesce(Sum(importe_detalles_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
+        .annotate(total_importe=total_importe_con_comision_expr())
         .prefetch_related(
             Prefetch(
                 "detalles",
@@ -70,8 +75,9 @@ def get_notas_para_impresion(ids):
         .select_related("almacen", "cliente_ref")
         .annotate(
             total_cantidad=Sum("detalles__cantidad"),
-            total_importe=Sum(importe_detalles_expr()),
+            subtotal_importe=Coalesce(Sum(importe_detalles_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
+        .annotate(total_importe=total_importe_con_comision_expr())
         .prefetch_related(
             Prefetch(
                 "detalles",

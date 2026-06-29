@@ -27,12 +27,13 @@ def expresion_total_nota(prefix="detalles__"):
 
 
 def get_total_nota(nota: NotaVenta) -> Decimal:
-    return nota.detalles.aggregate(
+    subtotal = nota.detalles.aggregate(
         total=Coalesce(
             Sum(expresion_total_nota(prefix="")),
             Value(Decimal("0.00"), output_field=MONEY_FIELD),
         )
     )["total"]
+    return subtotal + (getattr(nota, "comision_terminal_monto", Decimal("0.00")) or Decimal("0.00"))
 
 
 def get_total_aplicado_pagos_nota(nota: NotaVenta) -> Decimal:
@@ -86,10 +87,11 @@ def get_notas_venta_con_totales():
         )
         .select_related("cliente_ref")
         .annotate(
-            total_nota=Coalesce(Sum(expresion_total_nota()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
+            subtotal_nota=Coalesce(Sum(expresion_total_nota()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
             total_aplicado_pagos=Coalesce(Subquery(aplicado_pagos_subquery, output_field=MONEY_FIELD), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
             total_aplicado_saldo_favor=Coalesce(Subquery(aplicado_saldo_favor_subquery, output_field=MONEY_FIELD), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
+        .annotate(total_nota=ExpressionWrapper(F("subtotal_nota") + Coalesce(F("comision_terminal_monto"), Value(Decimal("0.00"), output_field=MONEY_FIELD)), output_field=MONEY_FIELD))
         .annotate(total_aplicado=ExpressionWrapper(F("total_aplicado_pagos") + F("total_aplicado_saldo_favor"), output_field=MONEY_FIELD))
         .annotate(saldo_pendiente=ExpressionWrapper(F("total_nota") - F("total_aplicado"), output_field=MONEY_FIELD))
     )

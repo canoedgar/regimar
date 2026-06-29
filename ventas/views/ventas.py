@@ -3,8 +3,9 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q, Sum
+from django.db.models import Count, DecimalField, ExpressionWrapper, F, Prefetch, Q, Sum, Value
 from django.shortcuts import get_object_or_404, redirect, render
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -17,6 +18,7 @@ from ventas.services.impresion import (
     importe_detalles_expr,
     importe_linea_expr,
 )
+from ventas.services.comisiones import MONEY_FIELD, total_importe_con_comision_expr
 
 
 def _importe_expr():
@@ -113,10 +115,10 @@ def ventas_list(request):
 
     ventas = ventas.distinct().annotate(
         total_cantidad=Sum("detalles__cantidad"),
-        total_importe=Sum(_importe_detalles_expr()),
+        subtotal_importe=Coalesce(Sum(_importe_detalles_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         num_detalle_almacenes=Count("detalles__almacen", distinct=True),
         num_asignacion_almacenes=Count("detalles__asignaciones__almacen", distinct=True),
-    )
+    ).annotate(total_importe=total_importe_con_comision_expr())
 
     # Guardamos los IDs de las ventas activas filtradas antes de paginar.
     # Los KPIs/resúmenes no deben considerar notas canceladas.
@@ -129,8 +131,14 @@ def ventas_list(request):
         salida_id__in=ventas_activas_ids
     ).aggregate(
         total_cantidad=Sum("cantidad"),
-        total_notas=Sum(_importe_expr()),
+        subtotal_notas=Sum(_importe_expr()),
     )
+    resumen_comisiones = SalidaInventario.objects.filter(
+        id__in=ventas_activas_ids
+    ).aggregate(
+        total_comisiones=Sum("comision_terminal_monto"),
+    )
+    total_notas = (resumen["subtotal_notas"] or Decimal("0")) + (resumen_comisiones["total_comisiones"] or Decimal("0"))
 
     detalle_qs = _base_detalles_qs(request)
     ventas = ventas.prefetch_related(
@@ -181,7 +189,7 @@ def ventas_list(request):
         "estado_pago_choices": SalidaInventario.ESTADO_PAGO_CHOICES,
         "filtros": filtros,
         "querystring": querystring.urlencode(),
-        "total_notas": resumen["total_notas"] or Decimal("0"),
+        "total_notas": total_notas,
         "total_cantidad": resumen["total_cantidad"] or Decimal("0"),
     }
     return render(request, "ventas/ventas_list.html", context)

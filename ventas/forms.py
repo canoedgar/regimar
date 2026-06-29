@@ -84,6 +84,9 @@ class SalidaVentaForm(forms.ModelForm):
         if not cleaned.get("estado_pago"):
             self.add_error("estado_pago", "Selecciona el estado de pago.")
 
+        if cleaned.get("forma_pago_venta") == SalidaInventario.FORMA_PAGO_TERMINAL:
+            cleaned["estado_pago"] = SalidaInventario.ESTADO_PAGO_PAGADO
+
         if not cleaned.get("logo_nota"):
             self.add_error("logo_nota", "Selecciona el logo de la nota.")
 
@@ -147,6 +150,8 @@ class SalidaVentaEdicionForm(forms.ModelForm):
             self.add_error("forma_pago_venta", "Selecciona la forma de pago.")
         if not cleaned.get("estado_pago"):
             self.add_error("estado_pago", "Selecciona el estado de pago.")
+        if cleaned.get("forma_pago_venta") == SalidaInventario.FORMA_PAGO_TERMINAL:
+            cleaned["estado_pago"] = SalidaInventario.ESTADO_PAGO_PAGADO
         if not cleaned.get("logo_nota"):
             self.add_error("logo_nota", "Selecciona el logo de la nota.")
         return cleaned

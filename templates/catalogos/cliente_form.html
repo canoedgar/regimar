@@ -6,7 +6,7 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-xl-9 col-lg-10">
-    <form method="post" class="sg-form-card p-4" novalidate>
+    <form method="post" enctype="multipart/form-data" class="sg-form-card p-4" novalidate>
       {% csrf_token %}
       {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
       {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
@@ -14,11 +14,11 @@
       <div class="accordion sg-form-accordion" id="clienteAccordion">
         <div class="accordion-item mb-3 border-0 shadow-sm rounded overflow-hidden">
           <h2 class="accordion-header">
-            <button class="accordion-button fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#datosVenta" aria-expanded="true">
+            <button class="accordion-button fw-bold{% if abrir_datos_fiscales %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#datosVenta" aria-expanded="{% if abrir_datos_fiscales %}false{% else %}true{% endif %}">
               <i class="bi bi-cart-check me-2"></i> Datos mínimos para nota de venta
             </button>
           </h2>
-          <div id="datosVenta" class="accordion-collapse collapse show" data-bs-parent="#clienteAccordion">
+          <div id="datosVenta" class="accordion-collapse collapse{% if not abrir_datos_fiscales %} show{% endif %}" data-bs-parent="#clienteAccordion">
             <div class="accordion-body">              
               <div class="row g-3 sg-form-grid">
                 <div class="col-md-6"><label class="form-label fw-semibold sg-form-label">Nombre comercial</label>{{ form.nombre_comercial }}<div class="text-danger small sg-form-error">{{ form.nombre_comercial.errors }}</div></div>
@@ -58,17 +58,34 @@
 
         <div class="accordion-item mb-3 border-0 shadow-sm rounded overflow-hidden">
           <h2 class="accordion-header">
-            <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#datosFiscales">
+            <button class="accordion-button fw-bold{% if not abrir_datos_fiscales %} collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#datosFiscales" aria-expanded="{% if abrir_datos_fiscales %}true{% else %}false{% endif %}">
               <i class="bi bi-receipt me-2"></i> Información fiscal
             </button>
           </h2>
-          <div id="datosFiscales" class="accordion-collapse collapse" data-bs-parent="#clienteAccordion">
+          <div id="datosFiscales" class="accordion-collapse collapse{% if abrir_datos_fiscales %} show{% endif %}" data-bs-parent="#clienteAccordion">
             <div class="accordion-body">
+              <div class="alert alert-info small mb-3">
+                <div class="fw-semibold mb-1"><i class="bi bi-file-earmark-pdf me-1"></i> Precarga desde constancia de situación fiscal</div>
+                <div class="mb-2">Carga el PDF del SAT y presiona <strong>Leer constancia</strong>. El sistema llenará RFC, nombre fiscal, régimen, CP fiscal y domicilio operativo cuando el dato exista en el documento.</div>
+                <div class="row g-2 align-items-end">
+                  <div class="col-lg-8">
+                    <label class="form-label fw-semibold sg-form-label mb-1">{{ form.constancia_situacion_fiscal_pdf.label }}</label>
+                    {{ form.constancia_situacion_fiscal_pdf }}
+                    <div class="form-text">{{ form.constancia_situacion_fiscal_pdf.help_text }}</div>
+                    <div class="text-danger small sg-form-error">{{ form.constancia_situacion_fiscal_pdf.errors }}</div>
+                  </div>
+                  <div class="col-lg-4">
+                    <button type="submit" name="accion" value="extraer_constancia" class="sg-btn-primary sg-btn-form sg-btn-md w-100">
+                      <i class="bi bi-magic me-1"></i> Leer constancia
+                    </button>
+                  </div>
+                </div>
+              </div>
               <p class="text-muted small mb-3 sg-form-help">No es obligatorio capturar datos fiscales. Si capturas alguno, completa el bloque fiscal mínimo.</p>
               <div class="row g-3 sg-form-grid">
                 <div class="col-md-4"><label class="form-label fw-semibold sg-form-label">Tipo de persona</label>{{ form.tipo_persona }}<div class="text-danger small sg-form-error">{{ form.tipo_persona.errors }}</div></div>
                 <div class="col-md-4"><label class="form-label fw-semibold sg-form-label">RFC</label>{{ form.rfc }}<div class="text-danger small sg-form-error">{{ form.rfc.errors }}</div></div>
-                <div class="col-md-4"><label class="form-label fw-semibold sg-form-label">Régimen fiscal</label>{{ form.regimen_fiscal }}<div class="text-danger small sg-form-error">{{ form.regimen_fiscal.errors }}</div></div>
+                <div class="col-md-4"><label class="form-label fw-semibold sg-form-label">Regímenes fiscales</label>{{ form.regimen_fiscal }}<div class="form-text">{{ form.regimen_fiscal.help_text }}</div><div class="text-danger small sg-form-error">{{ form.regimen_fiscal.errors }}</div></div>
                 <div class="col-md-8"><label class="form-label fw-semibold sg-form-label">Nombre / Razón social SAT</label>{{ form.nombre_fiscal }}<div class="text-danger small sg-form-error">{{ form.nombre_fiscal.errors }}</div></div>
                 <div class="col-md-4"><label class="form-label fw-semibold sg-form-label">CP fiscal</label>{{ form.domicilio_fiscal_cp }}<div class="text-danger small sg-form-error">{{ form.domicilio_fiscal_cp.errors }}</div></div>
                 <div class="col-md-6"><label class="form-label fw-semibold sg-form-label">Uso CFDI</label>{{ form.uso_cfdi_default }}<div class="text-danger small sg-form-error">{{ form.uso_cfdi_default.errors }}</div></div>
@@ -93,7 +110,7 @@
 
       <div class="sg-form-actions sg-form-actions-between">
         <a href="{% if next_url %}{{ next_url }}{% else %}{% url 'clientes_list' %}{% endif %}" class="sg-btn-secondary sg-btn-form sg-btn-md"><i class="bi bi-arrow-left me-1"></i> Volver</a>
-        <button class="sg-btn-success sg-btn-form sg-btn-md"><i class="bi bi-save me-1"></i> Guardar</button>
+        <button type="submit" name="accion" value="guardar" class="sg-btn-success sg-btn-form sg-btn-md"><i class="bi bi-save me-1"></i> Guardar</button>
       </div>
     </form>
   </div>

@@ -41,9 +41,13 @@ admin.site.register(Proyecto)
 
 @admin.register(Cliente)
 class ClienteAdmin(admin.ModelAdmin):
-    list_display = ("nombre_fiscal", "nombre_comercial", "rfc", "limite_credito", "dias_credito", "activo")
+    list_display = ("nombre_fiscal", "nombre_comercial", "rfc", "regimenes_display", "limite_credito", "dias_credito", "activo")
     search_fields = ("nombre_fiscal", "nombre_comercial", "rfc", "telefono", "contacto")
     list_filter = ("activo", "logo")
+
+    @admin.display(description="Regímenes fiscales")
+    def regimenes_display(self, obj):
+        return obj.regimen_fiscal_display or "—"
 
 admin.site.register(Almacen)
 

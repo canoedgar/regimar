@@ -5,3 +5,4 @@ pillow
 gunicorn
 psycopg2-binary
 openpyxl>=3.1.2
+pypdf>=4.0

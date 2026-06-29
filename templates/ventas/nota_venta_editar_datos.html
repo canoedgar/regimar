@@ -98,6 +98,10 @@
   search.addEventListener('keydown',e=>{if(results.classList.contains('d-none'))return; if(e.key==='ArrowDown'){e.preventDefault(); setActive(activeIndex+1>=matches.length?0:activeIndex+1);} if(e.key==='ArrowUp'){e.preventDefault(); setActive(activeIndex<=0?matches.length-1:activeIndex-1);} if(e.key==='Enter'&&activeIndex>=0&&matches[activeIndex]){e.preventDefault(); selectCliente(matches[activeIndex]);}});
   clearBtn&&clearBtn.addEventListener('click',()=>{selectCliente(null); if(clienteDireccion)clienteDireccion.value=''; if(clienteContacto)clienteContacto.value=''; search.focus();});
   document.addEventListener('click',e=>{if(!results.contains(e.target)&&e.target!==search)results.classList.add('d-none');});
+  const formaPago=document.getElementById('id_forma_pago_venta'), estadoPago=document.getElementById('id_estado_pago');
+  function syncTerminalPago(){if(!formaPago||!estadoPago)return; if(String(formaPago.value||'').toUpperCase()==='TERMINAL'){estadoPago.value='PAG'; estadoPago.classList.add('bg-body-secondary');}else{estadoPago.classList.remove('bg-body-secondary');}}
+  formaPago&&formaPago.addEventListener('change',syncTerminalPago);
+  syncTerminalPago();
 })();
 </script>
 {% endblock %}

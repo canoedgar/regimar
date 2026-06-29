@@ -3,7 +3,6 @@ from decimal import Decimal
 from catalogos.models import Producto
 from catalogos.services.clientes_precios import registrar_ultimo_precio_cliente
 from catalogos.services.credito_clientes import money, total_detalles_venta
-from cartera.selectors.cartera import get_total_nota
 from inventarios.models import SalidaInventarioDetalle, SalidaInventarioDetalleAlmacen
 from inventarios.services.stock import aplicar_movimientos_salida
 from ventas.services.venta_parser import VentaPostParser
@@ -14,6 +13,12 @@ from ventas.services.venta_credito import (
 from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
 from ventas.services.venta_precio import VentaPrecioMinimoService
 from ventas.services.creacion import VentaService
+from ventas.services.comisiones import (
+    aplicar_comision_terminal,
+    calcular_total_con_comision,
+    es_nota_terminal,
+    get_subtotal_nota,
+)
 from django.utils import timezone
 
 
@@ -21,6 +26,22 @@ def marcar_nota_editada(salida, user=None):
     salida.editada_en = timezone.now()
     salida.editada_por = user if getattr(user, "is_authenticated", False) else None
     salida.save(update_fields=["editada_en", "editada_por"])
+
+
+def sincronizar_comision_y_pago_terminal(salida, user=None):
+    aplicar_comision_terminal(salida)
+    if not es_nota_terminal(salida):
+        return None
+
+    from cartera.models import PagoMetodoDetalle
+    from cartera.services.cartera import sincronizar_pago_automatico_nota_pagada
+
+    return sincronizar_pago_automatico_nota_pagada(
+        salida,
+        usuario=user if getattr(user, "is_authenticated", False) else None,
+        metodo=PagoMetodoDetalle.METODO_TARJETA,
+        fecha_pago=salida.fecha,
+    )
 
 
 class EditarDatosNotaService:
@@ -37,9 +58,15 @@ class EditarDatosNotaService:
         if not cliente:
             return []
 
+        subtotal = get_subtotal_nota(salida_actual)
+        total_venta = calcular_total_con_comision(
+            subtotal,
+            forma_pago=self.form.cleaned_data.get("forma_pago_venta"),
+            porcentaje=getattr(salida_actual, "comision_terminal_porcentaje", None),
+        )
         errores, autorizacion = validar_credito_venta(
             cliente=cliente,
-            total_venta=get_total_nota(salida_actual),
+            total_venta=total_venta,
             fecha_venta=fecha,
             contexto=VentaRequestContext.from_request(self.request),
             venta_existente=salida_actual,
@@ -52,6 +79,7 @@ class EditarDatosNotaService:
         salida.editada_en = timezone.now()
         salida.editada_por = self.user if getattr(self.user, "is_authenticated", False) else None
         salida.save()
+        sincronizar_comision_y_pago_terminal(salida, self.user)
         marcar_autorizacion_credito_venta_usada(self.autorizacion_credito, salida)
         return salida
 
@@ -120,9 +148,14 @@ class AjustarPreciosNotaService:
             precio = money(form.cleaned_data.get("precio_unitario"))
             total += cantidad * precio
 
+        total_venta = calcular_total_con_comision(
+            money(total),
+            forma_pago=getattr(self.salida, "forma_pago_venta", ""),
+            porcentaje=getattr(self.salida, "comision_terminal_porcentaje", None),
+        )
         errores, autorizacion = validar_credito_venta(
             cliente=cliente,
-            total_venta=money(total),
+            total_venta=total_venta,
             fecha_venta=getattr(self.salida, "fecha", None),
             contexto=VentaRequestContext.from_request(self.request),
             venta_existente=self.salida,
@@ -137,6 +170,7 @@ class AjustarPreciosNotaService:
 
         detalles = self.formset.save()
         marcar_nota_editada(self.salida, self.user)
+        sincronizar_comision_y_pago_terminal(self.salida, self.user)
         marcar_autorizacion_credito_venta_usada(self.autorizacion_credito, self.salida)
         cliente = getattr(self.salida, "cliente_ref", None)
         for detalle in detalles:
@@ -219,7 +253,12 @@ class AgregarProductosNotaService:
         cliente = getattr(self.salida, "cliente_ref", None)
         if not cliente or self.resultado_parseo is None:
             return []
-        total_proyectado = money(get_total_nota(self.salida) + total_detalles_venta(self.resultado_parseo["detalles_validos"]))
+        subtotal_proyectado = money(get_subtotal_nota(self.salida) + total_detalles_venta(self.resultado_parseo["detalles_validos"]))
+        total_proyectado = calcular_total_con_comision(
+            subtotal_proyectado,
+            forma_pago=getattr(self.salida, "forma_pago_venta", ""),
+            porcentaje=getattr(self.salida, "comision_terminal_porcentaje", None),
+        )
         errores, autorizacion = validar_credito_venta(
             cliente=cliente,
             total_venta=total_proyectado,
@@ -238,6 +277,7 @@ class AgregarProductosNotaService:
 
         detalles = self._guardar_productos()
         marcar_nota_editada(self.salida, self.user)
+        sincronizar_comision_y_pago_terminal(self.salida, self.user)
         marcar_autorizacion_credito_venta_usada(self.autorizacion_credito, self.salida)
         return detalles
 

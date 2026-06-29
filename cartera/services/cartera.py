@@ -65,37 +65,86 @@ def actualizar_estado_pago_nota(nota):
     return nota.estado_pago
 
 
-@transaction.atomic
-def registrar_pago_automatico_nota_pagada(nota, usuario=None, metodo=PagoMetodoDetalle.METODO_EFECTIVO, fecha_pago=None):
+def _validar_nota_pago_automatico(nota):
     if nota.tipo != NotaVenta.TIPO_VENTA:
         raise ValidationError("Solo se pueden registrar pagos automáticos de notas de venta.")
     if not nota.cliente_ref_id:
         raise ValidationError("La nota debe tener cliente de catálogo para registrar pago automático.")
 
+
+@transaction.atomic
+def sincronizar_pago_automatico_nota_pagada(nota, usuario=None, metodo=PagoMetodoDetalle.METODO_EFECTIVO, fecha_pago=None):
+    _validar_nota_pago_automatico(nota)
+
     monto = _money(get_total_nota(nota))
     if monto <= 0:
         raise ValidationError("La nota no tiene importe para registrar pago.")
 
-    pago = PagoCliente.objects.create(
-        cliente=nota.cliente_ref,
-        origen=PagoCliente.ORIGEN_AUTO_NOTA,
-        tipo_aplicacion=PagoCliente.TIPO_AUTO,
-        fecha=_normalizar_fecha_movimiento(fecha_pago),
-        monto_recibido=monto,
-        referencia=f"Pago automático nota {nota.folio}",
-        creado_por=usuario,
+    pago = (
+        PagoCliente.objects.select_for_update()
+        .filter(
+            origen=PagoCliente.ORIGEN_AUTO_NOTA,
+            estado=PagoCliente.ESTADO_ACTIVO,
+            aplicaciones__nota_venta=nota,
+        )
+        .distinct()
+        .order_by("id")
+        .first()
     )
+
+    if pago is None:
+        pago = PagoCliente.objects.create(
+            cliente=nota.cliente_ref,
+            origen=PagoCliente.ORIGEN_AUTO_NOTA,
+            tipo_aplicacion=PagoCliente.TIPO_AUTO,
+            fecha=_normalizar_fecha_movimiento(fecha_pago),
+            monto_recibido=monto,
+            referencia=f"Pago automático nota {nota.folio}",
+            creado_por=usuario,
+        )
+    else:
+        pago.cliente = nota.cliente_ref
+        pago.tipo_aplicacion = PagoCliente.TIPO_AUTO
+        pago.fecha = _normalizar_fecha_movimiento(fecha_pago)
+        pago.monto_recibido = monto
+        pago.referencia = f"Pago automático nota {nota.folio}"
+        pago.save(update_fields=["cliente", "tipo_aplicacion", "fecha", "monto_recibido", "referencia"])
+        pago.metodos.all().delete()
+
     PagoMetodoDetalle.objects.create(pago=pago, metodo=metodo, monto=monto)
-    PagoAplicacionNota.objects.create(
-        pago=pago,
-        nota_venta=nota,
-        monto_aplicado=monto,
-        saldo_antes=monto,
-        saldo_despues=Decimal("0.00"),
-        creado_por=usuario,
-    )
+
+    aplicaciones = list(pago.aplicaciones.select_for_update().filter(nota_venta=nota).order_by("id"))
+    if aplicaciones:
+        aplicacion = aplicaciones[0]
+        aplicacion.monto_aplicado = monto
+        aplicacion.saldo_antes = monto
+        aplicacion.saldo_despues = Decimal("0.00")
+        aplicacion.creado_por = usuario
+        aplicacion.save(update_fields=["monto_aplicado", "saldo_antes", "saldo_despues", "creado_por"])
+        for extra in aplicaciones[1:]:
+            extra.delete()
+    else:
+        PagoAplicacionNota.objects.create(
+            pago=pago,
+            nota_venta=nota,
+            monto_aplicado=monto,
+            saldo_antes=monto,
+            saldo_despues=Decimal("0.00"),
+            creado_por=usuario,
+        )
+
     actualizar_estado_pago_nota(nota)
     return pago
+
+
+@transaction.atomic
+def registrar_pago_automatico_nota_pagada(nota, usuario=None, metodo=PagoMetodoDetalle.METODO_EFECTIVO, fecha_pago=None):
+    return sincronizar_pago_automatico_nota_pagada(
+        nota,
+        usuario=usuario,
+        metodo=metodo,
+        fecha_pago=fecha_pago,
+    )
 
 
 @transaction.atomic

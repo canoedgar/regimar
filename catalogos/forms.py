@@ -6,6 +6,8 @@ from django import forms
 from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 from django.forms import inlineformset_factory
 from .models import Producto, Categoria, Proveedor, Proyecto, Cliente, Almacen, ProductoMetricaConversion, ParametroSistema, ClienteProductoPrecio
+from .sat_catalogos import REGIMEN_FISCAL_CHOICES
+from .services.regimenes_fiscales import codigos_regimenes_fiscales, regimen_fiscal_a_json
 
 from django.core.exceptions import ValidationError
 
@@ -277,6 +279,26 @@ class ClienteProductoPrecioForm(forms.ModelForm):
 
 
 class ClienteForm(forms.ModelForm):
+    constancia_situacion_fiscal_pdf = forms.FileField(
+        label="Constancia de situación fiscal (PDF)",
+        required=False,
+        help_text="Carga el PDF emitido por el SAT para llenar automáticamente los datos fiscales y de domicilio.",
+        widget=forms.ClearableFileInput(attrs={
+            "class": "form-control",
+            "accept": "application/pdf,.pdf",
+        }),
+    )
+    regimen_fiscal = forms.MultipleChoiceField(
+        label="Regímenes fiscales (SAT)",
+        choices=REGIMEN_FISCAL_CHOICES,
+        required=False,
+        help_text="Selecciona uno o más regímenes fiscales del cliente.",
+        widget=forms.SelectMultiple(attrs={
+            "class": "form-select",
+            "size": "6",
+        }),
+    )
+
     class Meta:
         model = Cliente
         fields = [
@@ -330,7 +352,6 @@ class ClienteForm(forms.ModelForm):
                 "class": "form-control",
                 "placeholder": "Nombre/Razón social como en el SAT",
             }),
-            "regimen_fiscal": forms.Select(attrs={"class": "form-select"}),
             "domicilio_fiscal_cp": forms.TextInput(attrs={
                 "class": "form-control",
                 "placeholder": "Ej: 83290",
@@ -370,6 +391,9 @@ class ClienteForm(forms.ModelForm):
         self.puede_editar_parametros_cartera = kwargs.pop("puede_editar_parametros_cartera", True)
         super().__init__(*args, **kwargs)
 
+        if self.instance and self.instance.pk and not self.is_bound:
+            self.fields["regimen_fiscal"].initial = codigos_regimenes_fiscales(self.instance.regimen_fiscal)
+
         if not self.puede_editar_parametros_cartera:
             self.fields.pop("limite_credito", None)
             self.fields.pop("dias_credito", None)
@@ -386,6 +410,23 @@ class ClienteForm(forms.ModelForm):
     def clean_rfc(self):
         rfc = (self.cleaned_data.get("rfc") or "").strip().upper()
         return rfc or None
+
+    def clean_regimen_fiscal(self):
+        return regimen_fiscal_a_json(self.cleaned_data.get("regimen_fiscal") or [])
+
+    def clean_constancia_situacion_fiscal_pdf(self):
+        archivo = self.cleaned_data.get("constancia_situacion_fiscal_pdf")
+        if not archivo:
+            return archivo
+
+        nombre = (getattr(archivo, "name", "") or "").lower()
+        if not nombre.endswith(".pdf"):
+            raise ValidationError("La constancia debe ser un archivo PDF.")
+
+        if getattr(archivo, "size", 0) > 5 * 1024 * 1024:
+            raise ValidationError("El PDF no debe exceder 5 MB.")
+
+        return archivo
 
     def clean(self):
         cleaned = super().clean()
@@ -405,7 +446,7 @@ class ClienteForm(forms.ModelForm):
         fiscales = [
             cleaned.get("rfc"),
             cleaned.get("nombre_fiscal"),
-            cleaned.get("regimen_fiscal"),
+            codigos_regimenes_fiscales(cleaned.get("regimen_fiscal")),
             cleaned.get("domicilio_fiscal_cp"),
         ]
         if any(fiscales) and not all(fiscales):

@@ -59,7 +59,7 @@
           <tr>
             <th>RFC</th>
             <th>Nombre fiscal</th>
-            <th>Régimen</th>
+            <th>Regímenes</th>
             <th>CP fiscal</th>
             <th>Uso CFDI</th>
             <th>Logo</th>
@@ -77,7 +77,7 @@
                 <div class="sg-form-help">{{ c.nombre_comercial }}</div>
               {% endif %}
             </td>
-            <td class="sg-nowrap">{{ c.regimen_fiscal|default:"—" }}</td>
+            <td class="sg-nowrap">{{ c.regimen_fiscal_display|default:"—" }}</td>
             <td class="sg-nowrap">{{ c.domicilio_fiscal_cp|default:"—" }}</td>
             <td class="sg-nowrap">{{ c.uso_cfdi_default|default:"—" }}</td>
             <td>{{ c.get_logo_display|default:"CPC Alimentos" }}</td>
@@ -128,8 +128,8 @@
 
           <div class="sg-mobile-card-grid">
             <div class="sg-mobile-card-field">
-              <span class="sg-mobile-card-label">Régimen</span>
-              <span class="sg-mobile-card-value">{{ c.regimen_fiscal|default:"—" }}</span>
+              <span class="sg-mobile-card-label">Regímenes</span>
+              <span class="sg-mobile-card-value">{{ c.regimen_fiscal_display|default:"—" }}</span>
             </div>
             <div class="sg-mobile-card-field">
               <span class="sg-mobile-card-label">CP fiscal</span>

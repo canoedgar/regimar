@@ -85,7 +85,18 @@ class EntradaInventario(models.Model):
     )
 
     motivo = models.TextField("Motivo", blank=True)
-    observaciones = models.TextField("Observaciones", blank=True)    
+    observaciones = models.TextField("Observaciones", blank=True)
+    tiene_xml = models.BooleanField(
+        "Tiene XML",
+        default=False,
+        help_text="Indica si la entrada cuenta con XML de factura asociado.",
+    )
+    xml_contenido = models.TextField(
+        "Contenido XML",
+        blank=True,
+        default="",
+        help_text="Contenido XML de factura asociado a la entrada, cuando aplique.",
+    )
     creado_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -257,9 +268,11 @@ class SalidaInventario(models.Model):
     )
     FORMA_PAGO_CONTADO = "CONTADO"
     FORMA_PAGO_CREDITO = "CREDITO"
+    FORMA_PAGO_TERMINAL = "TERMINAL"
     FORMA_PAGO_CHOICES = [
         (FORMA_PAGO_CONTADO, "Contado"),
         (FORMA_PAGO_CREDITO, "Crédito"),
+        (FORMA_PAGO_TERMINAL, "Terminal bancaria"),
     ]
     forma_pago_venta = models.CharField(
         "Forma de pago de venta",
@@ -283,6 +296,20 @@ class SalidaInventario(models.Model):
         default=ESTADO_PAGO_PENDIENTE,
         db_index=True,
         help_text="Estado administrativo de pago de la nota; no depende de la forma de pago.",
+    )
+    comision_terminal_porcentaje = models.DecimalField(
+        "Comisión terminal (%)",
+        max_digits=7,
+        decimal_places=4,
+        default=0,
+        help_text="Porcentaje de comisión de terminal aplicado históricamente a la nota.",
+    )
+    comision_terminal_monto = models.DecimalField(
+        "Comisión terminal",
+        max_digits=14,
+        decimal_places=2,
+        default=0,
+        help_text="Importe de comisión de terminal aplicado a la nota.",
     )
 
     cliente_direccion = models.TextField("Dirección del cliente para esta venta", blank=True)

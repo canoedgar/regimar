@@ -54,6 +54,12 @@
     .qty,.price,.amount{ text-align:center; white-space:nowrap; }
     .desc{ min-width:0; }
     .sale-note-total-row td{ font-weight:800; }
+    .sale-note-totals{ width:42%; margin:8px 0 0 auto; border:1px solid #212529; border-bottom:0; }
+    .sale-note-copy.is-copy .sale-note-totals{ margin-left:0; margin-right:auto; }
+    .sale-note-totals-row{ display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #212529; padding:4px 6px; font-size:.78rem; line-height:1.15; }
+    .sale-note-totals-row span{ min-width:45%; text-align:right; }
+    .sale-note-totals-row strong{ white-space:nowrap; }
+    .sale-note-grand-total{ font-weight:800; }
 
     .pagare{ margin-top:12px; }
     .pagare h6{ margin:0 0 .5rem; text-align:left; font-size:.9rem; font-weight:800; }
@@ -195,15 +201,16 @@ Email: cpcalimentosbc@gmail.com</div>
                     <td colspan="5" class="text-center">Sin productos capturados</td>
                   </tr>
                 {% endfor %}
-                <tr class="sale-note-total-row">
-                  <td></td>
-                  <td></td>
-                  <td class="text-end">TOTAL</td>
-                  <td></td>
-                  <td class="amount">$ {{ nota.total_importe|default:0|dinero_decimal }}</td>
-                </tr>
               </tbody>
             </table>
+
+            <div class="sale-note-totals">
+              <div class="sale-note-totals-row"><span>Subtotal</span><strong>$ {{ nota.subtotal_importe|default:0|dinero_decimal }}</strong></div>
+              {% if nota.comision_terminal_monto and nota.comision_terminal_monto > 0 %}
+                <div class="sale-note-totals-row sale-note-commission-row"><span></span><strong>$ {{ nota.comision_terminal_monto|dinero_decimal }}</strong></div>
+              {% endif %}
+              <div class="sale-note-totals-row sale-note-grand-total"><span>Total</span><strong>$ {{ nota.total_importe|default:0|dinero_decimal }}</strong></div>
+            </div>
 
             <div class="pagare">
               <h6>PAGARÉ</h6>

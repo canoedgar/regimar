@@ -7,6 +7,7 @@ import uuid
 import secrets
 import re
 import unicodedata
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator, MinLengthValidator, MaxLengthValidator, MinValueValidator
 from decimal import Decimal
 
@@ -408,12 +409,14 @@ class Cliente(models.Model):
         max_length=260, editable=False, db_index=True
     )
 
-    regimen_fiscal = models.CharField(
-    "Régimen fiscal (SAT)",
-    max_length=3,
-    choices=REGIMEN_FISCAL_CHOICES,
-    blank=True,
-)
+    regimen_fiscal = models.TextField(
+        "Regímenes fiscales (SAT)",
+        blank=True,
+        help_text=(
+            "JSON con uno o más regímenes fiscales SAT del cliente. "
+            "Ejemplo: [{\"codigo\":\"612\",\"descripcion\":\"Personas Físicas con Actividades Empresariales y Profesionales\"}]"
+        ),
+    )
 
     domicilio_fiscal_cp = models.CharField(
         "Domicilio fiscal - CP (SAT)",
@@ -509,6 +512,18 @@ class Cliente(models.Model):
             models.Index(fields=["nombre_fiscal_normalizado"]),
         ]
 
+    def clean(self):
+        super().clean()
+        if self.regimen_fiscal:
+            from catalogos.services.regimenes_fiscales import codigos_regimenes_fiscales
+
+            codigos = codigos_regimenes_fiscales(self.regimen_fiscal)
+            valor = str(self.regimen_fiscal or "").strip()
+            if not codigos and valor not in {"[]", ""}:
+                raise ValidationError({
+                    "regimen_fiscal": "Selecciona al menos un régimen fiscal válido del catálogo SAT."
+                })
+
     def save(self, *args, **kwargs):
         # RFC siempre en mayúsculas
         if self.rfc:
@@ -520,7 +535,41 @@ class Cliente(models.Model):
         if not self.cp and self.domicilio_fiscal_cp:
             self.cp = self.domicilio_fiscal_cp
 
+        # Mantener el nuevo formato JSON aunque todavía existan clientes o flujos
+        # que envíen el formato legado de un solo código, por ejemplo "612".
+        if self.regimen_fiscal:
+            from catalogos.services.regimenes_fiscales import regimen_fiscal_a_json
+
+            self.regimen_fiscal = regimen_fiscal_a_json(self.regimen_fiscal)
+
         super().save(*args, **kwargs)
+
+    @property
+    def regimenes_fiscales(self):
+        from catalogos.services.regimenes_fiscales import normalizar_regimenes_fiscales
+
+        return normalizar_regimenes_fiscales(self.regimen_fiscal)
+
+    @property
+    def regimenes_fiscales_codigos(self):
+        from catalogos.services.regimenes_fiscales import codigos_regimenes_fiscales
+
+        return codigos_regimenes_fiscales(self.regimen_fiscal)
+
+    @property
+    def regimen_fiscal_principal(self):
+        from catalogos.services.regimenes_fiscales import codigo_regimen_fiscal_principal
+
+        return codigo_regimen_fiscal_principal(self.regimen_fiscal)
+
+    @property
+    def regimen_fiscal_display(self):
+        from catalogos.services.regimenes_fiscales import display_regimenes_fiscales
+
+        return display_regimenes_fiscales(self.regimen_fiscal)
+
+    def get_regimen_fiscal_display(self):
+        return self.regimen_fiscal_display
 
     @property
     def logo_static_path(self):

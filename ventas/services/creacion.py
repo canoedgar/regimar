@@ -14,6 +14,7 @@ from inventarios.services.folios import next_folio_movimiento
 from ventas.services.venta_credito import VentaCreditoService
 from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
 from ventas.services.venta_precio import VentaPrecioMinimoService
+from ventas.services.comisiones import aplicar_comision_terminal, es_nota_terminal
 
 
 def es_almacen_venta_virtual(almacen) -> bool:
@@ -159,7 +160,24 @@ class VentaService:
                 observaciones=f"Venta {salida.folio}",
             )
 
+        aplicar_comision_terminal(salida)
+        self._sincronizar_pago_terminal(salida)
+
         return salida
+
+    def _sincronizar_pago_terminal(self, salida):
+        if not es_nota_terminal(salida):
+            return None
+
+        from cartera.models import PagoMetodoDetalle
+        from cartera.services.cartera import sincronizar_pago_automatico_nota_pagada
+
+        return sincronizar_pago_automatico_nota_pagada(
+            salida,
+            usuario=self.data.contexto.usuario,
+            metodo=PagoMetodoDetalle.METODO_TARJETA,
+            fecha_pago=salida.fecha,
+        )
 
     def _registrar_entradas_virtuales(self, salida, requeridos_por_almacen):
         """
@@ -190,6 +208,8 @@ class VentaService:
                 documento_referencia=salida.folio,
                 motivo="Entrada automática por venta sin inventario",
                 registrado_por=self.data.contexto.usuario,
+                tiene_xml=False,
+                xml_contenido="",
                 observaciones=(
                     f"Entrada automática generada por la nota de venta {salida.folio}.\n"
                     "Flujo: venta desde almacén virtual; se registra entrada y salida en la misma transacción."

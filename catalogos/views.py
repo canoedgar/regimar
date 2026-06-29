@@ -27,6 +27,11 @@ from catalogos.services.precios import (
     registrar_bitacora_precio_producto,
     registrar_historial_precio_producto,
 )
+from catalogos.services.constancia_situacion_fiscal import (
+    ConstanciaFiscalPDFError,
+    extraer_datos_constancia_situacion_fiscal,
+)
+from catalogos.services.regimenes_fiscales import codigos_regimenes_fiscales, regimen_fiscal_a_json
 
 # Inicio Categorías
 
@@ -530,6 +535,88 @@ def _add_cliente_to_next_url(next_url, cliente_id):
         parts.fragment,
     ))
 
+
+def _aplicar_datos_constancia_en_post(post_data, datos_constancia):
+    """Mezcla datos extraídos de CSF en un POST mutable para re-renderizar el form."""
+    data = post_data.copy()
+    campos_cliente = [
+        "tipo_persona",
+        "rfc",
+        "nombre_fiscal",
+        "nombre_comercial",
+        "domicilio_fiscal_cp",
+        "calle",
+        "num_ext",
+        "num_int",
+        "colonia",
+        "localidad",
+        "municipio",
+        "estado",
+        "pais",
+        "cp",
+        "referencias",
+    ]
+
+    regimenes = datos_constancia.get("regimenes_fiscales_codigos") or codigos_regimenes_fiscales(
+        datos_constancia.get("regimen_fiscal")
+    )
+    if regimenes:
+        data.setlist("regimen_fiscal", regimenes)
+
+    for campo in campos_cliente:
+        valor = (datos_constancia.get(campo) or "").strip()
+        if valor:
+            data[campo] = valor
+
+    return data
+
+
+def _leer_constancia_desde_request(request):
+    archivo = request.FILES.get("constancia_situacion_fiscal_pdf")
+    if not archivo:
+        raise ConstanciaFiscalPDFError("Selecciona un PDF de constancia de situación fiscal para leerlo.")
+    return extraer_datos_constancia_situacion_fiscal(archivo)
+
+
+def _debe_abrir_datos_fiscales(form=None, forzar=False):
+    if forzar:
+        return True
+    if not form or not getattr(form, "errors", None):
+        return False
+
+    campos_fiscales = {
+        "tipo_persona",
+        "rfc",
+        "nombre_fiscal",
+        "regimen_fiscal",
+        "domicilio_fiscal_cp",
+        "uso_cfdi_default",
+        "email_cfdi",
+        "constancia_situacion_fiscal_pdf",
+    }
+    return bool(campos_fiscales.intersection(form.errors.keys()) or form.non_field_errors())
+
+
+def _mensaje_constancia_leida(request, datos_constancia):
+    campos_importantes = [
+        "rfc",
+        "nombre_fiscal",
+        "regimenes_fiscales_codigos",
+        "domicilio_fiscal_cp",
+        "calle",
+        "colonia",
+        "municipio",
+        "estado",
+    ]
+    total = sum(1 for campo in campos_importantes if datos_constancia.get(campo))
+    total_regimenes = len(datos_constancia.get("regimenes_fiscales_codigos") or [])
+    detalle_regimenes = f" Se detectaron {total_regimenes} régimen(es) fiscal(es)." if total_regimenes else ""
+    messages.success(
+        request,
+        f"Constancia leída correctamente. Se precargaron {total} campos; revisa la información antes de guardar.{detalle_regimenes}",
+    )
+
+
 @permiso_requerido("catalogos.view_cliente")
 def clientes_list(request):
     q = (request.GET.get("q") or "").strip()
@@ -554,19 +641,40 @@ def clientes_list(request):
 def cliente_create(request):
     next_url = _get_safe_next_url(request)
     puede_editar_parametros_cartera = _puede_editar_parametros_cartera(request.user)
+    abrir_datos_fiscales = False
 
     if request.method == "POST":
-        form = ClienteForm(
-            request.POST,
-            puede_editar_parametros_cartera=puede_editar_parametros_cartera,
-        )
-        if form.is_valid():
+        accion = request.POST.get("accion") or "guardar"
+
+        if accion == "extraer_constancia":
+            data_form = request.POST
+            abrir_datos_fiscales = True
             try:
-                cliente = form.save()
-                messages.success(request, "Cliente creado correctamente.")
-                return redirect(_add_cliente_to_next_url(next_url, cliente.id))
-            except IntegrityError:
-                form.add_error("rfc", "Ya existe un cliente con ese RFC.")
+                datos_constancia = _leer_constancia_desde_request(request)
+                data_form = _aplicar_datos_constancia_en_post(request.POST, datos_constancia)
+                _mensaje_constancia_leida(request, datos_constancia)
+            except ConstanciaFiscalPDFError as exc:
+                messages.error(request, str(exc))
+
+            form = ClienteForm(
+                data_form,
+                request.FILES,
+                puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+            )
+        else:
+            form = ClienteForm(
+                request.POST,
+                request.FILES,
+                puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+            )
+            if form.is_valid():
+                try:
+                    cliente = form.save()
+                    messages.success(request, "Cliente creado correctamente.")
+                    return redirect(_add_cliente_to_next_url(next_url, cliente.id))
+                except IntegrityError:
+                    form.add_error("rfc", "Ya existe un cliente con ese RFC.")
+            abrir_datos_fiscales = _debe_abrir_datos_fiscales(form)
     else:
         form = ClienteForm(puede_editar_parametros_cartera=puede_editar_parametros_cartera)
 
@@ -575,26 +683,49 @@ def cliente_create(request):
         "modo": "crear",
         "next_url": next_url,
         "puede_editar_parametros_cartera": puede_editar_parametros_cartera,
+        "abrir_datos_fiscales": abrir_datos_fiscales,
     })
 
 @permiso_requerido("catalogos.change_cliente")
 def cliente_edit(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     puede_editar_parametros_cartera = _puede_editar_parametros_cartera(request.user)
+    abrir_datos_fiscales = False
 
     if request.method == "POST":
-        form = ClienteForm(
-            request.POST,
-            instance=cliente,
-            puede_editar_parametros_cartera=puede_editar_parametros_cartera,
-        )
-        if form.is_valid():
+        accion = request.POST.get("accion") or "guardar"
+
+        if accion == "extraer_constancia":
+            data_form = request.POST
+            abrir_datos_fiscales = True
             try:
-                form.save()
-                messages.success(request, "Cliente actualizado correctamente.")
-                return redirect("clientes_list")
-            except IntegrityError:
-                form.add_error("rfc", "Ya existe un cliente con ese RFC.")
+                datos_constancia = _leer_constancia_desde_request(request)
+                data_form = _aplicar_datos_constancia_en_post(request.POST, datos_constancia)
+                _mensaje_constancia_leida(request, datos_constancia)
+            except ConstanciaFiscalPDFError as exc:
+                messages.error(request, str(exc))
+
+            form = ClienteForm(
+                data_form,
+                request.FILES,
+                instance=cliente,
+                puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+            )
+        else:
+            form = ClienteForm(
+                request.POST,
+                request.FILES,
+                instance=cliente,
+                puede_editar_parametros_cartera=puede_editar_parametros_cartera,
+            )
+            if form.is_valid():
+                try:
+                    form.save()
+                    messages.success(request, "Cliente actualizado correctamente.")
+                    return redirect("clientes_list")
+                except IntegrityError:
+                    form.add_error("rfc", "Ya existe un cliente con ese RFC.")
+            abrir_datos_fiscales = _debe_abrir_datos_fiscales(form)
     else:
         form = ClienteForm(
             instance=cliente,
@@ -606,6 +737,7 @@ def cliente_edit(request, pk):
         "modo": "editar",
         "cliente": cliente,
         "puede_editar_parametros_cartera": puede_editar_parametros_cartera,
+        "abrir_datos_fiscales": abrir_datos_fiscales,
     })
 
 
@@ -628,7 +760,7 @@ def cliente_quick_create(request):
         c = Cliente(
             rfc=rfc,
             nombre_fiscal=nombre_fiscal,
-            regimen_fiscal=regimen_fiscal,
+            regimen_fiscal=regimen_fiscal_a_json([regimen_fiscal]),
             domicilio_fiscal_cp=domicilio_fiscal_cp,
             telefono=telefono,
             contacto=contacto,
@@ -929,7 +1061,7 @@ def importar_clientes(request):
                     "tipo_persona": _to_str(row.get("tipo_persona")) or Cliente.TipoPersona.MORAL,
                     "rfc": rfc,
                     "nombre_fiscal": nombre_fiscal,
-                    "regimen_fiscal": regimen_fiscal,
+                    "regimen_fiscal": regimen_fiscal_a_json([regimen_fiscal]),
                     "domicilio_fiscal_cp": domicilio_fiscal_cp,
 
                     "uso_cfdi_default": _to_str(row.get("uso_cfdi_default")),

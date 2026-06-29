@@ -281,6 +281,41 @@
   font-weight: 800;
 }
 
+
+.sale-note-totals {
+  width: min(42%, 280px);
+  margin: 8px 0 0 auto;
+  border: 1px solid #212529;
+  border-bottom: 0;
+}
+
+.sale-note-totals-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid #212529;
+  padding: 4px 6px;
+  font-size: .78rem;
+  line-height: 1.15;
+}
+
+.sale-note-totals-row span {
+  min-width: 45%;
+  text-align: right;
+}
+
+.sale-note-totals-row strong {
+  white-space: nowrap;
+}
+
+.sale-note-grand-total {
+  font-weight: 800;
+}
+
+.venta-cart-totals {
+  font-size: .95rem;
+}
+
 .sale-note-footer {
   display: flex;
   justify-content: space-between;

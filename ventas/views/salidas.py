@@ -7,6 +7,7 @@ from django.utils import timezone
 
 from accounts.decorators import permiso_requerido
 from catalogos.sat_catalogos import REGIMEN_FISCAL_CHOICES
+from catalogos.services.credito_clientes import total_detalles_venta
 from inventarios.models import SalidaInventario, SalidaInventarioDetalle
 from inventarios.services.folios import next_folio_movimiento
 from ventas.forms import SalidaInventarioDetalleForm, SalidaVentaForm
@@ -22,6 +23,7 @@ from ventas.services.impresion import get_nota_guardada_para_impresion
 from ventas.services.precios_cliente import get_precios_cliente_payload
 from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
 from ventas.services.venta_parser import VentaPostParser
+from ventas.services.comisiones import calcular_total_con_comision, get_porcentaje_comision_terminal
 
 
 @permiso_requerido("catalogos.view_clienteproductoprecio")
@@ -93,6 +95,7 @@ def _render_salida_venta_form(
         "almacenes": almacenes_qs,
         "almacen": almacen_default,
         "REGIMEN_FISCAL_CHOICES": REGIMEN_FISCAL_CHOICES,
+        "comision_terminal_porcentaje": get_porcentaje_comision_terminal(),
     }
 
     if nota_guardada is not None:
@@ -177,9 +180,15 @@ def salida_venta_create(request):
                 contexto_venta=contexto_venta,
             )
 
+        subtotal_venta = total_detalles_venta(resultado_parseo["detalles_validos"])
+        total_venta_validacion = calcular_total_con_comision(
+            subtotal_venta,
+            forma_pago=form.cleaned_data.get("forma_pago_venta"),
+        )
         venta_data = VentaOperacionData.from_form(
             form,
             request_context=VentaRequestContext.from_request(request),
+            total_venta_override=total_venta_validacion,
         )
         venta_service = VentaService(
             data=venta_data,
