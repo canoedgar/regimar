@@ -33,6 +33,12 @@ Prioridad: alta
 
 Impacto esperado: 70% -> 76%
 
+Documentos creados para esta fase:
+
+- [Reglas de capas](arquitectura/capas.md)
+- [Checklist SOLID](arquitectura/checklist_solid.md)
+- [Deuda tecnica SOLID](arquitectura/deuda_tecnica_solid.md)
+
 ### Acciones
 
 1. Definir una regla formal de capas en `docs/`:
@@ -358,6 +364,8 @@ Impacto esperado: habilita todas las fases
 
 ### Ticket 1 - Extraer entrada virtual de venta
 
+Estado: aplicado.
+
 Objetivo:
 Crear `EntradaVirtualVentaService` y usarlo desde creación y edición.
 
@@ -375,6 +383,8 @@ Resultado esperado:
 
 ### Ticket 2 - Extraer sincronización de pago terminal
 
+Estado: aplicado.
+
 Objetivo:
 Crear un servicio explícito para pago automático de venta terminal.
 
@@ -391,6 +401,8 @@ Resultado esperado:
 
 ### Ticket 3 - Crear orquestador `CrearNotaVentaUseCase`
 
+Estado: aplicado en modo compatibilidad. `VentaService.guardar()` delega en el use case; la vista podrá llamarlo directamente cuando la validación también quede separada.
+
 Objetivo:
 Reducir el tamaño y responsabilidades de `VentaService`.
 
@@ -404,7 +416,26 @@ Resultado esperado:
 - La vista llama un caso de uso.
 - Los servicios internos quedan enfocados.
 
+### Ticket 3.1 - Separar validación de venta
+
+Estado: aplicado en modo compatibilidad. `VentaService.validar_stock()` delega en `ValidarNotaVentaService`; la vista podrá usarlo directamente cuando retiremos el wrapper.
+
+Objetivo:
+Extraer validación de precio mínimo, crédito y stock físico a un servicio propio.
+
+Archivos objetivo:
+
+- `ventas/services/creacion.py`
+- nuevo: `ventas/services/validacion.py`
+
+Resultado esperado:
+
+- La validación queda reutilizable fuera de `VentaService`.
+- Se prepara el retiro gradual de `VentaService` como fachada temporal.
+
 ### Ticket 4 - Dividir `catalogos/views.py`
+
+Estado: aplicado en modo compatibilidad. `catalogos/views.py` queda como fachada y las implementaciones viven en módulos `catalogos/views_*.py`.
 
 Objetivo:
 Separar vistas por subdominio.
@@ -412,8 +443,8 @@ Separar vistas por subdominio.
 Archivos objetivo:
 
 - `catalogos/views.py`
-- nuevos módulos bajo `catalogos/views/`
-- `catalogos/urls.py`
+- nuevos módulos `catalogos/views_*.py`
+- `catalogos/views.py` como fachada compatible
 
 Resultado esperado:
 

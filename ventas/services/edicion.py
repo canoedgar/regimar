@@ -14,11 +14,11 @@ from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
 from ventas.services.venta_precio import VentaPrecioMinimoService
 from ventas.services.creacion import VentaService
 from ventas.services.comisiones import (
-    aplicar_comision_terminal,
     calcular_total_con_comision,
-    es_nota_terminal,
     get_subtotal_nota,
 )
+from ventas.services.inventario_virtual import EntradaVirtualVentaService
+from ventas.services.pagos import sincronizar_comision_y_pago_terminal
 from django.utils import timezone
 
 
@@ -27,21 +27,6 @@ def marcar_nota_editada(salida, user=None):
     salida.editada_por = user if getattr(user, "is_authenticated", False) else None
     salida.save(update_fields=["editada_en", "editada_por"])
 
-
-def sincronizar_comision_y_pago_terminal(salida, user=None):
-    aplicar_comision_terminal(salida)
-    if not es_nota_terminal(salida):
-        return None
-
-    from cartera.models import PagoMetodoDetalle
-    from cartera.services.cartera import sincronizar_pago_automatico_nota_pagada
-
-    return sincronizar_pago_automatico_nota_pagada(
-        salida,
-        usuario=user if getattr(user, "is_authenticated", False) else None,
-        metodo=PagoMetodoDetalle.METODO_TARJETA,
-        fecha_pago=salida.fecha,
-    )
 
 
 class EditarDatosNotaService:
@@ -363,23 +348,15 @@ class AgregarProductosNotaService:
                 cantidad=linea["cantidad"],
             )
 
-        venta_data = VentaOperacionData(
-            salida=self.salida,
-            cliente=self.salida.cliente_ref,
-            fecha=self.salida.fecha,
-            contexto=self.request_context,
-            validar_credito=False,
-        )
-        venta_service = VentaService(
-            data=venta_data,
-            detalles_validos=detalles_validos,
-            detalles_meta=detalles_meta,
-            lineas_stock=self.resultado_parseo["lineas_stock"],
-            almacenes_permitidos=self.almacenes_permitidos,
-        )
-
         requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
-        venta_service._registrar_entradas_virtuales(self.salida, requeridos_por_almacen)
+        EntradaVirtualVentaService(
+            detalles_validos=detalles_validos,
+            almacenes_permitidos=self.almacenes_permitidos,
+            usuario=self.user if getattr(self.user, "is_authenticated", False) else None,
+        ).registrar(
+            salida=self.salida,
+            requeridos_por_almacen=requeridos_por_almacen,
+        )
 
         for almacen_id, requeridos in requeridos_por_almacen.items():
             aplicar_movimientos_salida(almacen_id=almacen_id, requeridos=requeridos)

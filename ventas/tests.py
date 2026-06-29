@@ -31,6 +31,9 @@ from ventas.services.venta_credito import VentaCreditoService
 from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
 from ventas.services.venta_parser import VentaPostParser
 from ventas.services.venta_precio import VentaPrecioMinimoService
+from ventas.services.validacion import ValidarNotaVentaService
+from ventas.services.edicion import AgregarProductosNotaService
+from ventas.services.pagos import sincronizar_comision_y_pago_terminal
 from ventas.services.ventas import VentaService, es_almacen_venta_virtual
 
 
@@ -329,6 +332,77 @@ class VentaSelectorTests(VentasFactoryMixin, TestCase):
         self.assertTrue(any(conv["id"] != "default" for conv in producto_ui["conversiones"]))
 
 
+class VentaPagoTerminalTests(TestCase):
+    @patch("cartera.services.cartera.sincronizar_pago_automatico_nota_pagada")
+    @patch("ventas.services.pagos.aplicar_comision_terminal")
+    def test_sincroniza_pago_automatico_si_la_nota_es_terminal(self, aplicar_comision, sincronizar_pago):
+        nota = SimpleNamespace(forma_pago_venta="TERMINAL", fecha=date(2026, 1, 15))
+        usuario = SimpleNamespace(is_authenticated=True)
+        sincronizar_pago.return_value = object()
+
+        resultado = sincronizar_comision_y_pago_terminal(nota, usuario=usuario)
+
+        aplicar_comision.assert_called_once_with(nota)
+        sincronizar_pago.assert_called_once()
+        _, kwargs = sincronizar_pago.call_args
+        self.assertIs(kwargs["usuario"], usuario)
+        self.assertEqual(kwargs["metodo"], "TARJETA")
+        self.assertEqual(kwargs["fecha_pago"], nota.fecha)
+        self.assertIs(resultado, sincronizar_pago.return_value)
+
+    @patch("cartera.services.cartera.sincronizar_pago_automatico_nota_pagada")
+    @patch("ventas.services.pagos.aplicar_comision_terminal")
+    def test_sincroniza_pago_automatico_sin_usuario_no_autenticado(self, aplicar_comision, sincronizar_pago):
+        nota = SimpleNamespace(forma_pago_venta="TERMINAL", fecha=date(2026, 1, 15))
+        usuario = SimpleNamespace(is_authenticated=False)
+
+        sincronizar_comision_y_pago_terminal(nota, usuario=usuario)
+
+        _, kwargs = sincronizar_pago.call_args
+        self.assertIsNone(kwargs["usuario"])
+
+    @patch("cartera.services.cartera.sincronizar_pago_automatico_nota_pagada")
+    @patch("ventas.services.pagos.aplicar_comision_terminal")
+    def test_no_sincroniza_pago_automatico_si_la_nota_no_es_terminal(self, aplicar_comision, sincronizar_pago):
+        nota = SimpleNamespace(forma_pago_venta="CONTADO", fecha=date(2026, 1, 15))
+
+        resultado = sincronizar_comision_y_pago_terminal(nota, usuario=None)
+
+        aplicar_comision.assert_called_once_with(nota)
+        sincronizar_pago.assert_not_called()
+        self.assertIsNone(resultado)
+
+
+class ValidarNotaVentaServiceTests(VentasFactoryMixin, TestCase):
+    def test_validacion_reutilizable_omite_stock_para_almacen_virtual(self):
+        producto = self.crear_producto(nombre="Producto validación virtual")
+        almacen_virtual = self.crear_almacen_virtual(codigo="VVAL", nombre="Virtual validación")
+        detalle = self.crear_detalle_venta(producto=producto, cantidad="2.00", precio="100.00")
+        credito_service = Mock()
+        credito_service.validar.return_value = []
+        precio_service = Mock()
+        precio_service.validar_detalles.return_value = []
+
+        errores = ValidarNotaVentaService(
+            detalles_validos=[detalle],
+            lineas_stock=[
+                {
+                    "almacen": almacen_virtual,
+                    "producto": producto,
+                    "cantidad": D("2.00"),
+                    "item_index": 0,
+                }
+            ],
+            almacenes_permitidos={str(almacen_virtual.id): almacen_virtual},
+            credito_service=credito_service,
+            precio_service=precio_service,
+        ).validar()
+
+        self.assertEqual(errores, [])
+        credito_service.validar.assert_called_once_with([detalle])
+        precio_service.validar_detalles.assert_called_once()
+
+
 class VentaServiceTests(VentasFactoryMixin, TestCase):
     def test_es_almacen_venta_virtual_detecta_virtual_por_tipo_o_flag(self):
         fisico = self.crear_almacen(codigo="FIS", nombre="Físico")
@@ -401,6 +475,63 @@ class VentaServiceTests(VentasFactoryMixin, TestCase):
         self.assertEqual(entrada_virtual.tipo, EntradaInventario.TIPO_AJUSTE_POSITIVO)
         self.assertEqual(entrada_virtual.detalles.get().cantidad, D("5.00"))
         self.assertEqual(venta.detalles.get().cantidad, D("5.00"))
+        self.assertEqual(stock.cantidad, D("0.00"))
+        self.assertEqual(producto.stock, D("0.00"))
+
+    def test_agregar_producto_virtual_genera_entrada_y_salida_sin_stock_negativo(self):
+        class FormsetFake:
+            forms = []
+
+            def __init__(self, detalles):
+                self.detalles = detalles
+
+            def is_valid(self):
+                return True
+
+            def save(self, commit=False):
+                return self.detalles
+
+        producto = self.crear_producto(
+            nombre="Producto agregado virtual",
+            ultimo_costo_compra=D("11.00"),
+            costo_promedio=D("11.00"),
+        )
+        almacen_virtual = self.crear_almacen_virtual(codigo="VAGR", nombre="Virtual agregar")
+        salida = self.crear_salida_venta(folio="VTA-AGR-VIR-001", persistida=True)
+        detalle = self.crear_detalle_venta(producto=producto, cantidad="4.00", precio="100.00")
+
+        post = QueryDict("", mutable=True)
+        post.update({"nuevos-TOTAL_FORMS": "1", "nuevos-0-producto": str(producto.id)})
+        post.setlist("detalle_producto_id", [str(producto.id)])
+        post.setlist("detalle_presentacion_id", ["default"])
+        post.setlist("detalle_cantidad_presentacion", ["4.00"])
+        post.setlist("detalle_factor_conversion", ["1"])
+        post.setlist("detalle_presentacion_nombre", ["Kilos"])
+        post.setlist("detalle_metrica_default", ["kg"])
+        post.setlist("detalle_equivalencia_texto", ["1 Kilos = 1 kg"])
+        post.setlist("linea_producto_id", [str(producto.id)])
+        post.setlist("linea_almacen_id", [str(almacen_virtual.id)])
+        post.setlist("linea_cantidad", ["4.00"])
+        post.setlist("linea_item_index", ["0"])
+
+        service = AgregarProductosNotaService(
+            salida=salida,
+            formset=FormsetFake([detalle]),
+            almacenes_permitidos={str(almacen_virtual.id): almacen_virtual},
+            post_data=post,
+        )
+
+        self.assertEqual(service.validar(), [])
+        detalles = service.execute()
+
+        entrada_virtual = EntradaInventario.objects.get(documento_referencia=salida.folio)
+        stock = InventarioStock.objects.get(producto=producto, almacen=almacen_virtual)
+        producto.refresh_from_db()
+
+        self.assertEqual(len(detalles), 1)
+        self.assertEqual(entrada_virtual.tipo, EntradaInventario.TIPO_AJUSTE_POSITIVO)
+        self.assertEqual(entrada_virtual.detalles.get().cantidad, D("4.00"))
+        self.assertEqual(salida.detalles.get().cantidad, D("4.00"))
         self.assertEqual(stock.cantidad, D("0.00"))
         self.assertEqual(producto.stock, D("0.00"))
 
