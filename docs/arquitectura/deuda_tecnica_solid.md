@@ -6,12 +6,13 @@ Este documento registra puntos concretos que reducen el cumplimiento SOLID actua
 
 | Area | Riesgo principal | Principios afectados | Prioridad |
 |---|---|---|---|
-| Creacion de ventas | Servicio con demasiadas responsabilidades | SRP, OCP, DIP | Muy alta |
-| Edicion de ventas | Reutilizacion mediante metodo privado | SRP, OCP | Muy alta |
+| Creacion de ventas | Fachada compatible; use case con puertos basicos | SRP, OCP, DIP | Media |
+| Nota de venta vs inventario | Separacion fisica aplicada con compatibilidad legacy | SRP, DIP | Baja |
+| Edicion de ventas | Fachada compatible; use cases separados para datos, precios y productos | SRP, OCP | Media |
 | Catalogos views | Archivo monolitico con varios subdominios | SRP, ISP | Alta |
 | Cliente fiscal | Modelo con logica fiscal y servicios | SRP, DIP | Alta |
 | Dependencias entre apps | Acoplamiento directo entre dominios | DIP | Muy alta |
-| Vistas de flujos grandes | Orquestacion web con calculos de negocio | SRP | Media-alta |
+| Vistas de flujos grandes | Creacion/listado de ventas delegados a use case/selectors | SRP | Media |
 
 ## 1. `ventas/services/creacion.py`
 
@@ -29,7 +30,7 @@ Este documento registra puntos concretos que reducen el cumplimiento SOLID actua
 - comision por terminal,
 - sincronizacion de pago en cartera.
 
-Estado parcial: la comision y sincronizacion de pago terminal ya fueron extraidas a `ventas/services/pagos.py` en el Ticket 2 de Fase 2. La orquestacion de guardado fue movida a `ventas/use_cases/crear_nota_venta.py` en el Ticket 3 de Fase 2, manteniendo `VentaService.guardar()` como wrapper de compatibilidad. La validacion de precio, credito y stock fue extraida a `ventas/services/validacion.py`, manteniendo `VentaService.validar_stock()` como wrapper de compatibilidad.
+Estado parcial: la comision y sincronizacion de pago terminal viven en `ventas/services/pagos.py`; la orquestacion de guardado vive en `ventas/use_cases/crear_nota_venta.py`; la validacion de precio, credito y stock vive en `ventas/services/validacion.py`. `VentaService` se mantiene como wrapper de compatibilidad. `CrearNotaVentaUseCase` ya acepta puertos basicos para stock, precio cliente y pago terminal con adaptadores por defecto.
 
 ### Riesgo
 
@@ -52,7 +53,7 @@ Use case orquestador creado:
 
 ## 2. `ventas/services/edicion.py`
 
-Estado: resuelto en el Ticket 1 de Fase 2. La entrada virtual de venta vive ahora en `ventas/services/inventario_virtual.py` y edicion ya no llama metodos privados de `VentaService`.
+Estado: resuelto parcialmente. La entrada virtual de venta vive ahora en `ventas/services/inventario_virtual.py` y edicion ya no llama metodos privados de `VentaService`. Ademas, `ventas/services/edicion.py` quedo como fachada compatible que delega en `ventas/use_cases/editar_datos_nota.py`, `ventas/use_cases/ajustar_precios_nota.py` y `ventas/use_cases/agregar_productos_nota.py`.
 
 ### Problema original
 
@@ -73,9 +74,31 @@ Se extrajo la regla a:
 - `ventas/services/inventario_virtual.py`
 - clase: `EntradaVirtualVentaService`
 
-El servicio se usa desde creacion y edicion de ventas.
+El servicio se usa desde creacion y edicion de ventas. Queda como mejora futura aplicar los mismos puertos de stock/precio/pago dentro de los use cases de edicion.
 
-## 3. `catalogos/views.py`
+## 3. `ventas.models.NotaVenta` vs `inventarios.models.SalidaInventario`
+
+Estado: aplicado en modo compatibilidad. `NotaVenta` dejo de ser proxy de `SalidaInventario` y ahora es una entidad comercial fisica ligada uno-a-uno al movimiento fisico de inventario mediante `salida`.
+
+### Problema original
+
+La nota comercial heredaba fisicamente de la misma tabla de salidas de inventario. Eso mezclaba identidad comercial, cliente, pago, cancelacion e impresion con el documento operativo que descuenta stock.
+
+### Refactor aplicado
+
+Se creo tabla propia de ventas y migracion de datos:
+
+- `ventas.models.NotaVenta` conserva folio, cliente, pago, estado comercial, logo y metadatos de impresion.
+- `inventarios.models.SalidaInventario` queda como movimiento fisico.
+- Los detalles siguen en inventario y se acceden desde la nota a traves de `nota.salida.detalles`.
+- Carteras y autorizaciones apuntan a `ventas.NotaVenta`.
+- Se mantiene sincronizacion legacy hacia `SalidaInventario` para no romper reportes o integraciones que aun leen columnas antiguas.
+
+### Riesgo restante
+
+La compatibilidad legacy debe retirarse gradualmente cuando los reportes y flujos externos dejen de depender de campos comerciales en `SalidaInventario`.
+
+## 4. `catalogos/views.py`
 
 Estado: aplicado en modo compatibilidad. El archivo monolítico fue dividido en módulos `catalogos/views_*.py`; `catalogos/views.py` conserva imports públicos para no romper URLs ni imports históricos.
 
@@ -112,7 +135,7 @@ Se dividió en módulos compatibles con el archivo existente:
 
 `catalogos/views.py` se mantiene como fachada de compatibilidad durante la transición.
 
-## 4. `catalogos/models.py` - `Cliente`
+## 5. `catalogos/models.py` - `Cliente`
 
 ### Problema
 
@@ -135,7 +158,7 @@ Con funciones como:
 - `get_regimenes_fiscales_cliente(cliente)`
 - `display_regimenes_fiscales_cliente(cliente)`
 
-## 5. Dependencias cruzadas entre apps
+## 6. Dependencias cruzadas entre apps
 
 ### Problema
 
@@ -162,16 +185,17 @@ Introducir puertos internos:
 
 Implementar adaptadores concretos por app.
 
-## 6. Vistas de flujos grandes
+## 7. Vistas de flujos grandes
 
 ### Problema
 
 Algunas vistas aun calculan o coordinan demasiado:
 
-- `ventas/views/salidas.py`
 - `cartera/views.py`
 - `costos/views.py`
 - partes de `catalogos/views.py`
+
+Estado aplicado en ventas: `ventas/views/salidas.py` delega el POST a `CrearSalidaVentaWebUseCase`; `ventas/views/ventas.py` delega filtros, resumen y presentacion de almacen a `ventas/selectors/ventas.py`.
 
 ### Riesgo
 

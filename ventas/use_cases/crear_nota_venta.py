@@ -1,10 +1,11 @@
 from decimal import Decimal
 
-from catalogos.services.clientes_precios import registrar_ultimo_precio_cliente
 from inventarios.models import SalidaInventarioDetalleAlmacen
-from inventarios.services.stock import aplicar_movimientos_salida
+from ventas.models import NotaVenta
+from ventas.adapters.catalogos import CatalogosPrecioClienteAdapter
+from ventas.adapters.inventario import InventarioStockVentaAdapter
+from ventas.adapters.pagos import PagoTerminalVentaAdapter
 from ventas.services.inventario_virtual import EntradaVirtualVentaService
-from ventas.services.pagos import sincronizar_comision_y_pago_terminal
 
 
 class CrearNotaVentaUseCase:
@@ -19,6 +20,9 @@ class CrearNotaVentaUseCase:
         lineas_stock,
         almacenes_permitidos,
         credito_service,
+        stock_port=None,
+        precio_cliente_port=None,
+        pago_port=None,
     ):
         self.data = data
         self.detalles_validos = detalles_validos
@@ -26,6 +30,9 @@ class CrearNotaVentaUseCase:
         self.lineas_stock = lineas_stock or []
         self.almacenes_permitidos = almacenes_permitidos or {}
         self.credito_service = credito_service
+        self.stock_port = stock_port or InventarioStockVentaAdapter()
+        self.precio_cliente_port = precio_cliente_port or CatalogosPrecioClienteAdapter()
+        self.pago_port = pago_port or PagoTerminalVentaAdapter()
 
     def execute(self):
         requeridos_por_almacen = self._agrupar_requeridos_por_almacen()
@@ -36,7 +43,8 @@ class CrearNotaVentaUseCase:
 
         self._agregar_observacion_almacenes(salida)
         salida.save()
-        self.credito_service.marcar_usada(salida)
+        nota = self._crear_nota_comercial(salida)
+        self.credito_service.marcar_usada(nota)
 
         EntradaVirtualVentaService(
             detalles_validos=self.detalles_validos,
@@ -50,14 +58,38 @@ class CrearNotaVentaUseCase:
         detalles_por_index = self._guardar_detalles(salida)
         self._guardar_asignaciones(detalles_por_index)
         self._aplicar_salidas_inventario(requeridos_por_almacen)
-        self._registrar_ultimos_precios(salida, detalles_por_index)
+        self._registrar_ultimos_precios(nota, detalles_por_index)
 
-        sincronizar_comision_y_pago_terminal(
-            salida,
+        self.pago_port.sincronizar_terminal(
+            nota,
             usuario=self.data.contexto.usuario,
         )
 
-        return salida
+        return nota
+
+    def _crear_nota_comercial(self, salida):
+        return NotaVenta.objects.create(
+            salida=salida,
+            folio=salida.folio,
+            fecha=salida.fecha,
+            cliente=salida.cliente,
+            cliente_ref=salida.cliente_ref,
+            forma_pago_venta=salida.forma_pago_venta,
+            estado_pago=salida.estado_pago,
+            comision_terminal_porcentaje=salida.comision_terminal_porcentaje,
+            comision_terminal_monto=salida.comision_terminal_monto,
+            cliente_direccion=salida.cliente_direccion,
+            cliente_contacto=salida.cliente_contacto,
+            logo_nota=salida.logo_nota,
+            documento_referencia=salida.documento_referencia,
+            motivo=salida.motivo,
+            observaciones=salida.observaciones,
+            estado=salida.estado,
+            cancelada_en=salida.cancelada_en,
+            motivo_cancelacion=salida.motivo_cancelacion,
+            editada_en=salida.editada_en,
+            editada_por=salida.editada_por,
+        )
 
     def _agrupar_requeridos_por_almacen(self):
         requeridos = {}
@@ -163,7 +195,7 @@ class CrearNotaVentaUseCase:
 
     def _aplicar_salidas_inventario(self, requeridos_por_almacen):
         for almacen_id, requeridos in requeridos_por_almacen.items():
-            aplicar_movimientos_salida(
+            self.stock_port.aplicar_salidas(
                 almacen_id=almacen_id,
                 requeridos=requeridos,
             )
@@ -171,7 +203,7 @@ class CrearNotaVentaUseCase:
     def _registrar_ultimos_precios(self, salida, detalles_por_index):
         cliente = getattr(salida, "cliente_ref", None)
         for detalle in detalles_por_index.values():
-            registrar_ultimo_precio_cliente(
+            self.precio_cliente_port.registrar_ultimo_precio(
                 cliente=cliente,
                 producto=detalle.producto,
                 precio=detalle.precio_unitario,

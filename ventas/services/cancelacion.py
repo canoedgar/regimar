@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from django.utils import timezone
 
-from inventarios.models import SalidaInventario
+from ventas.models import NotaVenta
 from inventarios.services.stock import aplicar_movimiento_stock
 
 
@@ -15,7 +15,7 @@ class CancelarNotaVentaService:
 
     def validar(self):
         errores = []
-        if self.salida.estado == SalidaInventario.ESTADO_CANCELADA:
+        if self.salida.estado == NotaVenta.ESTADO_CANCELADA:
             errores.append(f"La nota {self.salida.folio} ya se encontraba cancelada.")
         if not self.motivo:
             errores.append("Captura el motivo de cancelación.")
@@ -33,7 +33,7 @@ class CancelarNotaVentaService:
                 delta=cantidad,
             )
 
-        self.salida.estado = SalidaInventario.ESTADO_CANCELADA
+        self.salida.estado = NotaVenta.ESTADO_CANCELADA
         self.salida.cancelada_en = timezone.now()
         self.salida.motivo_cancelacion = self.motivo
         self.salida.save(update_fields=["estado", "cancelada_en", "motivo_cancelacion"])

@@ -3,6 +3,7 @@ from django import forms
 from accounts.widgets import UniversalDateInput, UNIVERSAL_DATE_INPUT_FORMATS
 from catalogos.models import Cliente, Producto
 from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from ventas.models import NotaVenta
 
 
 class SalidaInventarioDetalleForm(forms.ModelForm):
@@ -108,7 +109,7 @@ class SalidaVentaEdicionForm(forms.ModelForm):
     """
 
     class Meta:
-        model = SalidaInventario
+        model = NotaVenta
         fields = [
             "fecha",
             "cliente_ref",
@@ -150,8 +151,8 @@ class SalidaVentaEdicionForm(forms.ModelForm):
             self.add_error("forma_pago_venta", "Selecciona la forma de pago.")
         if not cleaned.get("estado_pago"):
             self.add_error("estado_pago", "Selecciona el estado de pago.")
-        if cleaned.get("forma_pago_venta") == SalidaInventario.FORMA_PAGO_TERMINAL:
-            cleaned["estado_pago"] = SalidaInventario.ESTADO_PAGO_PAGADO
+        if cleaned.get("forma_pago_venta") == NotaVenta.FORMA_PAGO_TERMINAL:
+            cleaned["estado_pago"] = NotaVenta.ESTADO_PAGO_PAGADO
         if not cleaned.get("logo_nota"):
             self.add_error("logo_nota", "Selecciona el logo de la nota.")
         return cleaned

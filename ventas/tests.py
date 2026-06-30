@@ -3,6 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+from django.contrib.auth import get_user_model
 from django.http import QueryDict
 from django.test import TestCase
 from django.urls import reverse
@@ -136,24 +137,29 @@ class VentasFactoryMixin:
 
 
 class VentaModelProxyTests(VentasFactoryMixin, TestCase):
-    def test_nota_venta_proxy_usa_tabla_de_salida_inventario(self):
+    def test_nota_venta_fisica_crea_salida_inventario_ligada(self):
         nota = NotaVenta.objects.create(
-            folio="VTA-PROXY-001",
+            folio="VTA-FISICA-001",
             fecha=timezone.localdate(),
             tipo=SalidaInventario.TIPO_VENTA,
-            cliente="Cliente proxy",
+            cliente="Cliente físico",
         )
 
         self.assertEqual(nota.tipo, SalidaInventario.TIPO_VENTA)
-        self.assertTrue(NotaVenta._meta.proxy)
+        self.assertFalse(NotaVenta._meta.proxy)
         self.assertEqual(SalidaInventario.objects.filter(pk=nota.pk).count(), 1)
+        self.assertEqual(nota.salida.tipo, SalidaInventario.TIPO_VENTA)
 
     def test_nota_venta_detalle_proxy_usa_detalle_de_salida(self):
         producto = self.crear_producto(nombre="Producto proxy")
-        nota = self.crear_salida_venta(folio="VTA-PROXY-002", persistida=True)
+        nota = NotaVenta.objects.create(
+            folio="VTA-FISICA-002",
+            fecha=timezone.localdate(),
+            cliente="Cliente detalle",
+        )
 
         detalle = NotaVentaDetalle.objects.create(
-            salida=nota,
+            salida=nota.salida,
             producto=producto,
             cantidad=D("2.00"),
             precio_unitario=D("150.00"),
@@ -169,6 +175,58 @@ class VentaUrlsTests(TestCase):
         self.assertEqual(reverse("ventas_list"), "/ventas/")
         self.assertEqual(reverse("salida_venta_create"), "/ventas/nueva/")
         self.assertEqual(reverse("precios_cliente_api"), "/ventas/precios-cliente/")
+
+
+class SalidaVentaCreateViewTests(VentasFactoryMixin, TestCase):
+    def test_post_terminal_crea_nota_y_renderiza_impresion(self):
+        user = get_user_model().objects.create_superuser(
+            username="ventas-admin",
+            email="ventas-admin@example.com",
+            password="secret",
+        )
+        self.client.force_login(user)
+        cliente = self.crear_cliente(nombre="Cliente venta web")
+        producto = self.crear_producto(nombre="Producto venta web")
+        almacen = self.crear_almacen_virtual(codigo="WEBV", nombre="Virtual venta web")
+
+        response = self.client.post(reverse("salida_venta_create"), {
+            "folio": "VTA-WEB-001",
+            "fecha": timezone.localdate().isoformat(),
+            "cliente_ref": str(cliente.id),
+            "forma_pago_venta": SalidaInventario.FORMA_PAGO_TERMINAL,
+            "estado_pago": SalidaInventario.ESTADO_PAGO_PAGADO,
+            "cliente": cliente.nombre_fiscal,
+            "cliente_direccion": "",
+            "cliente_contacto": "",
+            "logo_nota": SalidaInventario.LOGO_CPC_ALIMENTOS,
+            "documento_referencia": "",
+            "motivo": "",
+            "observaciones": "",
+            "form-TOTAL_FORMS": "1",
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "form-0-producto": str(producto.id),
+            "form-0-cantidad": "2.00",
+            "form-0-precio_unitario": "50.00",
+            "detalle_producto_id": str(producto.id),
+            "detalle_presentacion_id": "default",
+            "detalle_cantidad_presentacion": "2.00",
+            "detalle_factor_conversion": "1",
+            "detalle_presentacion_nombre": "kg",
+            "detalle_metrica_default": "kg",
+            "detalle_equivalencia_texto": "1 kg = 1 kg",
+            "linea_producto_id": str(producto.id),
+            "linea_almacen_id": str(almacen.id),
+            "linea_cantidad": "2.00",
+            "linea_item_index": "0",
+        }, secure=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(NotaVenta.objects.count(), 1)
+        nota = NotaVenta.objects.get()
+        self.assertEqual(nota.folio, "VTA-WEB-001")
+        self.assertEqual(nota.salida.detalles.count(), 1)
 
 
 class SalidaVentaFormTests(VentasFactoryMixin, TestCase):

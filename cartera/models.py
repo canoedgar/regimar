@@ -141,7 +141,6 @@ class PagoAplicacionNota(models.Model):
         "ventas.NotaVenta",
         on_delete=models.PROTECT,
         related_name="aplicaciones_cartera",
-        limit_choices_to={"tipo": "VTA"},
     )
     monto_aplicado = models.DecimalField(max_digits=14, decimal_places=2)
     saldo_antes = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)

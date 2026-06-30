@@ -6,7 +6,8 @@ from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Sum, 
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 
-from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from inventarios.models import SalidaInventarioDetalle
+from ventas.models import NotaVenta
 from ventas.services.comisiones import MONEY_FIELD, total_importe_con_comision_expr
 
 
@@ -29,7 +30,7 @@ def importe_linea_expr(prefix=""):
 
 def importe_detalles_expr():
     """Misma regla anterior, aplicada desde SalidaInventario hacia sus detalles."""
-    return importe_linea_expr("detalles__")
+    return importe_linea_expr("salida__detalles__")
 
 
 def parse_nota_ids(*, pk=None, raw_ids=""):
@@ -44,17 +45,17 @@ def get_nota_guardada_para_impresion(pk):
     Evita mostrar totales en cero o calculados con presentación.
     """
     return (
-        SalidaInventario.objects
-        .filter(pk=pk, tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen", "cliente_ref", "almacen_origen", "almacen_destino", "registrado_por")
+        NotaVenta.objects
+        .filter(pk=pk)
+        .select_related("salida", "salida__almacen", "cliente_ref")
         .annotate(
-            total_cantidad=Sum("detalles__cantidad"),
+            total_cantidad=Sum("salida__detalles__cantidad"),
             subtotal_importe=Coalesce(Sum(importe_detalles_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
         .annotate(total_importe=total_importe_con_comision_expr())
         .prefetch_related(
             Prefetch(
-                "detalles",
+                "salida__detalles",
                 queryset=(
                     SalidaInventarioDetalle.objects
                     .select_related("producto", "almacen")
@@ -70,17 +71,17 @@ def get_nota_guardada_para_impresion(pk):
 
 def get_notas_para_impresion(ids):
     return (
-        SalidaInventario.objects
-        .filter(id__in=ids, tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen", "cliente_ref")
+        NotaVenta.objects
+        .filter(pk__in=ids)
+        .select_related("salida", "salida__almacen", "cliente_ref")
         .annotate(
-            total_cantidad=Sum("detalles__cantidad"),
+            total_cantidad=Sum("salida__detalles__cantidad"),
             subtotal_importe=Coalesce(Sum(importe_detalles_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
         .annotate(total_importe=total_importe_con_comision_expr())
         .prefetch_related(
             Prefetch(
-                "detalles",
+                "salida__detalles",
                 queryset=(
                     SalidaInventarioDetalle.objects
                     .select_related("producto", "almacen")

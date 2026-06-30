@@ -10,7 +10,7 @@ from cartera.models import ClienteSaldoFavorMovimiento, PagoAplicacionNota, Pago
 MONEY_FIELD = DecimalField(max_digits=14, decimal_places=2)
 
 
-def expresion_total_nota(prefix="detalles__"):
+def expresion_total_nota(prefix="salida__detalles__"):
     """
     Importe de una nota de venta.
 
@@ -77,9 +77,7 @@ def get_notas_venta_con_totales():
     )
 
     return (
-        NotaVenta.objects.filter(
-            tipo=NotaVenta.TIPO_VENTA,
-            estado=NotaVenta.ESTADO_ACTIVA,
+        NotaVenta.objects.filter(            estado=NotaVenta.ESTADO_ACTIVA,
             estado_pago__in=[
                 NotaVenta.ESTADO_PAGO_PENDIENTE,
                 getattr(NotaVenta, "ESTADO_PAGO_PARCIAL", "PARC"),
@@ -101,7 +99,7 @@ def get_notas_con_saldo_pendiente(cliente):
     return (
         get_notas_venta_con_totales()
         .filter(cliente_ref=cliente, saldo_pendiente__gt=0)
-        .order_by("fecha", "folio", "id")
+        .order_by("fecha", "folio", "salida_id")
     )
 
 

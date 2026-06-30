@@ -13,8 +13,8 @@ from ..models import (
 )
 from ..utils import decimal_or_default as _to_decimal
 from .folios import folio_reversa_unico
-from .bitacora import registrar_bitacora_precio_inventario
-from .costos import aplicar_entrada_con_costo, recalcular_costo_promedio_producto
+from .afectaciones import AfectacionInventarioService
+from .costos import recalcular_costo_promedio_producto
 from .stock import aplicar_movimiento_stock
 
 
@@ -36,6 +36,7 @@ class ReversaInventarioService:
 
     def __init__(self, *, usuario=None):
         self.usuario = usuario if getattr(usuario, "is_authenticated", False) else None
+        self.afectacion = AfectacionInventarioService(usuario=self.usuario)
 
     @staticmethod
     def marcador_reversa_entrada_manual(entrada_id):
@@ -283,15 +284,12 @@ class ReversaInventarioService:
             costo_unitario=costo_reversa,
             costo_total=cantidad * costo_reversa,
         )
-        aplicar_entrada_con_costo(
+        self.afectacion.entrada_con_costo(
             producto_id=detalle.producto_id,
             almacen_id=almacen.id,
             cantidad=cantidad,
             costo_unitario=costo_reversa,
-        )
-        registrar_bitacora_precio_inventario(
             producto=detalle.producto,
-            usuario=self.usuario,
             motivo="Reversa de ajuste negativo de inventario",
         )
 

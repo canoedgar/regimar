@@ -358,7 +358,8 @@ Impacto esperado: habilita todas las fases
 7. Sacar lógica fiscal pesada de `Cliente`.
 8. Introducir puertos para pagos, crédito, stock y notificaciones.
 9. Convertir reglas variables a estrategias.
-10. Reforzar pruebas por cada extracción.
+10. Separar fisicamente `NotaVenta` de `SalidaInventario`.
+11. Reforzar pruebas por cada extracción.
 
 ## Backlog inicial sugerido
 
@@ -432,6 +433,84 @@ Resultado esperado:
 
 - La validación queda reutilizable fuera de `VentaService`.
 - Se prepara el retiro gradual de `VentaService` como fachada temporal.
+
+
+### Ticket 3.2 - Delegar creación web de venta
+
+Estado: aplicado. `ventas/views/salidas.py` delega la interpretación del POST y la creación de la nota en `ventas/use_cases/crear_salida_venta_web.py`.
+
+Resultado esperado:
+
+- La vista solo coordina HTTP, formularios, mensajes y render.
+- El parsing, cálculo de total para validación y persistencia quedan fuera de la vista.
+
+### Ticket 3.3 - Separar edición de notas de venta
+
+Estado: aplicado en modo compatibilidad. `ventas/services/edicion.py` conserva las clases públicas, pero delega en use cases específicos.
+
+Archivos creados:
+
+- `ventas/use_cases/editar_datos_nota.py`
+- `ventas/use_cases/ajustar_precios_nota.py`
+- `ventas/use_cases/agregar_productos_nota.py`
+- `ventas/services/marcado.py`
+
+Resultado esperado:
+
+- Menos razones de cambio en `ventas/services/edicion.py`.
+- Los flujos de datos, precios y productos pueden evolucionar por separado.
+
+### Ticket 3.4 - Introducir puertos básicos de venta
+
+Estado: aplicado parcialmente. `CrearNotaVentaUseCase` acepta puertos para stock, precio cliente y pago terminal, con adaptadores por defecto.
+
+Archivos creados:
+
+- `ventas/ports.py`
+- `ventas/adapters/inventario.py`
+- `ventas/adapters/catalogos.py`
+- `ventas/adapters/pagos.py`
+
+Resultado esperado:
+
+- La creación de ventas empieza a depender de contratos sustituibles.
+- Las pruebas futuras podrán inyectar fakes sin tocar inventarios, catálogo o cartera.
+
+### Ticket 3.5 - Mover consultas del listado de ventas a selectors
+
+Estado: aplicado. `ventas/views/ventas.py` delega filtros, agregados, paginación y display de almacén a `ventas/selectors/ventas.py`.
+
+Resultado esperado:
+
+- La vista del listado queda enfocada en renderizar.
+- Las consultas complejas quedan en la capa de lectura.
+
+### Ticket 3.6 - Aislar afectaciones de inventario
+
+Estado: aplicado parcialmente. `inventarios/services/afectaciones.py` centraliza operaciones de stock, costo y bitácora usadas por ajustes y reversas.
+
+Resultado esperado:
+
+- `AjusteInventarioService` y `ReversaInventarioService` reducen dependencias concretas directas.
+- La política de afectación de stock/costo queda en un colaborador pequeño.
+
+### Ticket 3.7 - Separar fisicamente `NotaVenta` de `SalidaInventario`
+
+Estado: aplicado en modo compatibilidad. `ventas.NotaVenta` ahora tiene tabla propia y una relacion uno-a-uno con `inventarios.SalidaInventario`, que queda como movimiento fisico de stock.
+
+Archivos principales:
+
+- `ventas/models.py`
+- `ventas/migrations/0002_notaventa_fisica.py`
+- `cartera/migrations/0005_notaventa_fisica_fk.py`
+- `catalogos/migrations/0027_notaventa_fisica_fk.py`
+- selectors, forms, services y vistas de `ventas`/`cartera`
+
+Resultado esperado:
+
+- La venta comercial puede evolucionar sin modificar el modelo operativo de inventario.
+- Cartera y autorizaciones referencian la entidad comercial correcta.
+- Se conserva sincronizacion legacy mientras se retiran dependencias antiguas sobre columnas comerciales de `SalidaInventario`.
 
 ### Ticket 4 - Dividir `catalogos/views.py`
 

@@ -66,8 +66,6 @@ def actualizar_estado_pago_nota(nota):
 
 
 def _validar_nota_pago_automatico(nota):
-    if nota.tipo != NotaVenta.TIPO_VENTA:
-        raise ValidationError("Solo se pueden registrar pagos automáticos de notas de venta.")
     if not nota.cliente_ref_id:
         raise ValidationError("La nota debe tener cliente de catálogo para registrar pago automático.")
 
@@ -228,16 +226,14 @@ def registrar_pago_fifo(cliente, monto_recibido, metodos, usuario=None, referenc
     restante = monto_recibido
     notas = (
         NotaVenta.objects.select_for_update()
-        .filter(
-            tipo=NotaVenta.TIPO_VENTA,
-            estado=NotaVenta.ESTADO_ACTIVA,
+        .filter(            estado=NotaVenta.ESTADO_ACTIVA,
             cliente_ref=cliente,
             estado_pago__in=[
                 NotaVenta.ESTADO_PAGO_PENDIENTE,
                 getattr(NotaVenta, "ESTADO_PAGO_PARCIAL", "PARC"),
             ],
         )
-        .order_by("fecha", "folio", "id")
+        .order_by("fecha", "folio", "salida_id")
     )
 
     for nota in notas:
@@ -299,8 +295,6 @@ def aplicar_saldo_favor_a_nota(cliente, nota, monto, usuario=None, referencia=""
     monto = _money(monto)
     if monto <= 0:
         raise ValidationError("El monto a aplicar debe ser mayor a cero.")
-    if nota.tipo != NotaVenta.TIPO_VENTA:
-        raise ValidationError("Solo se puede aplicar saldo a favor a notas de venta.")
     if nota.estado != NotaVenta.ESTADO_ACTIVA:
         raise ValidationError("Solo se puede aplicar saldo a favor a notas activas.")
     if nota.cliente_ref_id != cliente.id:

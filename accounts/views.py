@@ -172,12 +172,13 @@ def home(request):
 
     if dashboard_permisos["ventas_ver"]:
         ventas_activas = NotaVenta.objects.filter(
-            tipo=NotaVenta.TIPO_VENTA,
             estado=NotaVenta.ESTADO_ACTIVA,
             fecha__gte=fecha_inicio,
             fecha__lte=fecha_fin,
         )
-        detalles_venta = NotaVentaDetalle.objects.filter(salida__in=ventas_activas)
+        detalles_venta = NotaVentaDetalle.objects.filter(
+            salida_id__in=ventas_activas.values("salida_id"),
+        )
 
         resumen = detalles_venta.aggregate(
             kilos=Coalesce(Sum("cantidad"), Value(ZERO), output_field=DecimalField(max_digits=16, decimal_places=2)),
@@ -230,9 +231,9 @@ def home(request):
         if dashboard_permisos["clientes_ver"]:
             clientes_qs = (
                 detalles_venta.values(
-                    "salida__cliente",
-                    "salida__cliente_ref__nombre_fiscal",
-                    "salida__cliente_ref__nombre_comercial",
+                    "salida__nota_venta__cliente",
+                    "salida__nota_venta__cliente_ref__nombre_fiscal",
+                    "salida__nota_venta__cliente_ref__nombre_comercial",
                 )
                 .annotate(
                     notas=Count("salida", distinct=True),
@@ -244,7 +245,7 @@ def home(request):
             )
             mejores_clientes = []
             for item in clientes_qs:
-                nombre = item["salida__cliente_ref__nombre_comercial"] or item["salida__cliente_ref__nombre_fiscal"] or item["salida__cliente"] or "Cliente sin nombre"
+                nombre = item["salida__nota_venta__cliente_ref__nombre_comercial"] or item["salida__nota_venta__cliente_ref__nombre_fiscal"] or item["salida__nota_venta__cliente"] or "Cliente sin nombre"
                 venta = _money(item["venta"])
                 utilidad = _money(item["utilidad"])
                 mejores_clientes.append({
@@ -259,7 +260,7 @@ def home(request):
 
         if dashboard_permisos["cartera_ver"]:
             ventas_credito = ventas_activas.filter(forma_pago_venta=NotaVenta.FORMA_PAGO_CREDITO)
-            credito_ids = list(ventas_credito.values_list("id", flat=True))
+            credito_ids = list(ventas_credito.values_list("salida_id", flat=True))
             credito_resumen = NotaVentaDetalle.objects.filter(salida_id__in=credito_ids).aggregate(
                 total=Coalesce(Sum(_venta_expr()), Value(ZERO), output_field=DecimalField(max_digits=16, decimal_places=2))
             )
@@ -267,13 +268,12 @@ def home(request):
             ejecutivo["credito_total"] = _money(credito_resumen["total"])
 
         operativo["ventas_hoy"] = NotaVenta.objects.filter(
-            tipo=NotaVenta.TIPO_VENTA,
             estado=NotaVenta.ESTADO_ACTIVA,
             fecha=hoy,
         ).count()
         operativo["ultimas_salidas"] = (
-            NotaVenta.objects.filter(tipo=NotaVenta.TIPO_VENTA)
-            .select_related("cliente_ref", "almacen")
+            NotaVenta.objects
+            .select_related("cliente_ref", "salida__almacen")
             .order_by("-fecha", "-folio")[:5]
         )
 

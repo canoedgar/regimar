@@ -244,9 +244,7 @@ def pago_nota_create(request, nota_id):
 
     nota = get_object_or_404(
         NotaVenta.objects.select_related("cliente_ref"),
-        pk=nota_id,
-        tipo=NotaVenta.TIPO_VENTA,
-        estado=NotaVenta.ESTADO_ACTIVA,
+        pk=nota_id,        estado=NotaVenta.ESTADO_ACTIVA,
     )
     if not nota.cliente_ref_id:
         messages.error(request, "La nota no tiene cliente de catálogo asignado.")
@@ -537,9 +535,7 @@ def aplicar_saldo_favor(request, cliente_id):
         nota_seleccionada = get_object_or_404(
             NotaVenta.objects.select_related("cliente_ref"),
             pk=nota_id,
-            cliente_ref=cliente,
-            tipo=NotaVenta.TIPO_VENTA,
-            estado=NotaVenta.ESTADO_ACTIVA,
+            cliente_ref=cliente,            estado=NotaVenta.ESTADO_ACTIVA,
         )
         nota_saldo_pendiente = get_saldo_pendiente_nota(nota_seleccionada)
 
@@ -549,9 +545,7 @@ def aplicar_saldo_favor(request, cliente_id):
             nota = get_object_or_404(
                 NotaVenta.objects.select_related("cliente_ref"),
                 pk=form.cleaned_data["nota_id"],
-                cliente_ref=cliente,
-                tipo=NotaVenta.TIPO_VENTA,
-                estado=NotaVenta.ESTADO_ACTIVA,
+                cliente_ref=cliente,                estado=NotaVenta.ESTADO_ACTIVA,
             )
             try:
                 aplicar_saldo_favor_a_nota(

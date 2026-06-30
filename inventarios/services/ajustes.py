@@ -8,9 +8,8 @@ from catalogos.models import Producto
 from ..models import EntradaInventario, EntradaInventarioDetalle, InventarioStock, SalidaInventario, SalidaInventarioDetalle
 from ..utils import decimal_or_default as _to_decimal, decimal_text as _decimal_texto
 from .conversiones import normalizar_captura_entrada
-from .bitacora import registrar_bitacora_precio_inventario
-from .costos import aplicar_entrada_con_costo, costo_promedio_almacen, recalcular_costo_promedio_producto
-from .stock import aplicar_movimiento_stock
+from .afectaciones import AfectacionInventarioService
+from .costos import costo_promedio_almacen
 
 
 TIPO_AJUSTE_POSITIVO = "POS"
@@ -33,6 +32,7 @@ class AjusteInventarioService:
 
     def __init__(self, *, usuario=None):
         self.usuario = usuario if getattr(usuario, "is_authenticated", False) else None
+        self.afectacion = AfectacionInventarioService(usuario=self.usuario)
 
     def aplicar(self, *, data, almacen, conversion_id_raw="") -> AjusteInventarioResultado:
         folio = data["folio"]
@@ -174,15 +174,12 @@ class AjusteInventarioService:
             costo_total=cantidad * precio_unitario,
         )
 
-        aplicar_entrada_con_costo(
+        self.afectacion.entrada_con_costo(
             producto_id=producto.pk,
             almacen_id=almacen.id,
             cantidad=cantidad,
             costo_unitario=precio_unitario,
-        )
-        registrar_bitacora_precio_inventario(
             producto=producto,
-            usuario=self.usuario,
             motivo="Ajuste positivo de inventario",
         )
 
@@ -224,15 +221,11 @@ class AjusteInventarioService:
             costo_unitario_aplicado=getattr(producto, "costo_promedio", 0) or 0,
         )
 
-        aplicar_movimiento_stock(
+        self.afectacion.salida_con_recalculo(
             producto_id=producto.pk,
             almacen_id=almacen.id,
-            delta=-cantidad,
-        )
-        recalcular_costo_promedio_producto(producto.pk)
-        registrar_bitacora_precio_inventario(
+            cantidad=cantidad,
             producto=producto,
-            usuario=self.usuario,
             motivo="Ajuste negativo de inventario",
         )
 

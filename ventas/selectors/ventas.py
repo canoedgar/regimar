@@ -1,5 +1,15 @@
 from decimal import Decimal
 
+from django.core.paginator import Paginator
+from django.db.models import Count, Prefetch, Q, Sum, Value
+from django.db.models.functions import Coalesce
+from django.utils import timezone
+
+from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from ventas.models import NotaVenta
+from ventas.services.comisiones import MONEY_FIELD, total_importe_con_comision_expr
+from ventas.services.impresion import importe_detalles_expr, importe_linea_expr
+
 from catalogos.models import Almacen, Cliente, ClienteProductoPrecio, Producto
 from inventarios.models import InventarioStock
 from inventarios.utils import (
@@ -202,4 +212,153 @@ def get_contexto_salida_venta():
         "clientes": clientes,
         "almacenes_qs": almacenes_qs,
         "almacen_default": almacen_default,
+    }
+
+def _detalle_venta_filtrado_qs(request):
+    qs = (
+        SalidaInventarioDetalle.objects
+        .select_related("producto", "almacen")
+        .prefetch_related("asignaciones__almacen")
+        .annotate(importe=importe_linea_expr())
+        .order_by("id")
+    )
+
+    producto_id = (request.GET.get("producto") or "").strip()
+    presentacion = (request.GET.get("presentacion") or "").strip()
+    almacen_id = (request.GET.get("almacen") or "").strip()
+
+    if producto_id.isdigit():
+        qs = qs.filter(producto_id=int(producto_id))
+    if presentacion:
+        qs = qs.filter(presentacion_nombre__icontains=presentacion)
+    if almacen_id.isdigit():
+        qs = qs.filter(
+            Q(almacen_id=int(almacen_id))
+            | Q(asignaciones__almacen_id=int(almacen_id))
+            | Q(salida__almacen_id=int(almacen_id))
+        ).distinct()
+
+    return qs
+
+
+def _ventas_filtradas_qs(request):
+    ventas = (
+        NotaVenta.objects
+        .select_related("salida", "salida__almacen", "cliente_ref")
+        .order_by("-fecha", "-folio")
+    )
+
+    folio = (request.GET.get("folio") or "").strip()
+    cliente = (request.GET.get("cliente") or "").strip()
+    fecha_inicio = (request.GET.get("fecha_inicio") or "").strip()
+    fecha_fin = (request.GET.get("fecha_fin") or "").strip()
+    estado = (request.GET.get("estado") or "").strip()
+    estado_pago = (request.GET.get("estado_pago") or "").strip()
+    producto_id = (request.GET.get("producto") or "").strip()
+    almacen_id = (request.GET.get("almacen") or "").strip()
+    presentacion = (request.GET.get("presentacion") or "").strip()
+
+    if not request.GET:
+        hoy = timezone.localdate().isoformat()
+        fecha_inicio = hoy
+        fecha_fin = hoy
+
+    if folio:
+        ventas = ventas.filter(folio__icontains=folio)
+    if cliente:
+        ventas = ventas.filter(cliente__icontains=cliente)
+    if fecha_inicio:
+        ventas = ventas.filter(fecha__gte=fecha_inicio)
+    if fecha_fin:
+        ventas = ventas.filter(fecha__lte=fecha_fin)
+    if estado in dict(NotaVenta.ESTADO_CHOICES):
+        ventas = ventas.filter(estado=estado)
+    if estado_pago in dict(NotaVenta.ESTADO_PAGO_CHOICES):
+        ventas = ventas.filter(estado_pago=estado_pago)
+    if producto_id.isdigit():
+        ventas = ventas.filter(salida__detalles__producto_id=int(producto_id))
+    if almacen_id.isdigit():
+        ventas = ventas.filter(
+            Q(salida__almacen_id=int(almacen_id))
+            | Q(salida__detalles__almacen_id=int(almacen_id))
+            | Q(salida__detalles__asignaciones__almacen_id=int(almacen_id))
+        )
+    if presentacion:
+        ventas = ventas.filter(salida__detalles__presentacion_nombre__icontains=presentacion)
+
+    filtros = request.GET.copy()
+    if not request.GET:
+        filtros["fecha_inicio"] = fecha_inicio
+        filtros["fecha_fin"] = fecha_fin
+
+    return ventas, filtros
+
+
+def _marcar_almacen_display(page_obj):
+    for venta in page_obj.object_list:
+        venta.detalles_filtrados = getattr(getattr(venta, "salida", None), "detalles_filtrados", [])
+        almacenes_por_id = {}
+        if getattr(venta, "almacen_id", None) and getattr(venta, "almacen", None):
+            almacenes_por_id[venta.almacen_id] = venta.almacen
+
+        for detalle in getattr(venta, "detalles_filtrados", []):
+            if getattr(detalle, "almacen_id", None) and getattr(detalle, "almacen", None):
+                almacenes_por_id[detalle.almacen_id] = detalle.almacen
+            for asignacion in getattr(detalle, "asignaciones", []).all():
+                if getattr(asignacion, "almacen_id", None) and getattr(asignacion, "almacen", None):
+                    almacenes_por_id[asignacion.almacen_id] = asignacion.almacen
+
+        almacenes_unicos = list(almacenes_por_id.values())
+        venta.almacen_es_multiple = len(almacenes_unicos) > 1
+        venta.almacen_codigo_display = almacenes_unicos[0].codigo if len(almacenes_unicos) == 1 else ""
+        venta.almacen_nombre_display = almacenes_unicos[0].nombre if len(almacenes_unicos) == 1 else ""
+
+
+def get_ventas_list_context(request):
+    ventas, filtros = _ventas_filtradas_qs(request)
+    ventas = ventas.distinct().annotate(
+        total_cantidad=Sum("salida__detalles__cantidad"),
+        subtotal_importe=Coalesce(
+            Sum(importe_detalles_expr()),
+            Value(Decimal("0.00"), output_field=MONEY_FIELD),
+        ),
+        num_detalle_almacenes=Count("salida__detalles__almacen", distinct=True),
+        num_asignacion_almacenes=Count("salida__detalles__asignaciones__almacen", distinct=True),
+    ).annotate(total_importe=total_importe_con_comision_expr())
+
+    ventas_activas_ids = list(
+        ventas.exclude(estado=NotaVenta.ESTADO_CANCELADA)
+        .values_list("salida_id", flat=True)
+    )
+    resumen = SalidaInventarioDetalle.objects.filter(salida_id__in=ventas_activas_ids).aggregate(
+        total_cantidad=Sum("cantidad"),
+        subtotal_notas=Sum(importe_linea_expr()),
+    )
+    resumen_comisiones = NotaVenta.objects.filter(pk__in=ventas_activas_ids).aggregate(
+        total_comisiones=Sum("comision_terminal_monto"),
+    )
+
+    ventas = ventas.prefetch_related(
+        Prefetch("salida__detalles", queryset=_detalle_venta_filtrado_qs(request), to_attr="detalles_filtrados")
+    )
+    page_obj = Paginator(ventas, 25).get_page(request.GET.get("page"))
+    _marcar_almacen_display(page_obj)
+
+    querystring = filtros.copy()
+    querystring.pop("page", None)
+    total_notas = (resumen["subtotal_notas"] or Decimal("0")) + (
+        resumen_comisiones["total_comisiones"] or Decimal("0")
+    )
+
+    return {
+        "page_obj": page_obj,
+        "ventas": page_obj.object_list,
+        "productos": Producto.objects.all().order_by("nombre"),
+        "almacenes": Almacen.objects.filter(es_activo=True).order_by("tipo", "nombre"),
+        "estado_choices": NotaVenta.ESTADO_CHOICES,
+        "estado_pago_choices": NotaVenta.ESTADO_PAGO_CHOICES,
+        "filtros": filtros,
+        "querystring": querystring.urlencode(),
+        "total_notas": total_notas,
+        "total_cantidad": resumen["total_cantidad"] or Decimal("0"),
     }

@@ -4,7 +4,8 @@ from django.db.models import DecimalField, ExpressionWrapper, F, Prefetch, Sum, 
 from django.db.models.functions import Coalesce
 
 from catalogos.models import Cliente, Producto
-from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from inventarios.models import SalidaInventarioDetalle
+from ventas.models import NotaVenta
 from ventas.selectors.ventas import get_contexto_salida_venta
 from ventas.services.comisiones import MONEY_FIELD, total_importe_con_comision_expr
 
@@ -18,7 +19,7 @@ def importe_detalle_expr():
 
 def importe_salida_expr():
     return ExpressionWrapper(
-        F("detalles__cantidad") * F("detalles__precio_unitario"),
+        F("salida__detalles__cantidad") * F("salida__detalles__precio_unitario"),
         output_field=DecimalField(max_digits=14, decimal_places=2),
     )
 
@@ -34,16 +35,16 @@ def detalles_nota_qs():
 
 
 def get_nota_venta(pk, *, for_update=False):
-    qs = SalidaInventario.objects
+    qs = NotaVenta.objects
     if for_update:
         qs = qs.select_for_update()
 
     return (
-        qs.filter(pk=pk, tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen", "cliente_ref", "editada_por")
-        .prefetch_related(Prefetch("detalles", queryset=detalles_nota_qs()))
+        qs.filter(pk=pk)
+        .select_related("salida", "salida__almacen", "cliente_ref", "editada_por")
+        .prefetch_related(Prefetch("salida__detalles", queryset=detalles_nota_qs()))
         .annotate(
-            total_cantidad=Sum("detalles__cantidad"),
+            total_cantidad=Sum("salida__detalles__cantidad"),
             subtotal_importe=Coalesce(Sum(importe_salida_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
         .annotate(total_importe=total_importe_con_comision_expr())
@@ -52,15 +53,15 @@ def get_nota_venta(pk, *, for_update=False):
 
 
 def get_nota_venta_qs_for_404(pk, *, for_update=False):
-    qs = SalidaInventario.objects
+    qs = NotaVenta.objects
     if for_update:
         qs = qs.select_for_update()
     return (
-        qs.filter(pk=pk, tipo=SalidaInventario.TIPO_VENTA)
-        .select_related("almacen", "cliente_ref", "editada_por")
-        .prefetch_related(Prefetch("detalles", queryset=detalles_nota_qs()))
+        qs.filter(pk=pk)
+        .select_related("salida", "salida__almacen", "cliente_ref", "editada_por")
+        .prefetch_related(Prefetch("salida__detalles", queryset=detalles_nota_qs()))
         .annotate(
-            total_cantidad=Sum("detalles__cantidad"),
+            total_cantidad=Sum("salida__detalles__cantidad"),
             subtotal_importe=Coalesce(Sum(importe_salida_expr()), Value(Decimal("0.00"), output_field=MONEY_FIELD)),
         )
         .annotate(total_importe=total_importe_con_comision_expr())

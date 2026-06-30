@@ -7,7 +7,6 @@ from django.utils import timezone
 
 from accounts.decorators import permiso_requerido
 from catalogos.sat_catalogos import REGIMEN_FISCAL_CHOICES
-from catalogos.services.credito_clientes import total_detalles_venta
 from inventarios.models import SalidaInventario, SalidaInventarioDetalle
 from inventarios.services.folios import next_folio_movimiento
 from ventas.forms import SalidaInventarioDetalleForm, SalidaVentaForm
@@ -18,12 +17,11 @@ from ventas.services.autorizaciones import (
     get_autorizacion_precio_queryset,
     resolver_autorizacion_credito,
 )
-from ventas.services.creacion import VentaService
 from ventas.services.impresion import get_nota_guardada_para_impresion
 from ventas.services.precios_cliente import get_precios_cliente_payload
-from ventas.services.venta_data import VentaOperacionData, VentaRequestContext
-from ventas.services.venta_parser import VentaPostParser
-from ventas.services.comisiones import calcular_total_con_comision, get_porcentaje_comision_terminal
+from ventas.services.venta_data import VentaRequestContext
+from ventas.services.comisiones import get_porcentaje_comision_terminal
+from ventas.use_cases.crear_salida_venta_web import CrearSalidaVentaWebUseCase
 
 
 @permiso_requerido("catalogos.view_clienteproductoprecio")
@@ -145,63 +143,20 @@ def salida_venta_create(request):
             queryset=SalidaInventarioDetalle.objects.none(),
         )
 
-        if not form.is_valid() or not formset.is_valid():
-            messages.error(request, "Revisa los datos. Hay campos inválidos.")
-
-            return _render_salida_venta_desde_contexto(
-                request=request,
-                form=form,
-                formset=formset,
-                contexto_venta=contexto_venta,
-            )
-
         almacenes_permitidos = {
             str(almacen.id): almacen
             for almacen in contexto_venta["almacenes_qs"]
         }
-
-        parser = VentaPostParser(
-            post_data=request.POST,
+        resultado = CrearSalidaVentaWebUseCase(
+            form=form,
             formset=formset,
+            post_data=request.POST,
             almacenes_permitidos=almacenes_permitidos,
-        )
-
-        resultado_parseo = parser.parse()
-        errores_parseo = resultado_parseo["errores"]
-
-        if errores_parseo:
-            for error in errores_parseo:
-                messages.error(request, error)
-
-            return _render_salida_venta_desde_contexto(
-                request=request,
-                form=form,
-                formset=formset,
-                contexto_venta=contexto_venta,
-            )
-
-        subtotal_venta = total_detalles_venta(resultado_parseo["detalles_validos"])
-        total_venta_validacion = calcular_total_con_comision(
-            subtotal_venta,
-            forma_pago=form.cleaned_data.get("forma_pago_venta"),
-        )
-        venta_data = VentaOperacionData.from_form(
-            form,
             request_context=VentaRequestContext.from_request(request),
-            total_venta_override=total_venta_validacion,
-        )
-        venta_service = VentaService(
-            data=venta_data,
-            detalles_validos=resultado_parseo["detalles_validos"],
-            detalles_meta=resultado_parseo["detalles_meta"],
-            lineas_stock=resultado_parseo["lineas_stock"],
-            almacenes_permitidos=almacenes_permitidos,
-        )
+        ).execute()
 
-        errores_stock = venta_service.validar_stock()
-
-        if errores_stock:
-            for error in errores_stock:
+        if not resultado.ok:
+            for error in resultado.errores:
                 messages.error(request, error)
 
             return _render_salida_venta_desde_contexto(
@@ -211,7 +166,7 @@ def salida_venta_create(request):
                 contexto_venta=contexto_venta,
             )
 
-        salida = venta_service.guardar()
+        salida = resultado.salida
 
         messages.success(
             request,

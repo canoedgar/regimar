@@ -10,9 +10,6 @@ class NotaVentaAdmin(admin.ModelAdmin):
     search_fields = ("folio", "cliente", "cliente_ref__nombre_fiscal", "cliente_ref__nombre_comercial")
     date_hierarchy = "fecha"
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).filter(tipo=NotaVenta.TIPO_VENTA)
-
 
 @admin.register(NotaVentaDetalle)
 class NotaVentaDetalleAdmin(admin.ModelAdmin):
@@ -21,4 +18,4 @@ class NotaVentaDetalleAdmin(admin.ModelAdmin):
     search_fields = ("salida__folio", "producto__nombre")
 
     def get_queryset(self, request):
-        return super().get_queryset(request).filter(salida__tipo=NotaVenta.TIPO_VENTA)
+        return super().get_queryset(request)

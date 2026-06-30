@@ -10,7 +10,8 @@ from ventas.forms import (
     SalidaVentaDetallePrecioForm,
     SalidaVentaEdicionForm,
 )
-from inventarios.models import SalidaInventario, SalidaInventarioDetalle
+from inventarios.models import SalidaInventarioDetalle
+from ventas.models import NotaVenta
 from ventas.selectors.notas_venta import (
     get_clientes_activos,
     get_contexto_agregar_productos,
@@ -29,7 +30,7 @@ def _get_nota(pk, *, for_update=False):
 
 
 def _validar_editable(salida, request):
-    if salida.estado == SalidaInventario.ESTADO_CANCELADA:
+    if salida.estado == NotaVenta.ESTADO_CANCELADA:
         messages.error(request, "No se puede modificar una nota cancelada.")
         return False
     return True
