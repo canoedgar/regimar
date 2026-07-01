@@ -399,8 +399,8 @@ class ClienteForm(forms.ModelForm):
             self.fields.pop("dias_credito", None)
 
         if not self.instance.pk:
-            self.fields["municipio"].initial = "MEXICALI"
-            self.fields["estado"].initial = "B.C."
+            self.fields["municipio"].initial = "CIUDAD OBREGON"
+            self.fields["estado"].initial = "SONORA"
             self.fields["pais"].initial = "MÉXICO"
             if "limite_credito" in self.fields:
                 self.fields["limite_credito"].initial = "3000.00"

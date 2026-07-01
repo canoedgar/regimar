@@ -148,8 +148,8 @@ def _get_cantidad_reporte(request, default="todos"):
 def _empresa_contexto():
     return {
         "nombre": ParametroSistema.objects.filter(clave="EMPRESA_NOMBRE", activo=True).values_list("valor", flat=True).first() or "Regimar",
-        "propietario": ParametroSistema.objects.filter(clave="EMPRESA_PROPIETARIO", activo=True).values_list("valor", flat=True).first() or "Jaime Parada Villarreal",
-        "direccion": ParametroSistema.objects.filter(clave="EMPRESA_DIRECCION", activo=True).values_list("valor", flat=True).first() or "Mexicali, B.C. CP. 21376",
+        "propietario": ParametroSistema.objects.filter(clave="EMPRESA_PROPIETARIO", activo=True).values_list("valor", flat=True).first() or "Regimar",
+        "direccion": ParametroSistema.objects.filter(clave="EMPRESA_DIRECCION", activo=True).values_list("valor", flat=True).first() or "Calle Sinaloa 737, Zona Norte, Ciudad Obregon, Sonora CP 85000",
         "telefono": ParametroSistema.objects.filter(clave="EMPRESA_TELEFONO", activo=True).values_list("valor", flat=True).first() or "686 162 7239",
         "email": ParametroSistema.objects.filter(clave="EMPRESA_EMAIL", activo=True).values_list("valor", flat=True).first() or "regimar@gmail.com",
     }

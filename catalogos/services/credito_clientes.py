@@ -205,7 +205,7 @@ def validar_credito_cliente_para_venta(*, cliente, total_venta, fecha_venta=None
         return [f"La venta requiere autorización de cartera, pero no se pudo enviar el correo: {exc}"], None
 
     return [
-        "La venta requiere autorización de cartera. Se envió la solicitud al correo configurado de Jaime Parada."
+        "La venta requiere autorización de cartera. Se envió la solicitud al correo configurado de Regimar."
     ], None
 
 

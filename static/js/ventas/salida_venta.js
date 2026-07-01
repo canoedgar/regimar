@@ -925,9 +925,9 @@
               <img src="${escapeHtml(getSelectedLogoUrl())}" alt="Logo" class="sale-note-logo">
               <div class="sale-note-brand">
                 <div class="brand-name">Regimar</div>
-                <div class="brand-owner">Jaime Parada Villarreal</div>
-                <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
-Mayakhan Residencial Mexicali B.C
+                <div class="brand-owner">Regimar</div>
+                <div class="sale-note-address">Calle Sinaloa 737, Zona Norte
+Ciudad Obregon, Sonora CP 85000
 Teléfono: 686 162 7239
 Email: regimar@gmail.com</div>
               </div>
@@ -991,7 +991,7 @@ Email: regimar@gmail.com</div>
           <h6 class="fw-bold text-center mb-2">PAGARÉ</h6>
 
           <p style="font-size: 12px; text-align: justify;">
-            Por este pagaré me comprometo a pagar a la orden de: Jaime Parada Villarreal en la Ciudad de Mexicali, Baja California, México.
+            Por este pagaré me comprometo a pagar a la orden de: Regimar en Calle Sinaloa 737, Zona Norte, Ciudad Obregon, Sonora CP 85000.
           </p>
 
           <p style="font-size: 12px; text-align: justify;">
