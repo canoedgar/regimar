@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                 ("comision_terminal_monto", models.DecimalField(decimal_places=2, default=0, max_digits=14, verbose_name="Comision terminal")),
                 ("cliente_direccion", models.TextField(blank=True, verbose_name="Direccion del cliente para esta venta")),
                 ("cliente_contacto", models.CharField(blank=True, max_length=200, verbose_name="Contacto del cliente para esta venta")),
-                ("logo_nota", models.CharField(choices=[("CPC", "CPC Alimentos"), ("BAJA_BACON", "Baja Bacon")], default="CPC", max_length=20, verbose_name="Logo")),
+                ("logo_nota", models.CharField(choices=[("REGIMAR", "Regimar")], default="REGIMAR", max_length=20, verbose_name="Logo")),
                 ("documento_referencia", models.CharField(blank=True, max_length=60, verbose_name="Documento referencia")),
                 ("motivo", models.TextField(blank=True, verbose_name="Motivo")),
                 ("observaciones", models.TextField(blank=True, verbose_name="Observaciones")),

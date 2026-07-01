@@ -375,8 +375,7 @@ class Cliente(models.Model):
         MORAL = "MORAL", "Moral"
 
     class LogoNota(models.TextChoices):
-        CPC_ALIMENTOS = "CPC", "CPC Alimentos"
-        BAJA_BACON = "BAJA_BACON", "Baja Bacon"
+        REGIMAR = "REGIMAR", "Regimar"
 
     # =========================
     # Datos CFDI (Receptor) - CFDI 4.0
@@ -449,7 +448,7 @@ class Cliente(models.Model):
         "Logo",
         max_length=20,
         choices=LogoNota.choices,
-        default=LogoNota.CPC_ALIMENTOS,
+        default=LogoNota.REGIMAR,
         help_text="Logo default que se usará en las notas de venta del cliente.",
     )
 
@@ -573,7 +572,7 @@ class Cliente(models.Model):
 
     @property
     def logo_static_path(self):
-        return "resources/bajabaconnota.png" if self.logo == self.LogoNota.BAJA_BACON else "resources/cpcnota.png"
+        return "resources/regimar.jpg"
 
     def __str__(self):
         return self.nombre_fiscal or self.nombre_comercial or self.rfc or f"Cliente {self.pk}"

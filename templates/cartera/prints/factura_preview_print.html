@@ -1,0 +1,93 @@
+{% load static humanize %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Factura {{ factura.folio_display }}</title>
+  {% include "cartera/prints/_print_styles.html" %}
+  <style>
+    .xml-preview{max-height:145mm;overflow:auto;border:1px solid #222;background:#f8fafc;padding:8px;font-family:Consolas,Menlo,monospace;font-size:9px;line-height:1.35;white-space:pre-wrap;word-break:break-word;}
+    @media print{.xml-preview{max-height:none;overflow:visible;}}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="toolbar-title">Vista previa CFDI</div>
+    <div class="toolbar-actions">
+      <button class="btn btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+      <button class="btn" onclick="window.close()">Cerrar</button>
+    </div>
+  </div>
+
+  <main class="sheet">
+    <header class="doc-header">
+      <div class="brand">
+        <img src="{% static 'resources/regimar.jpg' %}" class="logo" alt="Logo">
+        <div>
+          <div class="brand-name">{{ empresa.nombre }}</div>
+          <div class="brand-owner">{{ empresa.propietario }}</div>
+          <div class="brand-data">{{ empresa.direccion }}<br>Tel. {{ empresa.telefono }}<br>{{ empresa.email }}</div>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <div class="doc-title">CFDI control interno</div>
+        <div class="doc-subtitle">{{ factura.folio_display }}</div>
+        <div class="small">Emitido: {{ emitido_en|date:"d/m/Y H:i" }}</div>
+      </div>
+    </header>
+
+    <section class="section grid avoid-break">
+      <div class="box" style="grid-column:span 2;"><div class="label">UUID</div><div class="value fw">{{ factura.uuid }}</div></div>
+      <div class="box"><div class="label">Fecha CFDI</div><div class="value fw">{{ factura.fecha|date:"d/m/Y H:i" }}</div></div>
+      <div class="box"><div class="label">Estado interno</div><div class="value fw">{{ factura.get_estado_display }}</div></div>
+      <div class="box"><div class="label">Aplicación</div><div class="value fw">{{ factura.get_tipo_aplicacion_display }}</div></div>
+      <div class="box"><div class="label">Moneda</div><div class="value fw">{{ factura.moneda|default:"—" }}</div></div>
+      <div class="box"><div class="label">Monto operativo</div><div class="value fw">${{ factura.total|floatformat:2|intcomma }}</div></div>
+      <div class="box"><div class="label">Total XML</div><div class="value fw">${{ factura.total_xml|floatformat:2|intcomma }}</div></div>
+    </section>
+
+    <section class="section grid avoid-break">
+      <div class="box" style="grid-column:span 2;"><div class="label">Cliente</div><div class="value">{{ factura.cliente.nombre_fiscal|default:factura.cliente.nombre_comercial }}<br>RFC: {{ factura.cliente.rfc|default:"—" }}</div></div>
+      <div class="box" style="grid-column:span 2;"><div class="label">Receptor XML</div><div class="value">{{ factura.nombre_receptor|default:"—" }}<br>{{ factura.rfc_receptor|default:"—" }}</div></div>
+      <div class="box" style="grid-column:span 2;"><div class="label">Emisor XML</div><div class="value">{{ factura.nombre_emisor|default:"—" }}<br>{{ factura.rfc_emisor|default:"—" }}</div></div>
+      <div class="box"><div class="label">Uso CFDI</div><div class="value">{{ factura.uso_cfdi|default:"—" }}</div></div>
+      <div class="box"><div class="label">Forma / método</div><div class="value">{{ factura.forma_pago|default:"—" }} / {{ factura.metodo_pago|default:"—" }}</div></div>
+    </section>
+
+    <section class="section avoid-break">
+      <div class="section-title">Importes del XML</div>
+      <table>
+        <tbody>
+          <tr><td>Subtotal</td><td class="text-end">${{ factura.subtotal|floatformat:2|intcomma }}</td></tr>
+          <tr><td>Descuento</td><td class="text-end">${{ factura.descuento|floatformat:2|intcomma }}</td></tr>
+          <tr><td>Impuestos trasladados</td><td class="text-end">${{ factura.impuestos_trasladados|floatformat:2|intcomma }}</td></tr>
+          <tr><td>Impuestos retenidos</td><td class="text-end">${{ factura.impuestos_retenidos|floatformat:2|intcomma }}</td></tr>
+          <tr><td class="fw">Total leído del XML</td><td class="text-end fw">${{ factura.total_xml|floatformat:2|intcomma }}</td></tr>
+          <tr><td class="fw">Monto operativo registrado</td><td class="text-end fw">${{ factura.total|floatformat:2|intcomma }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Notas relacionadas</div>
+      <table>
+        <thead><tr><th>Nota</th><th>Fecha</th><th>Observaciones</th><th class="text-end">Monto facturado</th></tr></thead>
+        <tbody>
+          {% for app in factura.aplicaciones.all %}
+            <tr><td class="fw">{{ app.nota_venta.folio }}</td><td class="text-center">{{ app.nota_venta.fecha|date:"d/m/Y" }}</td><td>{{ app.observaciones|default:"—" }}</td><td class="text-end fw">${{ app.monto_facturado|floatformat:2|intcomma }}</td></tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-center muted">Factura global al cliente, sin notas relacionadas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <div class="section-title">Vista previa del XML</div>
+      <pre class="xml-preview">{{ xml_pretty|default:"XML no disponible." }}</pre>
+    </section>
+
+    <footer class="footer"><span>Control interno: no sustituye validación SAT ni PAC.</span><span>{{ empresa.nombre }}</span></footer>
+  </main>
+</body>
+</html>

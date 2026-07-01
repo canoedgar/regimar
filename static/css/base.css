@@ -1,93 +1,124 @@
 /* ============================
-   TEMA GLOBAL AZUL / NARANJA
+   TEMA GLOBAL REGIMAR — Borgoña / Gris neutro
    ============================ */
 :root,
 html[data-theme="light"],
 body[data-theme="light"] {
+  /* Paleta base inspirada en la identidad visual de Regimar:
+     gris neutro como fondo de aplicación, blanco para superficies/cards,
+     carbón para estructura, borgoña para acciones y dorado suave como acento secundario. */
+  --color-brand-burgundy: #5f1719;
+  --color-brand-red: #9f1117;
+  --color-brand-red-soft: #c33a3d;
+  --color-brand-cream: #f7f2ea;
+  --color-brand-cream-strong: #efe4d4;
+  --color-brand-gold: #b88a44;
+  --color-brand-charcoal: #171515;
+
   /* Variables base obligatorias */
-  --color-bg: #f4f7fb;
+  --color-bg: #eef2f6;
   --color-surface: #ffffff;
-  --color-surface-soft: #f8fbff;
-  --color-text: #1f2937;
-  --color-text-soft: #5b6472;
-  --color-border: rgba(15, 61, 145, 0.14);
-  --color-primary: #0f3d91;
-  --color-secondary: #f97316;
-  --color-danger: #dc2626;
-  --color-success: #16a34a;
-  --color-warning: #d97706;
+  --color-surface-soft: #f8fafc;
+  --color-text: #201f1d;
+  --color-text-soft: #6b6259;
+  --color-border: rgba(31, 41, 55, 0.13);
+  --color-primary: var(--color-brand-red);
+  --color-secondary: #e5e7eb;
+  --color-danger: #b42318;
+  --color-success: #2f855a;
+  --color-warning: #b7791f;
 
   /* Variantes y aliases globales */
-  --color-bg-alt: #eaf1fb;
-  --color-primary-strong: #082a66;
-  --color-primary-soft: #3b82f6;
-  --color-secondary-soft: #fb923c;
-  --color-danger-soft: #fee2e2;
-  --color-success-soft: #dcfce7;
-  --color-warning-soft: #fef3c7;
-  --color-accent: #ffb703;
+  --color-bg-alt: #e3e8ef;
+  --color-primary-strong: var(--color-brand-burgundy);
+  --color-primary-soft: #d56a6d;
+  --color-secondary-soft: #f1f5f9;
+  --color-danger-soft: #f8dedb;
+  --color-success-soft: #dff2e7;
+  --color-warning-soft: #f7ead2;
+  --color-accent: var(--color-brand-gold);
   --color-text-inverse: #ffffff;
-  --color-border-strong: rgba(15, 61, 145, 0.24);
+  --color-border-strong: rgba(31, 41, 55, 0.22);
   --color-input-bg: var(--color-surface);
   --color-input-text: var(--color-text);
-  --color-table-head-bg: #eef4ff;
-  --color-table-row-hover: rgba(15, 61, 145, 0.055);
+  --color-table-head-bg: #f3f6fa;
+  --color-table-row-hover: rgba(159, 17, 23, 0.045);
   --color-sidebar-text: rgba(255, 255, 255, 0.88);
-  --color-sidebar-muted: rgba(255, 255, 255, 0.58);
-  --color-sidebar-hover: rgba(255, 183, 3, 0.18);
-  --color-sidebar-active: #ffd166;
-  --shadow-soft: 0 14px 34px rgba(8, 42, 102, 0.14);
-  --shadow-strong: 0 18px 45px rgba(7, 24, 58, 0.28);
-  --focus-ring: 0 0 0 0.2rem rgba(249, 115, 22, 0.22);
-  --gradient-main: linear-gradient(135deg, #082a66 0%, #0f3d91 38%, #f97316 100%);
-  --gradient-sidebar: linear-gradient(180deg, #082a66 0%, #0f3d91 58%, #f97316 100%);
-  --gradient-auth: linear-gradient(145deg, #082a66 0%, #0f3d91 45%, #fb923c 100%);
-  --gradient-hero: linear-gradient(160deg, #0a224f 0%, #123f93 56%, #f97316 100%);
-  --badge-bg: rgba(249, 115, 22, 0.12);
+  --color-sidebar-muted: rgba(247, 242, 234, 0.62);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.12);
+  --color-sidebar-active: #ffffff;
+  --shadow-soft: 0 14px 34px rgba(15, 23, 42, 0.10);
+  --shadow-strong: 0 18px 45px rgba(15, 23, 42, 0.22);
+  --focus-ring: 0 0 0 0.2rem rgba(159, 17, 23, 0.18);
+  --gradient-main: linear-gradient(135deg, #e8edf3 0%, #eef2f6 48%, #dde4ec 100%);
+  --gradient-sidebar: linear-gradient(180deg, #171515 0%, #2a1718 48%, #5f1719 100%);
+  --gradient-auth: linear-gradient(145deg, #e8edf3 0%, #f8fafc 48%, #dde4ec 100%);
+  --gradient-hero: linear-gradient(160deg, #171515 0%, #3a1819 58%, #7e1518 100%);
+  --badge-bg: rgba(159, 17, 23, 0.08);
+
+  /* Aliases Bootstrap para eliminar azul default y mantener consistencia global */
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: 159, 17, 23;
+  --bs-link-color: var(--color-primary);
+  --bs-link-hover-color: var(--color-primary-strong);
 }
 
 html[data-theme="dark"],
 body[data-theme="dark"] {
   /* Variables base obligatorias */
-  --color-bg: #0b1220;
-  --color-surface: #162033;
-  --color-surface-soft: #1b2940;
-  --color-text: #e5edf8;
-  --color-text-soft: #aebcd0;
-  --color-border: rgba(147, 197, 253, 0.16);
-  --color-primary: #60a5fa;
-  --color-secondary: #fb923c;
+  --color-brand-burgundy: #7e1518;
+  --color-brand-red: #e25558;
+  --color-brand-red-soft: #f08a8c;
+  --color-brand-cream: #f7f2ea;
+  --color-brand-cream-strong: #3a2f2a;
+  --color-brand-gold: #d5a85b;
+  --color-brand-charcoal: #0f0e0e;
+
+  --color-bg: #0f0e0e;
+  --color-surface: #181516;
+  --color-surface-soft: #231b1a;
+  --color-text: #f7f2ea;
+  --color-text-soft: #c7b8a7;
+  --color-border: rgba(247, 242, 234, 0.14);
+  --color-primary: var(--color-brand-red);
+  --color-secondary: #3a2f2a;
   --color-danger: #f87171;
-  --color-success: #4ade80;
-  --color-warning: #fbbf24;
+  --color-success: #68d391;
+  --color-warning: #f6c56e;
 
   /* Variantes y aliases globales */
-  --color-bg-alt: #111b2e;
-  --color-primary-strong: #1d4ed8;
-  --color-primary-soft: #93c5fd;
-  --color-secondary-soft: #fdba74;
+  --color-bg-alt: #231b1a;
+  --color-primary-strong: #ff7a7d;
+  --color-primary-soft: #f08a8c;
+  --color-secondary-soft: #4a3b32;
   --color-danger-soft: rgba(248, 113, 113, 0.14);
-  --color-success-soft: rgba(74, 222, 128, 0.14);
-  --color-warning-soft: rgba(251, 191, 36, 0.16);
-  --color-accent: #ffd166;
+  --color-success-soft: rgba(104, 211, 145, 0.14);
+  --color-warning-soft: rgba(246, 197, 110, 0.16);
+  --color-accent: var(--color-brand-gold);
   --color-text-inverse: #ffffff;
-  --color-border-strong: rgba(251, 146, 60, 0.26);
-  --color-input-bg: #101a2b;
+  --color-border-strong: rgba(247, 242, 234, 0.22);
+  --color-input-bg: #121010;
   --color-input-text: var(--color-text);
-  --color-table-head-bg: #111b2e;
-  --color-table-row-hover: rgba(147, 197, 253, 0.075);
-  --color-sidebar-text: rgba(229, 237, 248, 0.9);
-  --color-sidebar-muted: rgba(229, 237, 248, 0.62);
-  --color-sidebar-hover: rgba(251, 146, 60, 0.16);
-  --color-sidebar-active: #ffd166;
+  --color-table-head-bg: #231b1a;
+  --color-table-row-hover: rgba(226, 85, 88, 0.08);
+  --color-sidebar-text: rgba(247, 242, 234, 0.9);
+  --color-sidebar-muted: rgba(247, 242, 234, 0.58);
+  --color-sidebar-hover: rgba(255, 255, 255, 0.12);
+  --color-sidebar-active: #ffffff;
   --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.28);
   --shadow-strong: 0 18px 45px rgba(0, 0, 0, 0.42);
-  --focus-ring: 0 0 0 0.2rem rgba(251, 146, 60, 0.22);
-  --gradient-main: linear-gradient(135deg, #09111f 0%, #13233d 42%, #7c2d12 100%);
-  --gradient-sidebar: linear-gradient(180deg, #0b1220 0%, #13233d 56%, #7c2d12 100%);
-  --gradient-auth: linear-gradient(145deg, #0b1220 0%, #13233d 45%, #9a3412 100%);
-  --gradient-hero: linear-gradient(160deg, #111b2e 0%, #1b2940 58%, #9a3412 100%);
-  --badge-bg: rgba(251, 146, 60, 0.14);
+  --focus-ring: 0 0 0 0.2rem rgba(226, 85, 88, 0.22);
+  --gradient-main: linear-gradient(135deg, #0f0e0e 0%, #181516 52%, #231b1a 100%);
+  --gradient-sidebar: linear-gradient(180deg, #0f0e0e 0%, #1a1212 54%, #4b1718 100%);
+  --gradient-auth: linear-gradient(145deg, #0f0e0e 0%, #181516 52%, #231b1a 100%);
+  --gradient-hero: linear-gradient(160deg, #0f0e0e 0%, #2a1718 58%, #5f1719 100%);
+  --badge-bg: rgba(226, 85, 88, 0.14);
+
+  /* Aliases Bootstrap para eliminar azul default y mantener consistencia global */
+  --bs-primary: var(--color-primary);
+  --bs-primary-rgb: 226, 85, 88;
+  --bs-link-color: var(--color-primary);
+  --bs-link-hover-color: var(--color-primary-soft);
 }
 
 html {
@@ -188,12 +219,12 @@ a:hover {
 }
 
 .btn-secondary {
-  --bs-btn-bg: var(--color-secondary);
-  --bs-btn-border-color: var(--color-secondary);
-  --bs-btn-hover-bg: var(--color-secondary-soft);
-  --bs-btn-hover-border-color: var(--color-secondary-soft);
-  --bs-btn-color: #1a1a1a;
-  --bs-btn-hover-color: #1a1a1a;
+  --bs-btn-bg: var(--color-surface);
+  --bs-btn-border-color: var(--color-border-strong);
+  --bs-btn-hover-bg: var(--color-secondary);
+  --bs-btn-hover-border-color: var(--color-primary);
+  --bs-btn-color: var(--color-primary-strong);
+  --bs-btn-hover-color: var(--color-primary-strong);
 }
 
 .btn-danger {
@@ -323,14 +354,14 @@ a:hover {
 
 .form-control:focus,
 .form-select:focus {
-  border-color: var(--color-secondary);
+  border-color: var(--color-primary);
   box-shadow: var(--focus-ring);
 }
 
 .btn-solar {
-  background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-accent) 100%);
+  background: linear-gradient(135deg, var(--color-primary-strong) 0%, var(--color-primary) 100%);
   border: none;
-  color: #1a1a1a;
+  color: var(--color-text-inverse);
   font-weight: 600;
 }
 
@@ -452,17 +483,17 @@ a:hover {
 .solar-main-header {
   background: rgba(255, 255, 255, 0.94);
   padding: 0.75rem 1.5rem;
-  box-shadow: 0 4px 18px rgba(8, 42, 102, 0.12);
+  box-shadow: 0 4px 18px rgba(23, 21, 21, 0.10);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(15, 61, 145, 0.08);
+  border-bottom: 1px solid rgba(95, 23, 25, 0.10);
 }
 
 html[data-theme="dark"] .solar-main-header {
-  background: rgba(22, 32, 51, 0.92);
+  background: rgba(24, 21, 22, 0.92);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.24);
-  border-bottom-color: rgba(147, 197, 253, 0.08);
+  border-bottom-color: rgba(247, 242, 234, 0.12);
 }
 
 .solar-main-header-title {
@@ -683,7 +714,7 @@ html[data-theme="dark"] .modal .btn-close {
 }
 
 .theme-switcher-toggle:hover {
-  border-color: var(--color-secondary);
+  border-color: var(--color-primary);
 }
 
 .theme-switcher-toggle:focus-visible {
@@ -830,7 +861,7 @@ html[data-theme="dark"] .theme-switcher-moon {
   --sg-btn-hover-bg: var(--color-primary-strong);
   --sg-btn-hover-color: var(--color-text-inverse);
   --sg-btn-hover-border: var(--color-primary-strong);
-  --sg-btn-shadow: 0 0.5rem 1.15rem rgba(15, 61, 145, 0.18);
+  --sg-btn-shadow: 0 0.5rem 1.15rem rgba(159, 17, 23, 0.16);
 }
 
 .sg-btn-secondary {
@@ -862,10 +893,10 @@ html[data-theme="dark"] .theme-switcher-moon {
 
 .sg-btn-warning {
   --sg-btn-bg: var(--color-warning);
-  --sg-btn-color: #1f2937;
+  --sg-btn-color: #201f1d;
   --sg-btn-border: var(--color-warning);
   --sg-btn-hover-bg: color-mix(in srgb, var(--color-warning) 86%, #ffffff 14%);
-  --sg-btn-hover-color: #1f2937;
+  --sg-btn-hover-color: #201f1d;
   --sg-btn-hover-border: var(--color-warning);
 }
 

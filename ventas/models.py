@@ -32,11 +32,9 @@ class NotaVenta(models.Model):
         (ESTADO_PAGO_PARCIAL, "Pago parcial"),
     ]
 
-    LOGO_CPC_ALIMENTOS = "CPC"
-    LOGO_BAJA_BACON = "BAJA_BACON"
+    LOGO_REGIMAR = "REGIMAR"
     LOGO_NOTA_CHOICES = [
-        (LOGO_CPC_ALIMENTOS, "CPC Alimentos"),
-        (LOGO_BAJA_BACON, "Baja Bacon"),
+        (LOGO_REGIMAR, "Regimar"),
     ]
 
     ESTADO_ACTIVA = "ACT"
@@ -69,7 +67,7 @@ class NotaVenta(models.Model):
     comision_terminal_monto = models.DecimalField("Comision terminal", max_digits=14, decimal_places=2, default=0)
     cliente_direccion = models.TextField("Direccion del cliente para esta venta", blank=True)
     cliente_contacto = models.CharField("Contacto del cliente para esta venta", max_length=200, blank=True)
-    logo_nota = models.CharField("Logo", max_length=20, choices=LOGO_NOTA_CHOICES, default=LOGO_CPC_ALIMENTOS)
+    logo_nota = models.CharField("Logo", max_length=20, choices=LOGO_NOTA_CHOICES, default=LOGO_REGIMAR)
     documento_referencia = models.CharField("Documento referencia", max_length=60, blank=True)
     motivo = models.TextField("Motivo", blank=True)
     observaciones = models.TextField("Observaciones", blank=True)
@@ -124,7 +122,7 @@ class NotaVenta(models.Model):
 
     @property
     def logo_nota_static_path(self):
-        return "resources/bajabaconnota.png" if self.logo_nota == self.LOGO_BAJA_BACON else "resources/cpcnota.png"
+        return "resources/regimar.jpg"
 
     def get_tipo_display(self):
         return "Salida por venta"

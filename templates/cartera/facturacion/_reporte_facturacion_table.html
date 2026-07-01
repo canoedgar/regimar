@@ -1,0 +1,87 @@
+{% load humanize %}
+<section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card facturacion-table-card">
+  <div class="table-responsive facturacion-table-responsive d-none d-md-block">
+    <table class="table table-hover align-middle mb-0 sg-table facturacion-table">
+      <thead class="table-light">
+        <tr>
+          <th>Factura</th>
+          <th>Cliente</th>
+          <th>Aplicación</th>
+          <th>UUID</th>
+          <th>Fecha</th>
+          <th>Estado</th>
+          <th class="text-end">Monto</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for factura in facturas %}
+          <tr class="{% if factura.estado == 'CAN' %}table-danger{% endif %}">
+            <td class="fw-semibold facturacion-folio">{{ factura.folio_display }}</td>
+            <td>{{ factura.cliente }}</td>
+            <td><span class="badge text-bg-light border">{{ factura.get_tipo_aplicacion_display }}</span></td>
+            <td><small class="facturacion-uuid">{{ factura.uuid }}</small></td>
+            <td>{{ factura.fecha|date:"Y-m-d" }}</td>
+            <td>
+              <span class="badge {% if factura.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ factura.get_estado_display }}</span>
+            </td>
+            <td class="text-end sg-nowrap">${{ factura.total|floatformat:2|intcomma }}</td>
+            <td class="text-end sg-table-actions facturacion-row-actions">
+              <a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:factura_detalle' factura.id %}" title="Detalle"><i class="bi bi-eye"></i></a>
+              <a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:factura_preview_print' factura.id %}" target="_blank" title="Vista previa"><i class="bi bi-printer"></i></a>
+              <a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:factura_xml_download' factura.id %}" title="XML"><i class="bi bi-download"></i></a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="sg-empty-state">Sin facturas registradas.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="facturacion-mobile-list d-md-none">
+    {% for factura in facturas %}
+      <article class="facturacion-mobile-card {% if factura.estado == 'CAN' %}facturacion-mobile-card--cancelled{% endif %}">
+        <div class="facturacion-mobile-card__header">
+          <div>
+            <span class="facturacion-mobile-card__label">Factura</span>
+            <strong class="facturacion-mobile-card__folio">{{ factura.folio_display }}</strong>
+          </div>
+          <span class="badge {% if factura.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ factura.get_estado_display }}</span>
+        </div>
+
+        <div class="facturacion-mobile-card__client">
+          <span class="facturacion-mobile-card__label">Cliente</span>
+          <strong>{{ factura.cliente }}</strong>
+        </div>
+
+        <div class="facturacion-mobile-card__grid">
+          <div>
+            <span class="facturacion-mobile-card__label">Fecha</span>
+            <strong>{{ factura.fecha|date:"Y-m-d" }}</strong>
+          </div>
+          <div>
+            <span class="facturacion-mobile-card__label">Monto</span>
+            <strong>${{ factura.total|floatformat:2|intcomma }}</strong>
+          </div>
+          <div>
+            <span class="facturacion-mobile-card__label">Aplicación</span>
+            <strong>{{ factura.get_tipo_aplicacion_display }}</strong>
+          </div>
+          <div>
+            <span class="facturacion-mobile-card__label">UUID</span>
+            <strong>{{ factura.uuid|truncatechars:28 }}</strong>
+          </div>
+        </div>
+
+        <div class="facturacion-mobile-card__actions">
+          <a class="sg-btn-outline sg-btn-sm" href="{% url 'cartera:factura_detalle' factura.id %}"><i class="bi bi-eye me-1"></i>Ver detalle</a>
+          <a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:factura_preview_print' factura.id %}" target="_blank" title="Vista previa"><i class="bi bi-printer"></i></a>
+          <a class="sg-btn-table sg-btn-sm" href="{% url 'cartera:factura_xml_download' factura.id %}" title="Descargar XML"><i class="bi bi-download"></i></a>
+        </div>
+      </article>
+    {% empty %}
+      <div class="facturacion-empty-state sg-empty-state">Sin facturas registradas.</div>
+    {% endfor %}
+  </div>
+</section>

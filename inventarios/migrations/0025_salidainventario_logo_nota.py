@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='salidainventario',
             name='logo_nota',
-            field=models.CharField(choices=[('CPC', 'CPC Alimentos'), ('BAJA_BACON', 'Baja Bacon')], default='CPC', help_text='Logo usado históricamente para imprimir esta nota de venta.', max_length=20, verbose_name='Logo'),
+            field=models.CharField(choices=[('REGIMAR', 'Regimar')], default='REGIMAR', help_text='Logo usado históricamente para imprimir esta nota de venta.', max_length=20, verbose_name='Logo'),
         ),
     ]

@@ -2,6 +2,7 @@ from datetime import date
 from decimal import Decimal
 
 from django.contrib import messages
+from django.http import FileResponse, Http404
 from django.contrib.auth.decorators import login_required
 from accounts.decorators import grupos_requeridos, permiso_requerido
 from django.core.exceptions import ValidationError
@@ -12,8 +13,18 @@ from django.views.decorators.http import require_POST
 
 from catalogos.models import Cliente, ParametroSistema
 from ventas.models import NotaVenta
-from cartera.forms import CancelarPagoForm, PagoGlobalForm, PagoNotaForm, SaldoFavorAplicacionForm, SaldoFavorDevolucionForm
-from cartera.models import ClienteSaldoFavorMovimiento, PagoAplicacionNota, PagoCliente
+from cartera.forms import (
+    CancelarFacturaForm,
+    CancelarPagoForm,
+    FacturaAplicacionNotaFormSet,
+    FacturaClienteForm,
+    PagoGlobalForm,
+    PagoNotaForm,
+    ReporteFacturacionForm,
+    SaldoFavorAplicacionForm,
+    SaldoFavorDevolucionForm,
+)
+from cartera.models import ClienteSaldoFavorMovimiento, FacturaCliente, PagoAplicacionNota, PagoCliente
 from cartera.selectors.cartera import (
     get_estado_cuenta_cliente,
     get_notas_con_saldo_pendiente,
@@ -22,7 +33,16 @@ from cartera.selectors.cartera import (
     get_total_adeudado_cliente,
     get_total_nota,
 )
+from cartera.selectors.facturacion import (
+    get_estado_facturacion_cliente,
+    get_facturacion_cliente_resumen,
+    get_facturas_cliente,
+    get_reporte_facturacion_por_cliente,
+    get_reporte_facturacion_resumen,
+    get_reporte_facturacion_resumen_clientes,
+)
 from cartera.services.cartera import aplicar_saldo_favor_a_nota, cancelar_pago_cliente, devolver_saldo_favor, registrar_pago_fifo, registrar_pago_notas_especificas
+from cartera.services.facturacion import cancelar_factura_cliente, pretty_xml_factura, registrar_factura_cliente
 
 
 def _puede_registrar_pagos(user):
@@ -33,6 +53,32 @@ def _puede_registrar_pagos(user):
     )
 
 
+
+
+def _puede_registrar_facturas(user):
+    return (
+        user.is_superuser
+        or user.has_perm("cartera.puede_registrar_facturas")
+        or user.has_perm("cartera.add_facturacliente")
+        or user.groups.filter(name__in=["Ventas", "Administrador"]).exists()
+    )
+
+
+def _puede_ver_facturacion(user):
+    return (
+        user.is_superuser
+        or user.has_perm("cartera.puede_ver_facturacion")
+        or user.has_perm("cartera.view_facturacliente")
+        or user.groups.filter(name__in=["Ventas", "Administrador"]).exists()
+    )
+
+
+def _puede_cancelar_facturas(user):
+    return (
+        user.is_superuser
+        or user.has_perm("cartera.puede_cancelar_facturas")
+        or user.has_perm("cartera.change_facturacliente")
+    )
 
 
 def _puede_cancelar_pagos(user):
@@ -101,11 +147,11 @@ def _get_cantidad_reporte(request, default="todos"):
 
 def _empresa_contexto():
     return {
-        "nombre": ParametroSistema.objects.filter(clave="EMPRESA_NOMBRE", activo=True).values_list("valor", flat=True).first() or "CPC Alimentos",
+        "nombre": ParametroSistema.objects.filter(clave="EMPRESA_NOMBRE", activo=True).values_list("valor", flat=True).first() or "Regimar",
         "propietario": ParametroSistema.objects.filter(clave="EMPRESA_PROPIETARIO", activo=True).values_list("valor", flat=True).first() or "Jaime Parada Villarreal",
         "direccion": ParametroSistema.objects.filter(clave="EMPRESA_DIRECCION", activo=True).values_list("valor", flat=True).first() or "Mexicali, B.C. CP. 21376",
         "telefono": ParametroSistema.objects.filter(clave="EMPRESA_TELEFONO", activo=True).values_list("valor", flat=True).first() or "686 162 7239",
-        "email": ParametroSistema.objects.filter(clave="EMPRESA_EMAIL", activo=True).values_list("valor", flat=True).first() or "cpcalimentosbc@gmail.com",
+        "email": ParametroSistema.objects.filter(clave="EMPRESA_EMAIL", activo=True).values_list("valor", flat=True).first() or "regimar@gmail.com",
     }
 
 
@@ -158,8 +204,37 @@ def cartera_dashboard(request):
             "total_saldo_favor": total_saldo_favor,
             "pagos_hoy": pagos_hoy,
             "puede_registrar_pagos": _puede_registrar_pagos(request.user),
+            "puede_registrar_facturas": _puede_registrar_facturas(request.user),
+            "puede_ver_facturacion": _puede_ver_facturacion(request.user),
         },
     )
+
+
+def _facturacion_activa(request):
+    return (request.GET.get("facturacion") or "").strip() in {"1", "true", "on", "si", "sí"}
+
+
+def _set_formset_notas_queryset(formset, cliente):
+    notas = NotaVenta.objects.filter(cliente_ref=cliente, estado=NotaVenta.ESTADO_ACTIVA).order_by("-fecha", "-folio")
+    for form in formset.forms:
+        form.fields["nota_id"].queryset = notas
+        form.fields["nota_id"].label_from_instance = lambda nota: f"{nota.folio} · {nota.fecha:%Y-%m-%d}"
+
+
+def _aplicaciones_desde_formset(formset):
+    aplicaciones = []
+    for form in formset.forms:
+        if not form.cleaned_data:
+            continue
+        nota = form.cleaned_data.get("nota_id")
+        monto = form.cleaned_data.get("monto")
+        if nota and monto:
+            aplicaciones.append({
+                "nota_id": nota.pk,
+                "monto": monto,
+                "observaciones": form.cleaned_data.get("observaciones", ""),
+            })
+    return aplicaciones
 
 
 @permiso_requerido("cartera.add_pagocliente")
@@ -371,6 +446,9 @@ def pago_detalle_print(request, pago_id):
 def estado_cuenta_cliente(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
     estado = get_estado_cuenta_cliente(cliente)
+    incluir_facturacion = _facturacion_activa(request) and _puede_ver_facturacion(request.user)
+    if incluir_facturacion:
+        estado["facturacion"] = get_estado_facturacion_cliente(cliente)
     movimientos_opcion, movimientos_limite = _get_movimientos_limit(request)
 
     pagos_qs = estado["pagos"]
@@ -395,6 +473,9 @@ def estado_cuenta_cliente(request, cliente_id):
             "movimientos_opcion": movimientos_opcion,
             "total_pagos": total_pagos,
             "total_movimientos_saldo": total_movimientos_saldo,
+            "incluir_facturacion": incluir_facturacion,
+            "puede_ver_facturacion": _puede_ver_facturacion(request.user),
+            "puede_registrar_facturas": _puede_registrar_facturas(request.user),
             "puede_cancelar_pagos": _puede_cancelar_pagos(request.user),
         },
     )
@@ -404,6 +485,9 @@ def estado_cuenta_cliente(request, cliente_id):
 def estado_cuenta_cliente_print(request, cliente_id):
     cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
     estado = get_estado_cuenta_cliente(cliente)
+    incluir_facturacion = _facturacion_activa(request) and _puede_ver_facturacion(request.user)
+    if incluir_facturacion:
+        estado["facturacion"] = get_estado_facturacion_cliente(cliente)
     movimientos_opcion, movimientos_limite = _get_movimientos_limit(request)
     movimientos_saldo_qs = ClienteSaldoFavorMovimiento.objects.filter(cliente=cliente).select_related("pago_origen", "nota_aplicada").order_by("-fecha", "-id")
 
@@ -413,7 +497,7 @@ def estado_cuenta_cliente_print(request, cliente_id):
     else:
         movimientos_saldo = movimientos_saldo_qs
 
-    return render(request, "cartera/prints/estado_cuenta_cliente_print.html", {"estado": estado, "cliente": cliente, "movimientos_saldo": movimientos_saldo, "empresa": _empresa_contexto(), "emitido_en": timezone.now(), "movimientos_opcion": movimientos_opcion})
+    return render(request, "cartera/prints/estado_cuenta_cliente_print.html", {"estado": estado, "cliente": cliente, "movimientos_saldo": movimientos_saldo, "empresa": _empresa_contexto(), "emitido_en": timezone.now(), "movimientos_opcion": movimientos_opcion, "incluir_facturacion": incluir_facturacion})
 
 
 @permiso_requerido("cartera.view_pagocliente", "ventas.view_notaventa", "inventarios.view_salidainventario")
@@ -620,3 +704,204 @@ def liquidar_saldo_favor(request, cliente_id):
         form = SaldoFavorDevolucionForm(initial={"monto": saldo_favor})
 
     return render(request, "cartera/liquidar_saldo_favor.html", {"cliente": cliente, "saldo_favor": saldo_favor, "form": form, "movimientos": movimientos})
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def factura_list(request):
+    if not _puede_ver_facturacion(request.user):
+        messages.error(request, "No tienes permiso para ver facturación.")
+        return redirect("cartera:dashboard")
+    form = ReporteFacturacionForm(request.GET or None)
+    facturas = get_reporte_facturacion_por_cliente()
+    if form.is_valid():
+        facturas = get_reporte_facturacion_por_cliente(
+            fecha_inicio=form.cleaned_data.get("fecha_inicio"),
+            fecha_fin=form.cleaned_data.get("fecha_fin"),
+            cliente_query=form.cleaned_data.get("q", ""),
+            estado=form.cleaned_data.get("estado", ""),
+            tipo_aplicacion=form.cleaned_data.get("tipo_aplicacion", ""),
+        )
+    resumen = get_reporte_facturacion_resumen(facturas)
+    resumen_clientes = get_reporte_facturacion_resumen_clientes(facturas)
+    return render(request, "cartera/facturacion/factura_list.html", {"form": form, "facturas": facturas[:300], "resumen": resumen, "resumen_clientes": resumen_clientes, "puede_registrar_facturas": _puede_registrar_facturas(request.user)})
+
+
+def _factura_create_context(request, nota=None):
+    cliente_id = request.POST.get("cliente") or request.GET.get("cliente") or (nota.cliente_ref_id if nota else None)
+    busqueda_cliente = (request.GET.get("cliente_q") or "").strip()
+    cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True) if cliente_id else None
+    clientes_encontrados = list(_buscar_clientes(busqueda_cliente)) if busqueda_cliente and not cliente else []
+    form_initial = {"cliente": cliente.pk} if cliente else {}
+    if nota:
+        form_initial["tipo_aplicacion"] = FacturaCliente.TIPO_NOTAS
+    form = FacturaClienteForm(request.POST or None, request.FILES or None, initial=form_initial)
+    formset_initial = []
+    if nota:
+        formset_initial.append({"nota_id": nota.pk})
+    formset = FacturaAplicacionNotaFormSet(request.POST or None, initial=formset_initial, prefix="aplicaciones")
+    if cliente:
+        _set_formset_notas_queryset(formset, cliente)
+    return cliente, clientes_encontrados, busqueda_cliente, form, formset
+
+
+@permiso_requerido("cartera.add_facturacliente", "cartera.puede_registrar_facturas")
+def factura_create(request):
+    if not _puede_registrar_facturas(request.user):
+        messages.error(request, "No tienes permiso para registrar facturas.")
+        return redirect("cartera:dashboard")
+    cliente, clientes_encontrados, busqueda_cliente, form, formset = _factura_create_context(request)
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        try:
+            factura = registrar_factura_cliente(
+                cliente=form.cleaned_data["cliente"],
+                xml_file=form.cleaned_data["xml"],
+                monto=form.cleaned_data["monto"],
+                tipo_aplicacion=form.cleaned_data["tipo_aplicacion"],
+                aplicaciones=_aplicaciones_desde_formset(formset),
+                usuario=request.user,
+                referencia=form.cleaned_data["referencia"],
+                observaciones=form.cleaned_data["observaciones"],
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            messages.success(request, f"Factura {factura.folio_display} registrada para control interno.")
+            return redirect("cartera:factura_detalle", factura_id=factura.id)
+    return render(request, "cartera/facturacion/factura_form.html", {"form": form, "formset": formset, "cliente_seleccionado": cliente, "clientes_encontrados": clientes_encontrados, "busqueda_cliente": busqueda_cliente})
+
+
+@permiso_requerido("cartera.add_facturacliente", "cartera.puede_registrar_facturas")
+def factura_create_desde_nota(request, nota_id):
+    nota = get_object_or_404(NotaVenta.objects.select_related("cliente_ref"), pk=nota_id, estado=NotaVenta.ESTADO_ACTIVA)
+    if not nota.cliente_ref_id:
+        messages.error(request, "La nota no tiene cliente de catálogo asignado.")
+        return redirect("cartera:dashboard")
+    cliente, clientes_encontrados, busqueda_cliente, form, formset = _factura_create_context(request, nota=nota)
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        try:
+            factura = registrar_factura_cliente(
+                cliente=form.cleaned_data["cliente"],
+                xml_file=form.cleaned_data["xml"],
+                monto=form.cleaned_data["monto"],
+                tipo_aplicacion=form.cleaned_data["tipo_aplicacion"],
+                aplicaciones=_aplicaciones_desde_formset(formset),
+                usuario=request.user,
+                referencia=form.cleaned_data["referencia"],
+                observaciones=form.cleaned_data["observaciones"],
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            messages.success(request, f"Factura {factura.folio_display} registrada desde la nota {nota.folio}.")
+            return redirect("cartera:factura_detalle", factura_id=factura.id)
+    return render(request, "cartera/facturacion/factura_form.html", {"form": form, "formset": formset, "cliente_seleccionado": cliente, "clientes_encontrados": clientes_encontrados, "busqueda_cliente": busqueda_cliente, "nota_origen": nota})
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def factura_detalle(request, factura_id):
+    factura = get_object_or_404(FacturaCliente.objects.select_related("cliente", "creado_por", "cancelado_por").prefetch_related("aplicaciones__nota_venta"), pk=factura_id)
+    return render(request, "cartera/facturacion/factura_detalle.html", {"factura": factura, "cancelar_form": CancelarFacturaForm(), "puede_cancelar_facturas": _puede_cancelar_facturas(request.user)})
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def factura_xml_download(request, factura_id):
+    factura = get_object_or_404(FacturaCliente, pk=factura_id)
+    if not factura.xml:
+        raise Http404("XML no disponible")
+    filename = f"{factura.uuid}.xml"
+    return FileResponse(factura.xml.open("rb"), as_attachment=True, filename=filename, content_type="application/xml")
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def factura_preview_print(request, factura_id):
+    factura = get_object_or_404(FacturaCliente.objects.select_related("cliente").prefetch_related("aplicaciones__nota_venta"), pk=factura_id)
+    return render(
+        request,
+        "cartera/prints/factura_preview_print.html",
+        {
+            "factura": factura,
+            "xml_pretty": pretty_xml_factura(factura),
+            "empresa": _empresa_contexto(),
+            "emitido_en": timezone.now(),
+        },
+    )
+
+
+@permiso_requerido("cartera.puede_cancelar_facturas", "cartera.change_facturacliente")
+@require_POST
+def factura_cancelar(request, factura_id):
+    factura = get_object_or_404(FacturaCliente, pk=factura_id)
+    if not _puede_cancelar_facturas(request.user):
+        messages.error(request, "No tienes permiso para cancelar facturas.")
+        return redirect("cartera:factura_detalle", factura_id=factura.id)
+    form = CancelarFacturaForm(request.POST)
+    if form.is_valid():
+        try:
+            cancelar_factura_cliente(factura, request.user, form.cleaned_data["motivo_cancelacion"])
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages) if hasattr(exc, "messages") else str(exc))
+        else:
+            messages.success(request, "Factura cancelada internamente. El XML y sus aplicaciones se conservaron.")
+    else:
+        messages.error(request, " ".join(error for errors in form.errors.values() for error in errors))
+    return redirect("cartera:factura_detalle", factura_id=factura.id)
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def facturacion_cliente_reporte(request, cliente_id):
+    cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
+    facturas = get_facturas_cliente(cliente, incluir_canceladas=True)
+    resumen = get_facturacion_cliente_resumen(cliente)
+    return render(request, "cartera/facturacion/facturacion_cliente_reporte.html", {"cliente": cliente, "facturas": facturas, "resumen": resumen})
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def facturacion_cliente_reporte_print(request, cliente_id):
+    cliente = get_object_or_404(Cliente, pk=cliente_id, activo=True)
+    facturas = get_facturas_cliente(cliente, incluir_canceladas=True)
+    resumen = get_facturacion_cliente_resumen(cliente)
+    return render(
+        request,
+        "cartera/prints/facturacion_cliente_reporte_print.html",
+        {
+            "cliente": cliente,
+            "facturas": facturas,
+            "resumen": resumen,
+            "empresa": _empresa_contexto(),
+            "emitido_en": timezone.now(),
+        },
+    )
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def reporte_facturacion_clientes(request):
+    form = ReporteFacturacionForm(request.GET or None)
+    facturas = get_reporte_facturacion_por_cliente()
+    if form.is_valid():
+        facturas = get_reporte_facturacion_por_cliente(
+            fecha_inicio=form.cleaned_data.get("fecha_inicio"),
+            fecha_fin=form.cleaned_data.get("fecha_fin"),
+            cliente_query=form.cleaned_data.get("q", ""),
+            estado=form.cleaned_data.get("estado", ""),
+            tipo_aplicacion=form.cleaned_data.get("tipo_aplicacion", ""),
+        )
+    resumen = get_reporte_facturacion_resumen(facturas)
+    resumen_clientes = get_reporte_facturacion_resumen_clientes(facturas)
+    return render(request, "cartera/facturacion/reporte_facturacion_clientes.html", {"form": form, "facturas": facturas[:500], "resumen": resumen, "resumen_clientes": resumen_clientes})
+
+
+@permiso_requerido("cartera.view_facturacliente", "cartera.puede_ver_facturacion")
+def reporte_facturacion_clientes_print(request):
+    form = ReporteFacturacionForm(request.GET or None)
+    facturas = get_reporte_facturacion_por_cliente()
+    if form.is_valid():
+        facturas = get_reporte_facturacion_por_cliente(
+            fecha_inicio=form.cleaned_data.get("fecha_inicio"),
+            fecha_fin=form.cleaned_data.get("fecha_fin"),
+            cliente_query=form.cleaned_data.get("q", ""),
+            estado=form.cleaned_data.get("estado", ""),
+            tipo_aplicacion=form.cleaned_data.get("tipo_aplicacion", ""),
+        )
+    resumen = get_reporte_facturacion_resumen(facturas)
+    resumen_clientes = get_reporte_facturacion_resumen_clientes(facturas)
+    return render(request, "cartera/prints/reporte_facturacion_clientes_print.html", {"facturas": facturas[:500], "resumen": resumen, "resumen_clientes": resumen_clientes, "empresa": _empresa_contexto(), "emitido_en": timezone.now()})
+

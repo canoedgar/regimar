@@ -24,8 +24,8 @@
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(13, 110, 253, .1);
-  border: 1px solid rgba(13, 110, 253, .25);
+  background: rgba(159, 17, 23, .07);
+  border: 1px solid rgba(95, 23, 25, .18);
   font-weight: 700;
 }
 
@@ -36,7 +36,7 @@
 
 .wizard-step.active {
   opacity: 1;
-  border-color: rgba(13, 110, 253, .35);
+  border-color: rgba(95, 23, 25, .24);
   box-shadow: 0 6px 16px rgba(0, 0, 0, .06);
 }
 
@@ -59,7 +59,7 @@
 }
 
 .cart-item:hover {
-  border-left-color: var(--bs-primary);
+  border-left-color: var(--color-primary);
 }
 
 .cart-name {
@@ -68,7 +68,7 @@
 
 .cart-meta {
   font-size: .85rem;
-  color: #6c757d;
+  color: #6b6259;
 }
 
 .qty-btn {
@@ -235,7 +235,7 @@
   text-align: center;
   padding: 6px 8px;
   border-bottom: 1px solid #212529;
-  background: #f6f7f8;
+  background: #f3eadf;
 }
 
 .sale-note-field .value {
@@ -261,7 +261,7 @@
 }
 
 .sale-note-table th {
-  background: #f6f7f8;
+  background: #f3eadf;
   text-align: center;
   font-weight: 800;
 }
@@ -329,7 +329,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .08em;
-  color: #6c757d;
+  color: #6b6259;
 }
 
 .sale-note-sign {
@@ -369,7 +369,7 @@
 }
 
 .client-result-item:hover {
-  background: #f8f9fa;
+  background: #f7f2ea;
 }
 
 .print-sale-note-root {
@@ -407,16 +407,16 @@
 }
 
 .product-item:hover {
-  background: rgba(13, 110, 253, .04);
+  background: rgba(159, 17, 23, .035);
 }
 
 .product-item.active {
-  background: rgba(13, 110, 253, .12);
-  border-left: 4px solid var(--bs-primary);
+  background: rgba(159, 17, 23, .08);
+  border-left: 4px solid var(--color-primary);
 }
 
 .product-item.pos-focus {
-  outline: 2px solid rgba(13, 110, 253, .35);
+  outline: 2px solid rgba(95, 23, 25, .24);
   outline-offset: -2px;
 }
 
@@ -437,7 +437,7 @@
   padding: .25rem .55rem;
   border: 1px solid rgba(0, 0, 0, .08);
   border-radius: 999px;
-  background: #f8f9fa;
+  background: #f7f2ea;
   font-size: .8rem;
 }
 
@@ -482,7 +482,7 @@
 
 .metric-label {
   font-size: .78rem;
-  color: #6c757d;
+  color: #6b6259;
   margin-bottom: 2px;
 }
 
@@ -535,7 +535,7 @@
   border: 1px dashed rgba(0, 0, 0, .18);
   border-radius: 14px;
   padding: 10px 12px;
-  background: #fcfcfd;
+  background: #ffffff;
 }
 
 .mini-ticket-row {
@@ -557,11 +557,11 @@
   border: 1px dashed rgba(0, 0, 0, .16);
   border-radius: 14px;
   padding: 28px 14px;
-  background: #fafbfc;
+  background: #fbf8f3;
 }
 
 .step3-panel-card-light {
-  background: #f8f9fa;
+  background: #f7f2ea;
   border: 1px solid rgba(0, 0, 0, .08);
   border-radius: 16px;
   padding: 14px;
@@ -773,15 +773,15 @@ html[data-theme="dark"] .sg-sale-modal-header {
 
 .client-results .client-result-item:hover,
 .client-results .client-result-item:focus {
-  background: rgba(13, 110, 253, 0.08);
+  background: rgba(159, 17, 23, 0.06);
   color: var(--bs-body-color, #212529);
 }
 
 .client-results .client-result-item.active,
 .client-results .client-result-item.active:hover,
 .client-results .client-result-item.active:focus {
-  background: var(--bs-primary, #0d6efd) !important;
-  border-color: var(--bs-primary, #0d6efd) !important;
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
   color: #fff !important;
 }
 
@@ -844,7 +844,7 @@ html[data-theme="dark"] .wizard-step.done {
 }
 
 html[data-theme="dark"] .wizard-step .dot {
-  color: #dbeafe;
+  color: #f7d9d4;
   background: color-mix(in srgb, var(--color-primary) 24%, var(--color-surface) 76%);
   border-color: color-mix(in srgb, var(--color-primary) 62%, #ffffff 38%);
 }
@@ -854,7 +854,7 @@ html[data-theme="dark"] .wizard-step .dot {
 [data-theme="dark"] input[readonly],
 [data-theme="dark"] input:disabled {
   background-color: #1e293b !important;
-  color: #e5e7eb !important;
+  color: #e8ded2 !important;
   border-color: #334155 !important;
   opacity: 1 !important;
 }
@@ -935,12 +935,12 @@ html[data-theme="dark"] .allocation-chip {
 .sale-note-copy .small.text-muted,
 .note-preview-wrap .sale-note-copy .text-muted,
 .print-sale-note-root .sale-note-copy .text-muted {
-  color: #6c757d !important;
+  color: #6b6259 !important;
 }
 
 .sale-note-field .label,
 .sale-note-table th {
-  background: #f6f7f8 !important;
+  background: #f3eadf !important;
   color: #212529 !important;
 }
 

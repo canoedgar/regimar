@@ -36,7 +36,7 @@ def _date_range(fecha_inicio=None, fecha_fin=None):
 
 def _empresa_contexto():
     return {
-        "nombre": ParametroSistema.objects.filter(clave="EMPRESA_NOMBRE", activo=True).values_list("valor", flat=True).first() or "CPC Alimentos",
+        "nombre": ParametroSistema.objects.filter(clave="EMPRESA_NOMBRE", activo=True).values_list("valor", flat=True).first() or "Regimar",
         "email": ParametroSistema.objects.filter(clave="EMPRESA_EMAIL", activo=True).values_list("valor", flat=True).first() or "",
         "telefono": ParametroSistema.objects.filter(clave="EMPRESA_TELEFONO", activo=True).values_list("valor", flat=True).first() or "",
     }
@@ -211,7 +211,7 @@ def construir_asunto_reporte_general(reporte):
         rango = fecha_inicio
     else:
         rango = f"{fecha_inicio} a {fecha_fin}"
-    return f"Reporte general CPC Alimentos | {rango}"
+    return f"Reporte general Regimar | {rango}"
 
 
 def construir_cuerpo_texto_reporte_general(reporte):

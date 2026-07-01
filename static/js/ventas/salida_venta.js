@@ -2,8 +2,7 @@
   const form = document.getElementById("ventaForm");
   if (!form) return;
   const logoUrls = {
-    CPC: form.dataset.logoCpcUrl || form.dataset.logoUrl || "/static/resources/cpcnota.png",
-    BAJA_BACON: form.dataset.logoBajaBaconUrl || "/static/resources/bajabaconnota.png",
+    REGIMAR: form.dataset.logoRegimarUrl || form.dataset.logoUrl || "/static/resources/regimar.jpg",
   };
   const initialStep = Number(form.dataset.initialStep || "1");
   const btnPrev = document.getElementById("btnPrev");
@@ -125,8 +124,7 @@
   }
 
   function getSelectedLogoUrl(){
-    const value = logoNotaReal ? String(logoNotaReal.value || "CPC") : "CPC";
-    return logoUrls[value] || logoUrls.CPC;
+    return logoUrls.REGIMAR;
   }
 
   function decimal(v){
@@ -279,7 +277,7 @@
     setClienteText((c ? c.value : "") || "");
     if (clienteDireccionVenta) clienteDireccionVenta.value = (c ? c.direccion : "") || "";
     if (clienteContactoVenta) clienteContactoVenta.value = (c ? c.contacto : "") || "";
-    if (logoNotaReal) logoNotaReal.value = (c && c.logo ? c.logo : "CPC");
+    if (logoNotaReal) logoNotaReal.value = "REGIMAR";
     syncClienteExtras();
     clientesResults && clientesResults.classList.add("d-none");
     clienteSearch.classList.remove("is-invalid");
@@ -926,12 +924,12 @@
             <div class="sale-note-header-row">
               <img src="${escapeHtml(getSelectedLogoUrl())}" alt="Logo" class="sale-note-logo">
               <div class="sale-note-brand">
-                <div class="brand-name">CPC Alimentos</div>
+                <div class="brand-name">Regimar</div>
                 <div class="brand-owner">Jaime Parada Villarreal</div>
                 <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
 Mayakhan Residencial Mexicali B.C
 Teléfono: 686 162 7239
-Email: cpcalimentosbc@gmail.com</div>
+Email: regimar@gmail.com</div>
               </div>
             </div>
             <div class="sale-note-title">NOTA DE VENTA</div>
@@ -1127,7 +1125,7 @@ Email: cpcalimentosbc@gmail.com</div>
     setClienteText("");
     if (clienteDireccionVenta) clienteDireccionVenta.value = "";
     if (clienteContactoVenta) clienteContactoVenta.value = "";
-    if (logoNotaReal) logoNotaReal.value = "CPC";
+    if (logoNotaReal) logoNotaReal.value = "REGIMAR";
     syncClienteExtras();
     clientesResults && clientesResults.classList.add("d-none");
     clienteSearch.focus();

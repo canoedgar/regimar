@@ -6,6 +6,17 @@ app_name = "cartera"
 
 urlpatterns = [
     path("", views.cartera_dashboard, name="dashboard"),
+    path("facturas/", views.factura_list, name="factura_list"),
+    path("facturas/nueva/", views.factura_create, name="factura_create"),
+    path("facturas/nota/<int:nota_id>/nueva/", views.factura_create_desde_nota, name="factura_create_desde_nota"),
+    path("facturas/<int:factura_id>/", views.factura_detalle, name="factura_detalle"),
+    path("facturas/<int:factura_id>/preview/", views.factura_preview_print, name="factura_preview_print"),
+    path("facturas/<int:factura_id>/xml/", views.factura_xml_download, name="factura_xml_download"),
+    path("facturas/<int:factura_id>/cancelar/", views.factura_cancelar, name="factura_cancelar"),
+    path("clientes/<int:cliente_id>/facturacion/", views.facturacion_cliente_reporte, name="facturacion_cliente_reporte"),
+    path("clientes/<int:cliente_id>/facturacion/imprimir/", views.facturacion_cliente_reporte_print, name="facturacion_cliente_reporte_print"),
+    path("reportes/facturacion-clientes/", views.reporte_facturacion_clientes, name="reporte_facturacion_clientes"),
+    path("reportes/facturacion-clientes/imprimir/", views.reporte_facturacion_clientes_print, name="reporte_facturacion_clientes_print"),
     path("pagos/global/", views.pago_global_create, name="pago_global_create"),
     path("pagos/nota/<int:nota_id>/", views.pago_nota_create, name="pago_nota_create"),
     path("pagos/<int:pago_id>/", views.pago_detalle, name="pago_detalle"),

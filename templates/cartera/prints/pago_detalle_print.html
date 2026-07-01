@@ -6,7 +6,7 @@
   <div class="toolbar"><div class="toolbar-title">Detalle de pago #{{ pago.id }}</div><div class="toolbar-actions"><button class="btn btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button><button class="btn" onclick="window.close()">Cerrar</button></div></div>
   <main class="sheet">
     <header class="doc-header">
-      <div class="brand"><img src="{% static 'resources/logo.png' %}" class="logo" alt="Logo"><div><div class="brand-name">{{ empresa.nombre }}</div><div class="brand-owner">{{ empresa.propietario }}</div><div class="brand-data">{{ empresa.direccion }}<br>Tel. {{ empresa.telefono }}<br>{{ empresa.email }}</div></div></div>
+      <div class="brand"><img src="{% static 'resources/regimar.jpg' %}" class="logo" alt="Logo"><div><div class="brand-name">{{ empresa.nombre }}</div><div class="brand-owner">{{ empresa.propietario }}</div><div class="brand-data">{{ empresa.direccion }}<br>Tel. {{ empresa.telefono }}<br>{{ empresa.email }}</div></div></div>
       <div class="doc-meta"><div class="doc-title">Detalle de pago</div><div class="doc-subtitle">Pago #{{ pago.id }} · {{ pago.get_estado_display }}</div><div class="small">Emitido: {{ emitido_en|date:"d/m/Y H:i" }}</div></div>
     </header>
 

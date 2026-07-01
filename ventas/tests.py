@@ -104,7 +104,7 @@ class VentasFactoryMixin:
             "cliente": str(cliente or "Cliente mostrador"),
             "forma_pago_venta": SalidaInventario.FORMA_PAGO_CONTADO,
             "estado_pago": SalidaInventario.ESTADO_PAGO_PAGADO,
-            "logo_nota": SalidaInventario.LOGO_CPC_ALIMENTOS,
+            "logo_nota": SalidaInventario.LOGO_REGIMAR,
         }
         defaults.update(kwargs)
         salida = SalidaInventario(**defaults)
@@ -198,7 +198,7 @@ class SalidaVentaCreateViewTests(VentasFactoryMixin, TestCase):
             "cliente": cliente.nombre_fiscal,
             "cliente_direccion": "",
             "cliente_contacto": "",
-            "logo_nota": SalidaInventario.LOGO_CPC_ALIMENTOS,
+            "logo_nota": SalidaInventario.LOGO_REGIMAR,
             "documento_referencia": "",
             "motivo": "",
             "observaciones": "",
@@ -241,7 +241,7 @@ class SalidaVentaFormTests(VentasFactoryMixin, TestCase):
             "cliente": "Cliente form venta",
             "cliente_direccion": "Dirección de prueba",
             "cliente_contacto": "Contacto",
-            "logo_nota": SalidaInventario.LOGO_CPC_ALIMENTOS,
+            "logo_nota": SalidaInventario.LOGO_REGIMAR,
             "documento_referencia": "REM-001",
             "motivo": "",
             "observaciones": "",

@@ -34,12 +34,12 @@
 }
 
 .cotizacion-wizard-card .wizard-step.active {
-  border-color: var(--bs-primary);
-  box-shadow: 0 0 0 .2rem rgba(13, 110, 253, .08);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 .2rem rgba(159, 17, 23, .06);
 }
 
 .cotizacion-wizard-card .wizard-step.active .dot {
-  background: var(--bs-primary);
+  background: var(--color-primary);
   color: #fff;
 }
 
@@ -52,8 +52,8 @@
 
 .client-result-item.active,
 .cot-product-item.active {
-  background: var(--bs-primary);
-  border-color: var(--bs-primary);
+  background: var(--color-primary);
+  border-color: var(--color-primary);
   color: #fff;
 }
 
@@ -178,10 +178,10 @@
   width: 100%;
   min-height: 560px;
   background: #fff;
-  color: #1f2937;
+  color: #201f1d;
   border-radius: .5rem;
   padding: 1.2rem;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
+  box-shadow: 0 10px 25px rgba(23, 21, 21, .10);
   font-size: .8rem;
 }
 
@@ -189,7 +189,7 @@
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  border-bottom: 2px solid #1d4ed8;
+  border-bottom: 2px solid var(--color-primary);
   padding-bottom: .75rem;
 }
 
@@ -206,7 +206,7 @@
 }
 
 .cot-preview-title {
-  color: #1d4ed8;
+  color: var(--color-primary);
   font-size: 1.35rem;
   letter-spacing: .12em;
   font-weight: 800;
@@ -231,7 +231,7 @@
 }
 
 .cot-preview-info td {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e8ded2;
   padding: .35rem;
 }
 
@@ -241,15 +241,15 @@
 }
 
 .cot-preview-table th {
-  background: #1d4ed8;
-  color: white;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
   padding: .45rem;
   text-align: left;
 }
 
 .cot-preview-table td {
   padding: .45rem;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e8ded2;
 }
 
 .cot-preview-table .num {
@@ -259,7 +259,7 @@
 
 .cot-preview-note {
   margin-top: 1rem;
-  color: #374151;
+  color: #4b4540;
   font-size: .75rem;
 }
 
@@ -344,7 +344,7 @@
     border: 1px solid var(--bs-border-color);
     border-radius: 1.15rem;
     background: var(--bs-body-bg);
-    box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+    box-shadow: 0 .5rem 1.25rem rgba(23, 21, 21, .08);
     padding: .85rem;
   }
 
@@ -383,7 +383,7 @@
   }
 
   .cotizaciones-list-table tbody td:first-child::before {
-    color: var(--bs-primary);
+    color: var(--color-primary);
   }
 
   .cotizaciones-list-table .cot-card-actions {
@@ -407,7 +407,7 @@
   border: 1px solid var(--bs-border-color);
   border-radius: 1.15rem;
   background: var(--bs-body-bg);
-  box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+  box-shadow: 0 .5rem 1.25rem rgba(23, 21, 21, .08);
   padding: .9rem;
 }
 
@@ -433,7 +433,7 @@
 
 .cotizacion-mobile-card__folio {
   display: block;
-  color: var(--bs-primary);
+  color: var(--color-primary);
   font-size: 1rem;
   line-height: 1.25;
   margin-top: .15rem;
@@ -545,9 +545,9 @@ html[data-theme="dark"] .text-bg-light {
 }
 
 html[data-theme="dark"] .alert-info {
-  background-color: rgba(96, 165, 250, .14);
+  background-color: rgba(159, 17, 23, .08);
   color: var(--color-text);
-  border-color: rgba(96, 165, 250, .24);
+  border-color: rgba(95, 23, 25, .18);
 }
 
 html[data-theme="dark"] .alert-warning,
@@ -577,7 +577,7 @@ html[data-theme="dark"] .cot-product-item.active .text-muted {
   border: 1px solid var(--bs-border-color);
   border-radius: 1.15rem;
   background: var(--bs-body-bg);
-  box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+  box-shadow: 0 .5rem 1.25rem rgba(23, 21, 21, .08);
   padding: .9rem;
 }
 
@@ -672,10 +672,10 @@ html[data-theme="dark"] .cot-steps .wizard-step .dot {
 
 html[data-theme="dark"] .cotizacion-wizard-card .wizard-step.active,
 html[data-theme="dark"] .cot-steps .wizard-step.active {
-  background: rgba(59, 130, 246, .16);
+  background: rgba(159, 17, 23, .10);
   color: var(--color-text);
-  border-color: var(--bs-primary);
-  box-shadow: 0 0 0 .2rem rgba(59, 130, 246, .16);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 .2rem rgba(159, 17, 23, .10);
 }
 
 html[data-theme="dark"] .cotizacion-wizard-card .wizard-step.active .label,
@@ -686,9 +686,9 @@ html[data-theme="dark"] .cot-steps .wizard-step.active .label {
 
 html[data-theme="dark"] .cotizacion-wizard-card .wizard-step.active .dot,
 html[data-theme="dark"] .cot-steps .wizard-step.active .dot {
-  background: var(--bs-primary);
+  background: var(--color-primary);
   color: #fff;
-  border-color: var(--bs-primary);
+  border-color: var(--color-primary);
 }
 
 html[data-theme="dark"] .cotizacion-wizard-card .wizard-step:not(.active),
@@ -736,7 +736,7 @@ html[data-theme="dark"] .cot-steps .wizard-step:not(.active) {
   background: var(--color-surface);
   color: var(--color-text);
   padding: 1rem;
-  box-shadow: 0 0.75rem 1.75rem rgba(15, 23, 42, 0.08);
+  box-shadow: 0 0.75rem 1.75rem rgba(23, 21, 21, 0.08);
 }
 
 .cotizaciones-detail-page .sg-kpi-title {

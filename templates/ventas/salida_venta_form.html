@@ -46,7 +46,7 @@
           </div>
         </div>
 
-        <form method="post" novalidate id="ventaForm" class="venta-form" data-logo-url="{% static 'resources/cpcnota.png' %}" data-logo-cpc-url="{% static 'resources/cpcnota.png' %}" data-logo-baja-bacon-url="{% static 'resources/bajabaconnota.png' %}" data-initial-step="{{ nota_guardada|yesno:'4,1' }}" data-comision-terminal-porcentaje="{{ comision_terminal_porcentaje|default:0 }}">
+        <form method="post" novalidate id="ventaForm" class="venta-form" data-logo-url="{% static 'resources/regimar.jpg' %}" data-logo-regimar-url="{% static 'resources/regimar.jpg' %}" data-initial-step="{{ nota_guardada|yesno:'4,1' }}" data-comision-terminal-porcentaje="{{ comision_terminal_porcentaje|default:0 }}">
           {% csrf_token %}
 
           <div class="d-none">
@@ -390,12 +390,12 @@
             <div class="sale-note-header-row">
               <img src="{% static nota_guardada.logo_nota_static_path %}" alt="Logo" class="sale-note-logo">
               <div class="sale-note-brand">
-                <div class="brand-name">CPC Alimentos</div>
+                <div class="brand-name">Regimar</div>
                 <div class="brand-owner">Jaime Parada Villarreal</div>
                 <div class="sale-note-address">Cerrada Coba 3612 Cp. 21376
 Mayakhan Residencial Mexicali B.C
 Teléfono: 686 162 7239
-Email: cpcalimentosbc@gmail.com</div>
+Email: regimar@gmail.com</div>
               </div>
             </div>
             <div class="sale-note-title">NOTA DE VENTA</div>

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Reporte de facturación{% endblock %}
+{% block page_title %}Reporte de facturación{% endblock %}
+{% block active_cartera %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cartera.css' %}">{% endblock %}
+
+{% block content %}
+<div class="facturacion-page sg-list-page facturacion-report-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card facturacion-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-file-earmark-bar-graph"></i>Reporte de facturación por cliente</h5>
+        <p class="sg-page-header-subtitle">Control interno de facturas cargadas manualmente, separado de pagos y saldos de cartera.</p>
+      </div>
+      <div class="sg-page-actions facturacion-actions">
+        <a href="{% url 'cartera:reporte_facturacion_clientes_print' %}?{{ request.GET.urlencode }}" target="_blank" class="sg-btn-outline sg-btn-md"><i class="bi bi-printer me-1"></i>Imprimir</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sg-toolbar sg-list-toolbar cartera-filter-card facturacion-filter-card">
+    <form method="get" class="sg-filter-bar sg-filter-bar-inline sg-list-filter-form facturacion-filter-form">
+      <div class="cartera-filter-field facturacion-filter-field-wide">
+        <label class="sg-form-label" for="{{ form.q.id_for_label }}">{{ form.q.label }}</label>
+        {{ form.q }}
+      </div>
+      <div class="cartera-filter-field">
+        <label class="sg-form-label" for="{{ form.fecha_inicio.id_for_label }}">{{ form.fecha_inicio.label }}</label>
+        {{ form.fecha_inicio }}
+      </div>
+      <div class="cartera-filter-field">
+        <label class="sg-form-label" for="{{ form.fecha_fin.id_for_label }}">{{ form.fecha_fin.label }}</label>
+        {{ form.fecha_fin }}
+      </div>
+      <div class="cartera-filter-field">
+        <label class="sg-form-label" for="{{ form.estado.id_for_label }}">{{ form.estado.label }}</label>
+        {{ form.estado }}
+      </div>
+      <div class="cartera-filter-field">
+        <label class="sg-form-label" for="{{ form.tipo_aplicacion.id_for_label }}">{{ form.tipo_aplicacion.label }}</label>
+        {{ form.tipo_aplicacion }}
+      </div>
+      <div class="cartera-filter-actions facturacion-filter-actions">
+        <button class="sg-btn-primary sg-btn-md" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+        <a class="sg-btn-secondary sg-btn-md" href="{% url 'cartera:reporte_facturacion_clientes' %}"><i class="bi bi-x-circle me-1"></i>Limpiar</a>
+      </div>
+    </form>
+  </section>
+
+  <section class="cartera-kpi-grid facturacion-kpi-grid">
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-check-circle"></i>Activo</div>
+      <div class="cartera-kpi-value">${{ resumen.total_activo|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Facturación vigente del periodo.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-globe2"></i>Global</div>
+      <div class="cartera-kpi-value">${{ resumen.total_global|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Facturas aplicadas solo al cliente.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-journal-check"></i>A notas</div>
+      <div class="cartera-kpi-value">${{ resumen.total_notas|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Facturas relacionadas a notas.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-x-circle"></i>Cancelado</div>
+      <div class="cartera-kpi-value">${{ resumen.total_cancelado|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Cancelaciones internas.</div>
+    </article>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card facturacion-table-card">
+    <div class="card-header facturacion-card-header">
+      <div>
+        <h5 class="sg-page-header-title mb-1"><i class="bi bi-people"></i>Resumen por cliente</h5>
+        <p class="sg-page-header-subtitle mb-0">Totales agrupados de acuerdo con los filtros seleccionados.</p>
+      </div>
+    </div>
+    <div class="table-responsive d-none d-md-block">
+      <table class="table table-hover align-middle mb-0 sg-table">
+        <thead class="table-light">
+          <tr>
+            <th>Cliente</th>
+            <th>RFC</th>
+            <th class="text-end">Facturas</th>
+            <th class="text-end">Global</th>
+            <th class="text-end">A notas</th>
+            <th class="text-end">Activo</th>
+            <th class="text-end">Cancelado</th>
+            <th>Última factura</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in resumen_clientes %}
+            <tr>
+              <td class="fw-semibold">{{ item.cliente__nombre_fiscal|default:item.cliente__nombre_comercial }}</td>
+              <td>{{ item.cliente__rfc|default:"—" }}</td>
+              <td class="text-end">{{ item.facturas }}</td>
+              <td class="text-end">${{ item.total_global|floatformat:2|intcomma }}</td>
+              <td class="text-end">${{ item.total_notas|floatformat:2|intcomma }}</td>
+              <td class="text-end fw-semibold">${{ item.total_activo|floatformat:2|intcomma }}</td>
+              <td class="text-end">${{ item.total_cancelado|floatformat:2|intcomma }}</td>
+              <td>{{ item.ultima_factura|date:"Y-m-d" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="8" class="sg-empty-state">Sin clientes en el reporte.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="sg-mobile-list d-md-none">
+      {% for item in resumen_clientes %}
+        <article class="sg-mobile-card">
+          <div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Cliente</span><span class="sg-mobile-card-title">{{ item.cliente__nombre_fiscal|default:item.cliente__nombre_comercial }}</span><span class="sg-mobile-card-subtitle">{{ item.cliente__rfc|default:"Sin RFC" }}</span></div></div>
+          <div class="sg-mobile-card-grid">
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Facturas</span><span class="sg-mobile-card-value">{{ item.facturas }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Activo</span><span class="sg-mobile-card-value">${{ item.total_activo|floatformat:2|intcomma }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Global</span><span class="sg-mobile-card-value">${{ item.total_global|floatformat:2|intcomma }}</span></div>
+            <div class="sg-mobile-card-field"><span class="sg-mobile-card-label">A notas</span><span class="sg-mobile-card-value">${{ item.total_notas|floatformat:2|intcomma }}</span></div>
+          </div>
+        </article>
+      {% empty %}
+        <div class="sg-empty-state">Sin clientes en el reporte.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% include "cartera/facturacion/_reporte_facturacion_table.html" with facturas=facturas %}
+</div>
+{% endblock %}

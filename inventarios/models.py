@@ -231,11 +231,9 @@ class EntradaInventarioDetalle(models.Model):
 
 
 class SalidaInventario(models.Model):    
-    LOGO_CPC_ALIMENTOS = "CPC"
-    LOGO_BAJA_BACON = "BAJA_BACON"
+    LOGO_REGIMAR = "REGIMAR"
     LOGO_NOTA_CHOICES = [
-        (LOGO_CPC_ALIMENTOS, "CPC Alimentos"),
-        (LOGO_BAJA_BACON, "Baja Bacon"),
+        (LOGO_REGIMAR, "Regimar"),
     ]
 
     TIPO_VENTA = "VTA"
@@ -318,7 +316,7 @@ class SalidaInventario(models.Model):
         "Logo",
         max_length=20,
         choices=LOGO_NOTA_CHOICES,
-        default=LOGO_CPC_ALIMENTOS,
+        default=LOGO_REGIMAR,
         help_text="Logo usado históricamente para imprimir esta nota de venta.",
     )
     proveedor = models.CharField("Proveedor", max_length=200, blank=True) 
@@ -394,7 +392,7 @@ class SalidaInventario(models.Model):
 
     @property
     def logo_nota_static_path(self):
-        return "resources/bajabaconnota.png" if self.logo_nota == self.LOGO_BAJA_BACON else "resources/cpcnota.png"
+        return "resources/regimar.jpg"
 
     def __str__(self):
         return f"{self.folio} - {self.get_tipo_display()}"

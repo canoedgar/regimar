@@ -25,7 +25,7 @@
           <div class="wizard-step" data-step-indicator="4"><div class="dot">4</div><div class="label">Vista previa</div></div>
         </div>
 
-        <form method="post" id="cotizacionForm" novalidate data-logo-url="{% static 'resources/logo.png' %}">
+        <form method="post" id="cotizacionForm" novalidate data-logo-url="{% static 'resources/regimar.jpg' %}">
           {% csrf_token %}
           <div class="d-none">{{ form.cliente }}</div>
           <input type="hidden" name="fecha" value="{{ fecha_actual_value }}">

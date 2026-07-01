@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='cliente',
             name='logo',
-            field=models.CharField(choices=[('CPC', 'CPC Alimentos'), ('BAJA_BACON', 'Baja Bacon')], default='CPC', help_text='Logo default que se usará en las notas de venta del cliente.', max_length=20, verbose_name='Logo'),
+            field=models.CharField(choices=[('REGIMAR', 'Regimar')], default='REGIMAR', help_text='Logo default que se usará en las notas de venta del cliente.', max_length=20, verbose_name='Logo'),
         ),
     ]

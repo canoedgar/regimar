@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static humanize %}
 
-{% block title %}Cartera | CPC Alimentos{% endblock %}
+{% block title %}Cartera | Regimar{% endblock %}
 {% block page_title %}Cartera de clientes{% endblock %}
 {% block active_cartera %}active{% endblock %}
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/cartera.css' %}">{% endblock %}
@@ -31,6 +31,12 @@
           <i class="bi bi-file-earmark-bar-graph me-1"></i>
           Reporte general
         </a>
+        {% if puede_ver_facturacion %}
+          <a href="{% url 'cartera:factura_list' %}" class="sg-btn-outline sg-btn-md">
+            <i class="bi bi-receipt-cutoff me-1"></i>
+            Facturación
+          </a>
+        {% endif %}
       </div>
     </div>
   </section>
@@ -76,6 +82,7 @@
               </a>
             {% endif %}
             <a href="{% url 'cartera:reporte_cartera_general' %}" class="sg-btn-outline sg-btn-sm">Reporte general</a>
+            {% if puede_registrar_facturas %}<a href="{% url 'cartera:factura_create' %}" class="sg-btn-outline sg-btn-sm">Nueva factura</a>{% endif %}
           </div>
         </div>
       </div>

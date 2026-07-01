@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Factura {{ factura.folio_display }}{% endblock %}
+{% block page_title %}Detalle de factura{% endblock %}
+{% block active_cartera %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cartera.css' %}">{% endblock %}
+
+{% block content %}
+<div class="facturacion-page facturacion-detail-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card facturacion-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title">
+          <i class="bi bi-receipt-cutoff"></i>{{ factura.folio_display }}
+          <span class="badge {% if factura.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ factura.get_estado_display }}</span>
+        </h5>
+        <p class="sg-page-header-subtitle">UUID {{ factura.uuid }} · {{ factura.get_tipo_aplicacion_display }}</p>
+      </div>
+      <div class="sg-page-actions facturacion-actions">
+        <a href="{% url 'cartera:factura_preview_print' factura.id %}" target="_blank" class="sg-btn-primary sg-btn-md"><i class="bi bi-printer me-1"></i>Vista previa XML</a>
+        <a href="{% url 'cartera:factura_xml_download' factura.id %}" class="sg-btn-outline sg-btn-md"><i class="bi bi-download me-1"></i>XML</a>
+        <a href="{% url 'cartera:factura_list' %}" class="sg-btn-secondary sg-btn-md"><i class="bi bi-arrow-left me-1"></i>Volver</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cartera-kpi-grid facturacion-kpi-grid">
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-person-vcard"></i>Cliente</div>
+      <div class="cartera-kpi-value fs-5">{{ factura.cliente }}</div>
+      <div class="cartera-kpi-help">RFC receptor {{ factura.rfc_receptor|default:"—" }}</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-cash-coin"></i>Monto operativo</div>
+      <div class="cartera-kpi-value">${{ factura.total|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Usado para reportes de facturación.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-filetype-xml"></i>Total XML</div>
+      <div class="cartera-kpi-value">${{ factura.total_xml_display|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">XML guardado sin alteraciones.</div>
+    </article>
+  </section>
+
+  {% if factura.estado == 'CAN' %}
+    <div class="alert alert-danger facturacion-alert">
+      <strong>Cancelación interna:</strong> {{ factura.motivo_cancelacion|default:"—" }} · {{ factura.cancelado_en|date:"Y-m-d H:i" }}
+    </div>
+  {% endif %}
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card facturacion-info-card">
+    <div class="card-header facturacion-card-header">
+      <h5 class="sg-page-header-title mb-0"><i class="bi bi-file-earmark-text"></i>Datos fiscales</h5>
+    </div>
+    <div class="card-body">
+      <div class="facturacion-fiscal-grid">
+        <div class="facturacion-info-box">
+          <span>Emisor</span>
+          <strong>{{ factura.nombre_emisor|default:"—" }}</strong>
+          <small>{{ factura.rfc_emisor|default:"—" }}</small>
+        </div>
+        <div class="facturacion-info-box">
+          <span>Receptor</span>
+          <strong>{{ factura.nombre_receptor|default:"—" }}</strong>
+          <small>{{ factura.rfc_receptor|default:"—" }}</small>
+        </div>
+        <div class="facturacion-info-box">
+          <span>Forma / método</span>
+          <strong>{{ factura.forma_pago|default:"—" }} / {{ factura.metodo_pago|default:"—" }}</strong>
+          <small>Uso CFDI {{ factura.uso_cfdi|default:"—" }}</small>
+        </div>
+        <div class="facturacion-info-box">
+          <span>Importes XML</span>
+          <strong>Subtotal ${{ factura.subtotal|floatformat:2|intcomma }}</strong>
+          <small>Traslados ${{ factura.impuestos_trasladados|floatformat:2|intcomma }} · Retenciones ${{ factura.impuestos_retenidos|floatformat:2|intcomma }}</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card facturacion-table-card">
+    <div class="card-header facturacion-card-header">
+      <div>
+        <h5 class="sg-page-header-title mb-1"><i class="bi bi-journal-check"></i>Aplicación</h5>
+        <p class="sg-page-header-subtitle mb-0">{{ factura.get_tipo_aplicacion_display }}. La facturación no altera saldos ni pagos.</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 sg-table">
+        <thead class="table-light">
+          <tr>
+            <th>Nota</th>
+            <th>Fecha</th>
+            <th>Observaciones</th>
+            <th class="text-end">Monto facturado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for app in factura.aplicaciones.all %}
+            <tr>
+              <td class="fw-semibold">{{ app.nota_venta.folio }}</td>
+              <td>{{ app.nota_venta.fecha|date:"Y-m-d" }}</td>
+              <td>{{ app.observaciones|default:"—" }}</td>
+              <td class="text-end sg-nowrap">${{ app.monto_facturado|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="sg-empty-state">Factura global al cliente, sin notas relacionadas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {% if factura.estado != 'CAN' and puede_cancelar_facturas %}
+    <section class="card border-0 shadow-sm sg-form-card facturacion-cancel-card">
+      <div class="card-header facturacion-card-header">
+        <h5 class="sg-page-header-title text-danger mb-0"><i class="bi bi-x-circle"></i>Cancelación interna</h5>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'cartera:factura_cancelar' factura.id %}" onsubmit="return confirm('¿Confirmas cancelar internamente esta factura?');">
+          {% csrf_token %}
+          <label class="sg-form-label" for="{{ cancelar_form.motivo_cancelacion.id_for_label }}">{{ cancelar_form.motivo_cancelacion.label }}</label>
+          {{ cancelar_form.motivo_cancelacion }}
+          <button class="sg-btn-danger sg-btn-md mt-3" type="submit"><i class="bi bi-x-circle me-1"></i>Cancelar internamente</button>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+</div>
+{% endblock %}

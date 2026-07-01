@@ -2,7 +2,7 @@
   const form = document.getElementById("cotizacionForm");
   if (!form) return;
 
-  const logoUrl = form.dataset.logoUrl || "/static/resources/logo.png";
+  const logoUrl = form.dataset.logoUrl || "/static/resources/regimar.jpg";
   const panels = Array.from(document.querySelectorAll(".wizard-panel"));
   const indicators = Array.from(document.querySelectorAll(".wizard-step"));
   const badge = document.getElementById("cotStepBadge");
@@ -281,7 +281,7 @@
   function buildPreviewSheetHtml(items){
     return `
       <div class="cot-preview-top">
-        <div class="cot-preview-brand"><img src="${escapeHtml(logoUrl)}" alt="CPC"><div><strong>CPC Alimentos</strong><div class="small text-muted">Jaime Parada Villarreal</div></div></div>
+        <div class="cot-preview-brand"><img src="${escapeHtml(logoUrl)}" alt="Regimar"><div><strong>Regimar</strong><div class="small text-muted">Regimar</div></div></div>
         <div class="cot-preview-meta"><div class="cot-preview-title">COTIZACIÓN</div><div><strong>Fecha:</strong> ${escapeHtml(fechaInput ? fechaInput.value : "")}</div><div><strong>Vigencia:</strong> ${escapeHtml(fechaVigenciaInput ? fechaVigenciaInput.value : "")}</div></div>
       </div>
       <p class="mt-3 mb-2">Atendiendo a su amable solicitud enviamos la cotización correspondiente quedando a sus órdenes.</p>
@@ -304,24 +304,24 @@
     const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Vista PDF - Cotización</title><style>
       @page { size: letter; margin: 12mm; }
       * { box-sizing: border-box; }
-      body { margin: 0; padding: 12px; background: #f3f4f6; color: #1f2937; font-family: Arial, sans-serif; font-size: 12px; }
+      body { margin: 0; padding: 12px; background: #f7f2ea; color: #201f1d; font-family: Arial, sans-serif; font-size: 12px; }
       .actions { max-width: 780px; margin: 0 auto 12px; text-align: right; }
-      .actions button { padding: 8px 12px; border: 0; background: #1d4ed8; color: #fff; border-radius: 6px; }
-      .cot-preview-sheet { max-width: 780px; min-height: 960px; margin: 0 auto; background: #fff; color: #1f2937; padding: 24px; box-shadow: 0 10px 30px rgba(15, 23, 42, .12); }
-      .cot-preview-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 2px solid #1d4ed8; padding-bottom: 12px; }
+      .actions button { padding: 8px 12px; border: 0; background: #9f1117; color: #fff; border-radius: 6px; }
+      .cot-preview-sheet { max-width: 780px; min-height: 960px; margin: 0 auto; background: #fff; color: #201f1d; padding: 24px; box-shadow: 0 10px 30px rgba(15, 23, 42, .12); }
+      .cot-preview-top { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; border-bottom: 2px solid #9f1117; padding-bottom: 12px; }
       .cot-preview-brand { display: flex; gap: 12px; align-items: center; }
       .cot-preview-brand img { width: 86px; max-height: 70px; object-fit: contain; }
-      .cot-preview-title { margin: 0; font-size: 25px; letter-spacing: 2px; color: #1d4ed8; font-weight: 800; }
+      .cot-preview-title { margin: 0; font-size: 25px; letter-spacing: 2px; color: #9f1117; font-weight: 800; }
       .cot-preview-meta { text-align: right; line-height: 1.6; }
-      .text-muted { color: #6b7280; }
+      .text-muted { color: #6b6259; }
       .cot-preview-info { width: 100%; border-collapse: collapse; margin: 18px 0; }
-      .cot-preview-info th { text-align: left; width: 90px; color: #374151; padding: 5px; vertical-align: top; }
-      .cot-preview-info td { border-bottom: 1px solid #e5e7eb; padding: 5px; }
+      .cot-preview-info th { text-align: left; width: 90px; color: #4b4540; padding: 5px; vertical-align: top; }
+      .cot-preview-info td { border-bottom: 1px solid #e8ded2; padding: 5px; }
       .cot-preview-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-      .cot-preview-table th { background: #1d4ed8; color: #fff; text-align: left; padding: 8px; }
-      .cot-preview-table td { padding: 8px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+      .cot-preview-table th { background: #9f1117; color: #fff; text-align: left; padding: 8px; }
+      .cot-preview-table td { padding: 8px; border-bottom: 1px solid #e8ded2; vertical-align: top; }
       .cot-preview-table .num { text-align: right; white-space: nowrap; }
-      .cot-preview-note { margin-top: 18px; font-size: 11px; color: #374151; line-height: 1.5; }
+      .cot-preview-note { margin-top: 18px; font-size: 11px; color: #4b4540; line-height: 1.5; }
       @media print { body { padding: 0; background: #fff; } .actions { display: none; } .cot-preview-sheet { box-shadow: none; min-height: auto; } }
       @media (max-width: 576px) { body { padding: 0; } .actions { padding: 10px; } .cot-preview-sheet { width: 100%; min-height: auto; padding: 18px; box-shadow: none; } }
     </style></head><body><div class="actions"><button onclick="window.print()">Imprimir / Guardar PDF</button></div><div class="cot-preview-sheet">${buildPreviewSheetHtml(Array.from(selected.values()))}</div></body></html>`;

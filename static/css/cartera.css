@@ -320,3 +320,639 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ==========================================================
+   FACTURACIÓN — alineado a patrones SG / Cotizaciones
+   ========================================================== */
+.facturacion-page {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.facturacion-page .card,
+.facturacion-page .sg-form-card,
+.facturacion-page .sg-table-card {
+  min-width: 0;
+}
+
+.facturacion-header-card .sg-page-header {
+  margin-bottom: 0;
+  align-items: flex-start;
+}
+
+.facturacion-page .sg-page-header-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .25rem;
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.facturacion-page .sg-page-header-subtitle,
+.facturacion-page .sg-form-help,
+.facturacion-page .form-text,
+.facturacion-page .text-muted {
+  color: var(--color-text-soft) !important;
+}
+
+.facturacion-actions {
+  align-items: center;
+}
+
+.facturacion-filter-card {
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  box-shadow: 0 .75rem 1.75rem rgba(15, 23, 42, .07);
+}
+
+.facturacion-filter-form {
+  width: 100%;
+  align-items: end;
+  gap: .75rem;
+}
+
+.facturacion-filter-form .cartera-filter-field {
+  flex: 1 1 11rem;
+  min-width: 10rem;
+}
+
+.facturacion-filter-form .facturacion-filter-field-wide,
+.facturacion-client-search .cartera-filter-field-wide {
+  flex: 2 1 20rem;
+  min-width: min(100%, 18rem);
+}
+
+.facturacion-filter-form label,
+.facturacion-client-search label,
+.facturacion-page .sg-form-label,
+.facturacion-page .form-label {
+  color: var(--color-text) !important;
+  font-weight: 700;
+}
+
+.facturacion-filter-actions,
+.facturacion-page .cartera-filter-actions {
+  display: flex;
+  align-items: end;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+
+.facturacion-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1rem;
+}
+
+.facturacion-kpi-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.facturacion-kpi-card::after {
+  content: "";
+  position: absolute;
+  inset: auto -2rem -3rem auto;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 999px;
+  background: rgba(159, 17, 23, .07);
+  pointer-events: none;
+}
+
+.facturacion-table-card {
+  overflow: hidden;
+}
+
+.facturacion-table-responsive {
+  border-radius: .85rem;
+  overflow: auto;
+}
+
+.facturacion-table th,
+.facturacion-table td {
+  vertical-align: middle;
+}
+
+.facturacion-folio,
+.facturacion-uuid {
+  overflow-wrap: anywhere;
+}
+
+.facturacion-row-actions {
+  white-space: nowrap;
+}
+
+.facturacion-mobile-list {
+  display: grid;
+  gap: .85rem;
+  padding: .85rem;
+}
+
+.facturacion-mobile-card,
+.facturacion-client-result,
+.facturacion-info-box,
+.facturacion-help-card,
+.facturacion-selected-client-card {
+  border: 1px solid var(--color-border);
+  border-radius: 1.15rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+}
+
+.facturacion-mobile-card {
+  padding: .9rem;
+}
+
+.facturacion-mobile-card--cancelled {
+  border-color: rgba(180, 35, 24, .22);
+}
+
+.facturacion-mobile-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  padding-bottom: .7rem;
+  margin-bottom: .7rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.facturacion-mobile-card__label {
+  display: block;
+  color: var(--color-text-soft);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.facturacion-mobile-card__folio {
+  display: block;
+  color: var(--color-primary);
+  font-size: 1rem;
+  line-height: 1.25;
+  margin-top: .15rem;
+  overflow-wrap: anywhere;
+}
+
+.facturacion-mobile-card__client {
+  margin-bottom: .75rem;
+}
+
+.facturacion-mobile-card__client strong {
+  display: block;
+  font-size: .95rem;
+  line-height: 1.35;
+  margin-top: .2rem;
+  overflow-wrap: anywhere;
+}
+
+.facturacion-mobile-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem;
+  margin-bottom: .85rem;
+}
+
+.facturacion-mobile-card__grid > div {
+  border: 1px solid var(--color-border);
+  border-radius: .85rem;
+  background: var(--color-surface-soft);
+  padding: .65rem .7rem;
+  min-width: 0;
+}
+
+.facturacion-mobile-card__grid > div:last-child {
+  grid-column: 1 / -1;
+}
+
+.facturacion-mobile-card__grid strong {
+  display: block;
+  color: var(--color-text);
+  font-size: .92rem;
+  line-height: 1.25;
+  margin-top: .2rem;
+  overflow-wrap: anywhere;
+}
+
+.facturacion-mobile-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .5rem;
+  align-items: center;
+}
+
+.facturacion-mobile-card__actions a:first-child {
+  justify-content: center;
+}
+
+.facturacion-empty-state {
+  border: 1px dashed var(--color-border);
+  border-radius: 1rem;
+  padding: 1rem;
+  background: var(--color-surface);
+}
+
+.facturacion-search-layout,
+.facturacion-form-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17rem, .38fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.facturacion-section-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .35rem;
+  color: var(--color-text);
+  font-weight: 800;
+}
+
+.facturacion-help-card,
+.facturacion-selected-client-card {
+  padding: 1rem;
+  background: var(--color-surface-soft);
+}
+
+.facturacion-help-card strong,
+.facturacion-selected-client-card strong {
+  display: block;
+  color: var(--color-text);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.facturacion-help-card p,
+.facturacion-selected-client-meta {
+  margin-top: .35rem;
+  color: var(--color-text-soft);
+  font-size: .9rem;
+}
+
+.facturacion-selected-client-card > span {
+  display: block;
+  color: var(--color-text-soft);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.facturacion-client-search {
+  padding: 0;
+}
+
+.facturacion-client-results {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.facturacion-client-result {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .85rem;
+  padding: .9rem;
+  text-decoration: none;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+
+.facturacion-client-result:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+}
+
+.facturacion-client-result strong {
+  display: block;
+  margin-top: .15rem;
+  overflow-wrap: anywhere;
+}
+
+.facturacion-section-header {
+  margin-bottom: 1rem;
+}
+
+.facturacion-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .75rem;
+  background: var(--color-surface-soft);
+}
+
+.facturacion-page .form-control,
+.facturacion-page .form-select,
+.facturacion-page textarea,
+.facturacion-page input[type="file"],
+.facturacion-page input[type="text"],
+.facturacion-page input[type="number"],
+.facturacion-page select {
+  background-color: var(--color-input-bg);
+  color: var(--color-input-text);
+  border-color: var(--color-border);
+}
+
+.facturacion-alert {
+  border-radius: 1rem;
+}
+
+.facturacion-radio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+}
+
+.facturacion-radio-card {
+  position: relative;
+  display: flex;
+  gap: .65rem;
+  align-items: flex-start;
+  min-height: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: .85rem;
+}
+
+.facturacion-radio-card input[type="radio"] {
+  margin-top: .2rem;
+  flex: 0 0 auto;
+}
+
+.facturacion-radio-card__body {
+  min-width: 0;
+}
+
+.facturacion-radio-card__title {
+  display: block;
+  color: var(--color-text);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.facturacion-radio-card__help {
+  display: block;
+  margin-top: .25rem;
+  color: var(--color-text-soft);
+  font-size: .84rem;
+  line-height: 1.35;
+}
+
+.facturacion-xml-preview {
+  max-height: 28rem;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: .85rem;
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  padding: .9rem;
+  font-size: .78rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.facturacion-application-responsive {
+  border-radius: .85rem;
+  overflow: auto;
+}
+
+.facturacion-application-table th,
+.facturacion-application-table td {
+  vertical-align: top;
+}
+
+.facturacion-application-table select,
+.facturacion-application-table input {
+  min-width: 0;
+}
+
+.facturacion-form-actions {
+  padding-bottom: .25rem;
+}
+
+.facturacion-fiscal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .85rem;
+}
+
+.facturacion-info-box {
+  padding: .9rem;
+  background: var(--color-surface-soft);
+  box-shadow: none;
+}
+
+.facturacion-info-box span {
+  display: block;
+  color: var(--color-text-soft);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.facturacion-info-box strong,
+.facturacion-info-box small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.facturacion-info-box strong {
+  margin-top: .2rem;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.facturacion-info-box small {
+  margin-top: .25rem;
+  color: var(--color-text-soft);
+  line-height: 1.35;
+}
+
+@media (max-width: 1199.98px) {
+  .facturacion-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .facturacion-search-layout,
+  .facturacion-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .facturacion-page {
+    gap: .75rem;
+  }
+
+  .facturacion-header-card .sg-page-header,
+  .facturacion-section-header {
+    display: grid;
+    gap: .75rem;
+  }
+
+  .facturacion-actions,
+  .facturacion-actions > a,
+  .facturacion-actions > button,
+  .facturacion-filter-actions,
+  .facturacion-filter-actions > a,
+  .facturacion-filter-actions > button,
+  .facturacion-page .cartera-filter-actions,
+  .facturacion-page .cartera-filter-actions > button,
+  .facturacion-page .cartera-filter-actions > a,
+  .facturacion-form-actions,
+  .facturacion-form-actions > a,
+  .facturacion-form-actions > button {
+    width: 100%;
+  }
+
+  .facturacion-filter-form,
+  .facturacion-client-search,
+  .facturacion-filter-actions,
+  .facturacion-page .cartera-filter-actions,
+  .facturacion-form-actions {
+    display: grid;
+  }
+
+  .facturacion-filter-form .cartera-filter-field,
+  .facturacion-filter-form .facturacion-filter-field-wide,
+  .facturacion-client-search .cartera-filter-field-wide {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .facturacion-kpi-grid,
+  .facturacion-fiscal-grid,
+  .facturacion-radio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .facturacion-mobile-list {
+    padding: .75rem;
+    gap: .75rem;
+  }
+
+  .facturacion-mobile-card,
+  .facturacion-client-result {
+    padding: .85rem;
+  }
+
+  .facturacion-mobile-card__header .badge,
+  .facturacion-client-result .badge {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .facturacion-mobile-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .facturacion-mobile-card__grid > div:last-child {
+    grid-column: auto;
+  }
+
+  .facturacion-mobile-card__actions {
+    grid-template-columns: 1fr auto;
+  }
+
+  .facturacion-application-responsive {
+    overflow: visible;
+  }
+
+  .facturacion-application-table,
+  .facturacion-application-table thead,
+  .facturacion-application-table tbody,
+  .facturacion-application-table tr,
+  .facturacion-application-table th,
+  .facturacion-application-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .facturacion-application-table thead {
+    display: none;
+  }
+
+  .facturacion-application-table tbody {
+    display: grid;
+    gap: .85rem;
+  }
+
+  .facturacion-application-table tbody tr {
+    border: 1px solid var(--color-border);
+    border-radius: 1rem;
+    background: var(--color-surface);
+    box-shadow: 0 .5rem 1.25rem rgba(15, 23, 42, .08);
+    padding: .85rem;
+  }
+
+  .facturacion-application-table tbody td {
+    border: 0;
+    padding: .45rem 0;
+  }
+
+  .facturacion-application-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: .25rem;
+    color: var(--color-text-soft);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .facturacion-mobile-card__actions {
+    grid-template-columns: 1fr;
+  }
+
+  .facturacion-mobile-card__actions .sg-btn-table {
+    width: 100%;
+  }
+}
+
+html[data-theme="dark"] .facturacion-mobile-card,
+html[data-theme="dark"] .facturacion-client-result,
+html[data-theme="dark"] .facturacion-info-box,
+html[data-theme="dark"] .facturacion-help-card,
+html[data-theme="dark"] .facturacion-selected-client-card,
+html[data-theme="dark"] .facturacion-radio-card,
+html[data-theme="dark"] .facturacion-application-table tbody tr {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+html[data-theme="dark"] .facturacion-mobile-card__grid > div,
+html[data-theme="dark"] .facturacion-help-card,
+html[data-theme="dark"] .facturacion-selected-client-card,
+html[data-theme="dark"] .facturacion-info-box,
+html[data-theme="dark"] .facturacion-radio-card,
+html[data-theme="dark"] .facturacion-xml-preview {
+  background: var(--color-surface-soft);
+}
+
+html[data-theme="dark"] .facturacion-client-result:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+html[data-theme="dark"] .facturacion-page .badge.text-bg-light,
+html[data-theme="dark"] .facturacion-page .text-bg-light {
+  background-color: var(--color-surface-soft) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}

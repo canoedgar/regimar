@@ -200,7 +200,7 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", True)
 EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
 EMAIL_TIMEOUT = env_int("EMAIL_TIMEOUT", 20)
-DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "notificaciones@cpcalimentos.com")
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER or "notificaciones@regimar.com")
 SERVER_EMAIL = os.getenv("SERVER_EMAIL", DEFAULT_FROM_EMAIL)
 NOTIFICACIONES_REPORTES_DESTINATARIOS = env_list("NOTIFICACIONES_REPORTES_DESTINATARIOS", "")
 
@@ -210,7 +210,7 @@ NOTIFICACIONES_REPORTES_DESTINATARIOS = env_list("NOTIFICACIONES_REPORTES_DESTIN
 
 # Dominio(s) confiables para formularios POST cuando el sistema esté publicado con HTTPS.
 # Ejemplo .env:
-# CSRF_TRUSTED_ORIGINS=https://portal.cpcalimentos.com,https://cpcalimentos.com
+# CSRF_TRUSTED_ORIGINS=https://portal.regimar.com,https://regimar.com
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS", "")
 
 # Cuando Django está detrás de Nginx/Proxy con HTTPS, esta cabecera permite detectar

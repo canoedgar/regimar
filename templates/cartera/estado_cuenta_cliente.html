@@ -20,7 +20,8 @@
           <a href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}" class="sg-btn-success sg-btn-md"><i class="bi bi-check2-circle me-1"></i>Aplicar saldo</a>
           <a href="{% url 'cartera:liquidar_saldo_favor' cliente.id %}" class="sg-btn-outline sg-btn-md"><i class="bi bi-arrow-left-right me-1"></i>Devolver saldo</a>
         {% endif %}
-        <a href="{% url 'cartera:estado_cuenta_cliente_print' cliente.id %}?movimientos={{ movimientos_opcion }}" target="_blank" class="sg-btn-secondary sg-btn-md"><i class="bi bi-printer me-1"></i>Imprimir</a>
+        {% if puede_registrar_facturas %}<a href="{% url 'cartera:factura_create' %}?cliente={{ cliente.id }}" class="sg-btn-outline sg-btn-md"><i class="bi bi-receipt-cutoff me-1"></i>Agregar factura</a>{% endif %}
+        <a href="{% url 'cartera:estado_cuenta_cliente_print' cliente.id %}?movimientos={{ movimientos_opcion }}{% if incluir_facturacion %}&facturacion=1{% endif %}" target="_blank" class="sg-btn-secondary sg-btn-md"><i class="bi bi-printer me-1"></i>Imprimir</a>
       </div>
     </div>
   </section>
@@ -38,7 +39,7 @@
         <thead class="table-light"><tr><th>Folio</th><th>Fecha</th><th class="text-end">Total nota</th><th class="text-end">Pagado</th><th class="text-end">Saldo pendiente</th><th class="text-end">Acciones</th></tr></thead>
         <tbody>
           {% for nota in estado.notas_pendientes %}
-            <tr><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"Y-m-d" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-table sg-btn-sm" title="Pagar nota"><i class="bi bi-cash"></i></a>{% if estado.saldo_favor > 0 %}<a href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}" class="sg-btn-table sg-btn-sm" title="Aplicar saldo"><i class="bi bi-check2-circle"></i></a>{% endif %}</td></tr>
+            <tr><td class="fw-semibold">{{ nota.folio }}</td><td>{{ nota.fecha|date:"Y-m-d" }}</td><td class="text-end">${{ nota.total_nota|floatformat:2|intcomma }}</td><td class="text-end">${{ nota.total_aplicado|floatformat:2|intcomma }}</td><td class="text-end fw-semibold">${{ nota.saldo_pendiente|floatformat:2|intcomma }}</td><td class="text-end sg-table-actions"><a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-table sg-btn-sm" title="Pagar nota"><i class="bi bi-cash"></i></a>{% if puede_registrar_facturas %}<a href="{% url 'cartera:factura_create_desde_nota' nota.id %}" class="sg-btn-table sg-btn-sm" title="Facturar nota"><i class="bi bi-receipt"></i></a>{% endif %}{% if estado.saldo_favor > 0 %}<a href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}" class="sg-btn-table sg-btn-sm" title="Aplicar saldo"><i class="bi bi-check2-circle"></i></a>{% endif %}</td></tr>
           {% empty %}
             <tr><td colspan="6" class="sg-empty-state">El cliente no tiene notas pendientes.</td></tr>
           {% endfor %}
@@ -56,6 +57,7 @@
           </div>
           <div class="sg-mobile-card-actions">
             <a href="{% url 'cartera:pago_nota_create' nota.id %}" class="sg-btn-primary sg-btn-sm"><i class="bi bi-cash"></i> Pagar nota</a>
+            {% if puede_registrar_facturas %}<a href="{% url 'cartera:factura_create_desde_nota' nota.id %}" class="sg-btn-outline sg-btn-sm"><i class="bi bi-receipt"></i> Facturar</a>{% endif %}
             {% if estado.saldo_favor > 0 %}<a href="{% url 'cartera:aplicar_saldo_favor' cliente.id %}?nota={{ nota.id }}" class="sg-btn-success sg-btn-sm"><i class="bi bi-check2-circle"></i> Aplicar saldo</a>{% endif %}
           </div>
         </article>
@@ -64,6 +66,16 @@
       {% endfor %}
     </div>
   </section>
+
+
+
+  {% if incluir_facturacion and estado.facturacion %}
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-table-card">
+    <div class="card-header d-flex justify-content-between align-items-center"><div><h5 class="sg-page-header-title"><i class="bi bi-receipt-cutoff"></i>Facturación</h5><p class="sg-page-header-subtitle mb-0">Control interno separado de pagos y saldos.</p></div><a href="{% url 'cartera:facturacion_cliente_reporte' cliente.id %}" class="sg-btn-outline sg-btn-sm">Reporte</a></div>
+    <div class="table-responsive d-none d-md-block sg-no-mobile-grid"><table class="table table-hover align-middle mb-0 sg-table"><thead class="table-light"><tr><th>Factura</th><th>Aplicación</th><th>UUID</th><th>Fecha</th><th>Estado</th><th>Notas</th><th class="text-end">Monto</th></tr></thead><tbody>{% for factura in estado.facturacion.facturas %}<tr class="{% if factura.estado == 'CAN' %}table-danger{% endif %}"><td><a href="{% url 'cartera:factura_detalle' factura.id %}" class="fw-semibold">{{ factura.folio_display }}</a></td><td>{{ factura.get_tipo_aplicacion_display }}</td><td><small>{{ factura.uuid }}</small></td><td>{{ factura.fecha|date:"Y-m-d" }}</td><td><span class="badge {% if factura.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ factura.get_estado_display }}</span></td><td>{% for app in factura.aplicaciones.all %}{{ app.nota_venta.folio }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</td><td class="text-end fw-semibold">${{ factura.total|floatformat:2|intcomma }}</td></tr>{% empty %}<tr><td colspan="7" class="sg-empty-state">Sin facturas registradas.</td></tr>{% endfor %}</tbody></table></div>
+    <div class="sg-mobile-list d-md-none">{% for factura in estado.facturacion.facturas %}<article class="sg-mobile-card"><div class="sg-mobile-card-header"><div><span class="sg-mobile-card-label">Factura</span><a href="{% url 'cartera:factura_detalle' factura.id %}" class="sg-mobile-card-title">{{ factura.folio_display }}</a><span class="sg-mobile-card-subtitle">{{ factura.fecha|date:"Y-m-d" }}</span></div><span class="badge {% if factura.estado == 'CAN' %}text-bg-danger{% else %}text-bg-success{% endif %}">{{ factura.get_estado_display }}</span></div><div class="sg-mobile-card-grid"><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">UUID</span><span class="sg-mobile-card-value">{{ factura.uuid }}</span></div><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Aplicación</span><span class="sg-mobile-card-value">{{ factura.get_tipo_aplicacion_display }}</span></div><div class="sg-mobile-card-field"><span class="sg-mobile-card-label">Monto</span><span class="sg-mobile-card-value">${{ factura.total|floatformat:2|intcomma }}</span></div></div></article>{% empty %}<div class="sg-empty-state">Sin facturas registradas.</div>{% endfor %}</div>
+  </section>
+  {% endif %}
 
   <section class="card border-0 shadow-sm sg-form-card sg-table-card cartera-form-card">
     <div class="card-body d-flex flex-column flex-lg-row gap-3 justify-content-between align-items-lg-end">
@@ -81,6 +93,7 @@
           <option value="100" {% if movimientos_opcion == '100' %}selected{% endif %}>100 movimientos</option>
           <option value="todos" {% if movimientos_opcion == 'todos' %}selected{% endif %}>Todos</option>
         </select>
+        {% if puede_ver_facturacion %}<label class="form-check d-flex align-items-center gap-2 mb-0"><input class="form-check-input" type="checkbox" name="facturacion" value="1" {% if incluir_facturacion %}checked{% endif %}>Facturación</label>{% endif %}
         <button class="sg-btn-primary sg-btn-md" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
       </form>
     </div>

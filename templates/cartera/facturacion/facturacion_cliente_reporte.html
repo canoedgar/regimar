@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% load static humanize %}
+
+{% block title %}Facturación {{ cliente }}{% endblock %}
+{% block page_title %}Facturación por cliente{% endblock %}
+{% block active_cartera %}active{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/cartera.css' %}">{% endblock %}
+
+{% block content %}
+<div class="facturacion-page facturacion-client-page">
+  <section class="card border-0 shadow-sm sg-form-card sg-table-card facturacion-header-card">
+    <div class="card-body sg-page-header">
+      <div>
+        <h5 class="sg-page-header-title"><i class="bi bi-person-vcard"></i>{{ cliente }}</h5>
+        <p class="sg-page-header-subtitle">RFC {{ cliente.rfc|default:"—" }} · {{ cliente.email_cfdi|default:"Sin email CFDI" }}</p>
+      </div>
+      <div class="sg-page-actions facturacion-actions">
+        <a href="{% url 'cartera:factura_create' %}?cliente={{ cliente.id }}" class="sg-btn-primary sg-btn-md"><i class="bi bi-plus-circle me-1"></i>Nueva factura</a>
+        <a href="{% url 'cartera:facturacion_cliente_reporte_print' cliente.id %}" target="_blank" class="sg-btn-outline sg-btn-md"><i class="bi bi-printer me-1"></i>Imprimir</a>
+        <a href="{% url 'cartera:estado_cuenta_cliente' cliente.id %}?facturacion=1" class="sg-btn-outline sg-btn-md"><i class="bi bi-journal-text me-1"></i>Estado de cuenta</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cartera-kpi-grid facturacion-kpi-grid">
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-check-circle"></i>Activo</div>
+      <div class="cartera-kpi-value">${{ resumen.total_facturado_activo|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Facturación vigente del cliente.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-globe2"></i>Global</div>
+      <div class="cartera-kpi-value">${{ resumen.total_global|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Aplicada al cliente.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-journal-check"></i>A notas</div>
+      <div class="cartera-kpi-value">${{ resumen.total_notas|floatformat:2|intcomma }}</div>
+      <div class="cartera-kpi-help">Relacionada a notas.</div>
+    </article>
+    <article class="cartera-kpi-card facturacion-kpi-card">
+      <div class="cartera-kpi-title"><i class="bi bi-files"></i>Facturas</div>
+      <div class="cartera-kpi-value">{{ resumen.cantidad_facturas }}</div>
+      <div class="cartera-kpi-help">XML relacionados al cliente.</div>
+    </article>
+  </section>
+
+  {% include "cartera/facturacion/_reporte_facturacion_table.html" with facturas=facturas %}
+</div>
+{% endblock %}
